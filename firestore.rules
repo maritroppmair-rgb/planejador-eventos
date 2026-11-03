@@ -1,0 +1,25 @@
+rules_version = '2';
+// Planejador de Eventos · Feashion
+// Só quem está na coleção "permitidos" (ou é o e-mail inicial abaixo) lê e grava qualquer coisa.
+// Todos os permitidos têm as mesmas permissões.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function emailLogado() {
+      return request.auth.token.email.lower();
+    }
+    function logadoComEmail() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true;
+    }
+    function liberado() {
+      return logadoComEmail() && (
+        emailLogado() in ['EMAIL_INICIAL@usp.br']
+        || exists(/databases/$(database)/documents/permitidos/$(emailLogado()))
+      );
+    }
+    match /{documento=**} {
+      allow read, write: if liberado();
+    }
+  }
+}
