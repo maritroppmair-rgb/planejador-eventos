@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261105191146"></script>
-<script src="plataforma.js?v=20261105191146"></script>
+<script src="config.js?v=20261105191647"></script>
+<script src="plataforma.js?v=20261105191647"></script>
 </head>
 <body>
 
@@ -277,6 +277,17 @@ table.slist{min-width:720px}
 .sd-foot{border-top:1px solid var(--line);padding:14px 22px calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface)}
 .sd-foot .note{max-width:300px}
 body.sd-aberto{overflow:hidden}
+/* gavetas laterais genéricas (convidados, calendário, documentos) */
+.gav .sd-panel{width:min(560px,100vw)}
+.gav-form{flex:1;overflow:auto;padding:16px 22px 0;margin:0!important;border:0;border-radius:0;background:transparent;display:flex;flex-direction:column}
+.gav-form .inlineform{grid-template-columns:1fr 1fr!important;gap:12px!important}
+.gav-form .inlineform .field input,.gav-form .inlineform .field select{background:var(--surface);color:var(--fg)}
+.gav-form .multi{grid-template-columns:1fr}
+.gav-form>.btns:last-child{position:sticky;bottom:0;margin-top:auto!important;padding:14px 0 calc(env(safe-area-inset-bottom,0px) + 14px);background:var(--bg);z-index:1}
+.gav-form>.btns:last-child::before{content:"";display:block;position:absolute;left:-22px;right:-22px;top:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:-1}
+.gav-form>*:nth-last-child(2){margin-bottom:18px}
+@media (max-width:700px){.gav-form .inlineform{grid-template-columns:1fr!important}}
+
 @media (max-width:700px){.sd-three{grid-template-columns:1fr 1fr}.sd-three .field:first-child{grid-column:1/-1}table.slist{min-width:0}.slist thead{display:none}.slist tbody tr{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 14px;border-bottom:1px solid var(--line)}.slist tbody tr:last-child{border-bottom:0}.slist tbody td{display:block;padding:0;border:0}.slist tbody td:nth-child(2){grid-column:2;grid-row:1/3;align-self:start}.slist tbody td:nth-child(3),.slist tbody td:nth-child(5){grid-column:1;font-size:13px;color:var(--muted)}.slist tbody td:nth-child(3) .sub,.slist tbody td:nth-child(5) .sub{display:inline;margin-left:4px}.slist tbody td:nth-child(3) .sub::before{content:'· '}.slist tbody td:nth-child(5)::before{content:'Coffee: '}.slist tbody td:nth-child(5) .sub::before{content:'· '}.slist .c-custo{display:none!important}.slist tbody td:nth-child(6){grid-column:1/-1;margin-top:6px}.slist .sub{max-width:none;white-space:normal}.slist td.empty{grid-column:1/-1;padding:20px}}
 
 .inlineform{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:end;padding:10px 12px;background:var(--surface-2)}
@@ -359,7 +370,7 @@ a.btn{text-decoration:none;display:inline-block}
 @media (max-width:700px){.dviewer{padding:0}.dv-box{height:100vh;height:100dvh;width:100%;border-radius:0}.dv-head{flex-wrap:wrap}.dv-head b{flex-basis:100%}}
 /* ---------- permissões por cargo (a segurança de verdade está nas regras do Firestore) ---------- */
 body:not(.pode-excluir) :is([data-del],[data-delok],[data-gdel],[data-ddel],[data-sdel],[data-cdel]){display:none!important}
-body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,[data-dedit]){display:none!important}
+body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,#cnova,#knova,#dnova,[data-dedit]){display:none!important}
 body:not(.pode-editar) :is(#stable,#ctable,#ktab,#k-grid) :is(input,select,textarea,button){pointer-events:none;opacity:.6}
 body:not(.pode-editar) #k-grid{pointer-events:none}
 body:not(.pode-gerir) :is(#parsave,#parreset,#backup,#acesso,.mfoot .del-membro){display:none!important}
@@ -542,6 +553,7 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
   <section id="view-conv" role="tabpanel" aria-labelledby="tab-conv" hidden>
     <div class="section-head">
       <div><h2>Convidados</h2><p class="note">A lista se ordena pela nota de prioridade. Nota de 0 a 100 = potencial de público (1 a 5 vale de 0 a 30; sem avaliação, 15) + conexão de algum membro (20) + abertura registrada (alta 20, média 10, sem registro 5, baixa −5) + histórico (até 15), convertida para a escala de 100. Tema e segmento não entram na nota.</p></div>
+      <div class="btns"><span class="msg" id="cform-ok" aria-live="polite"></span><button class="btn" type="button" id="cnova">+ Novo convidado</button></div>
     </div>
     <form class="panel" id="cform" style="margin-bottom:16px" autocomplete="off">
       <div class="inlineform" style="background:transparent;padding:0;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
@@ -559,7 +571,7 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
         <fieldset><legend>Segmentos <span class="rq opt">pode marcar vários</span></legend><div class="chks" id="c-segs"></div>
           <div class="newopt"><label for="c-newseg" class="sr">Criar segmento</label><input id="c-newseg" placeholder="Criar segmento"><button type="button" class="btn small ghost" id="c-addseg">Criar segmento</button></div></fieldset>
       </div>
-      <div class="btns" style="margin-top:10px"><button class="btn" type="submit" id="cadd">Adicionar convidado</button><span class="msg" id="cmsg"></span></div>
+      <div class="btns" style="margin-top:10px"><button class="btn" type="submit" id="cadd">Adicionar convidado</button><button class="btn ghost" type="button" data-gclose>Cancelar</button><span class="msg" id="cmsg"></span></div>
     </form>
     <h3 style="margin-bottom:2px">Cobertura por tema</h3><p class="note" style="margin-bottom:8px">Reserva = convidado aprovado, contatado ou confirmado. Sugeridos e quem já palestrou aparecem à parte.</p>
     <div class="kpis" id="tcov"></div>
@@ -628,16 +640,17 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
   <section id="view-cal" role="tabpanel" aria-labelledby="tab-cal" hidden>
     <div class="section-head">
       <div><h2>Calendário</h2><p class="note">Feriados, férias e outros bloqueios usados na nota da data. Cada alteração é salva assim que você sai do campo. Feriados também contam como dia não útil no cronograma, e a véspera de feriado tira 50 pontos.</p></div>
+      <div class="btns"><span class="msg" id="kform-ok" aria-live="polite"></span><button class="btn" type="button" id="knova">+ Novo bloqueio</button></div>
     </div>
     <form class="panel" id="kform" style="margin-bottom:16px" autocomplete="off">
-      <h3 style="margin-bottom:8px">Adicionar bloqueio</h3>
+      <h3 style="margin-bottom:8px">Novo bloqueio</h3><p class="note" style="margin:0 0 12px">Dica: dá para escolher as datas clicando (ou arrastando) direto no calendário.</p>
       <div class="inlineform" style="background:transparent;padding:0;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
         <div class="field"><label for="k-nome">Nome</label><input id="k-nome" required></div>
         <div class="field"><label for="k-ini">Início</label><input id="k-ini" type="date" required></div>
         <div class="field"><label for="k-fim">Fim</label><input id="k-fim" type="date"></div>
         <div class="field"><label for="k-tipo">Tipo</label><select id="k-tipo"><option value="feriado">Feriado (−100)</option><option value="ferias">Férias (−100)</option><option value="externo">Evento externo (−20)</option><option value="outro">Outro bloqueio (−20)</option></select></div>
       </div>
-      <div class="btns" style="margin-top:10px"><button class="btn" type="submit">Adicionar bloqueio</button><span class="msg" id="kmsg"></span></div>
+      <div class="btns" style="margin-top:10px"><button class="btn" type="submit">Adicionar bloqueio</button><button class="btn ghost" type="button" data-gclose>Cancelar</button><span class="msg" id="kmsg"></span></div>
     </form>
     <div class="panel calbox">
       <div class="calhead">
@@ -646,8 +659,9 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
         <button type="button" class="btn small ghost" id="k-next" aria-label="Próximo mês">›</button>
         <button type="button" class="btn small ghost" id="k-today">Hoje</button>
       </div>
+      <p class="note" id="k-hint" aria-live="polite" style="margin:-4px 0 8px"></p>
       <div class="calgrid" id="k-grid"></div>
-      <div class="callegend"><span class="cb feriado">Feriado</span><span class="cb ferias">Férias</span><span class="cb externo">Evento externo / bloqueio</span><span class="cb evento">Evento da Feashion</span><span class="note">Clique num dia ou arraste sobre vários para preencher o período do novo bloqueio. No celular: toque no primeiro e depois no último dia.</span></div>
+      <div class="callegend"><span class="cb feriado">Feriado</span><span class="cb ferias">Férias</span><span class="cb externo">Evento externo / bloqueio</span><span class="cb evento">Evento da Feashion</span><span class="note">Clique num dia ou arraste sobre vários para abrir um novo bloqueio já com o período. No celular: toque no primeiro e depois no último dia.</span></div>
     </div>
     <details class="panel" id="k-details" style="margin-top:16px">
       <summary style="cursor:pointer;font-weight:700">Bloqueios de datas</summary>
@@ -668,6 +682,7 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
   <section id="view-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
     <div class="section-head">
       <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios e arquivos da Diretoria. Cada documento pode ser ligado a um ou mais eventos; os ligados aparecem no ▸ do evento na Base de eventos.</p></div>
+      <div class="btns"><span class="msg" id="dform-ok" aria-live="polite"></span><button class="btn" type="button" id="dnova">+ Novo documento</button></div>
     </div>
     <form class="panel" id="dform" style="margin-bottom:18px" autocomplete="off" novalidate>
       <h3 id="dformtitle" style="margin-bottom:8px">Novo documento</h3>
@@ -681,7 +696,7 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
         <div class="field" style="grid-column:1/-1"><label for="d-resumo">Para que serve <span class="rq opt">opcional</span></label><input id="d-resumo"></div>
       </div>
       <fieldset class="multi1"><legend>Eventos ligados <span class="rq opt">pode marcar vários; nenhum = documento geral</span></legend><div class="chks" id="d-evs"></div></fieldset>
-      <div class="btns" style="margin-top:10px"><button class="btn" type="submit" id="dsave">Adicionar documento</button><button class="btn ghost" type="button" id="dcancel" hidden>Cancelar edição</button><span class="msg" id="dmsg"></span></div>
+      <div class="btns" style="margin-top:10px"><button class="btn" type="submit" id="dsave">Adicionar documento</button><button class="btn ghost" type="button" id="dcancel">Cancelar</button><span class="msg" id="dmsg"></span></div>
     </form>
     <div class="btns" style="margin-bottom:12px"><label for="dsearch" class="sr">Buscar</label><input id="dsearch" type="search" placeholder="Buscar por nome, responsável ou descrição" style="flex:1;min-width:200px;max-width:420px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:var(--surface);color:var(--fg);font:inherit"><label for="dfilter" class="sr">Evento</label><select id="dfilter" style="max-width:320px"></select></div>
     <div id="dlist"></div>
@@ -1133,10 +1148,34 @@ $('etable').addEventListener('submit',function(e){e.preventDefault();var f=e.tar
   db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
 });
 function alertMsg(m){$('dbstatus').textContent=m;}
+/* ---------- gavetas laterais ---------- */
+var gavAberta=null,gavAoFechar={};
+function gav(fid,titulo){var f=$(fid);if(!f)return;var dr=document.createElement('div');dr.className='sdrawer gav';dr.id=fid+'-gav';dr.hidden=true;
+  var bk=document.createElement('div');bk.className='sd-back';bk.setAttribute('data-gclose','');
+  var pn=document.createElement('div');pn.className='sd-panel';pn.setAttribute('role','dialog');pn.setAttribute('aria-modal','true');
+  var hd=document.createElement('div');hd.className='sd-head';var h=f.querySelector('h3');
+  if(h)h.removeAttribute('style');else{h=document.createElement('h3');h.textContent=titulo;}
+  if(!h.id)h.id=fid+'-tit';pn.setAttribute('aria-labelledby',h.id);hd.appendChild(h);
+  var x=document.createElement('button');x.type='button';x.className='sd-x';x.setAttribute('data-gclose','');x.setAttribute('aria-label','Fechar');x.innerHTML='&times;';hd.appendChild(x);
+  f.parentNode.insertBefore(dr,f);dr.appendChild(bk);dr.appendChild(pn);pn.appendChild(hd);pn.appendChild(f);
+  f.classList.remove('panel');f.classList.add('gav-form');f.removeAttribute('style');
+  dr.addEventListener('click',function(e){if(e.target.closest('[data-gclose]'))fecharGav(fid);});}
+function abrirGav(fid,foco){var dr=$(fid+'-gav');if(!dr)return;if(gavAberta&&gavAberta!==fid)fecharGav(gavAberta);
+  gavAberta=fid;dr.hidden=false;document.body.classList.add('sd-aberto');var ok=$(fid+'-ok');if(ok)ok.textContent='';
+  var f=$(fid);f.scrollTop=0;
+  setTimeout(function(){var el=(foco&&$(foco))||f.querySelector('input,select,textarea');if(el&&matchMedia('(pointer:fine)').matches)el.focus();else dr.querySelector('.sd-x').focus();},30);}
+function fecharGav(fid,okMsg){var dr=$(fid+'-gav');if(!dr||dr.hidden)return;dr.hidden=true;if(gavAberta===fid)gavAberta=null;document.body.classList.remove('sd-aberto');
+  if(gavAoFechar[fid])gavAoFechar[fid]();var ok=$(fid+'-ok');if(ok)ok.textContent=okMsg||'';
+  var b=$({cform:'cnova',kform:'knova',dform:'dnova'}[fid]);if(b&&document.activeElement&&dr.contains(document.activeElement))b.focus();
+  var sec=dr.closest('section');if(sec&&pendente[sec.id])adiar(sec.id,pendente[sec.id]);}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&gavAberta){e.preventDefault();fecharGav(gavAberta);}});
+gav('cform','Novo convidado');gav('kform','Novo bloqueio');gav('dform','Novo documento');
+$('cnova').addEventListener('click',function(){$('cmsg').textContent='';abrirGav('cform','c-nome');});
+gavAoFechar.cform=function(){$('cmsg').textContent='';};
 $('cform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('cmsg').textContent='Sem conexão com a base.';return;}
   var g={nome:$('c-nome').value.trim(),empresa:$('c-emp').value.trim(),cargo:$('c-cargo').value.trim(),temas:checked('c-temas'),segmentos:checked('c-segs'),potencial:$('c-pot').value==='?'?null:+$('c-pot').value,conexao:$('c-conx').value,abertura:$('c-ab').value,status:$('c-st').value,criadoEm:new Date().toISOString()};
   if(!g.nome)return;
-  db.collection('convidados').add(g).then(function(){$('cmsg').textContent='Adicionado.';$('c-nome').value='';$('c-emp').value='';$('c-cargo').value='';$('c-temas').querySelectorAll('input').forEach(function(i){i.checked=false;});$('c-segs').querySelectorAll('input').forEach(function(i){i.checked=false;});}).catch(function(){$('cmsg').textContent='Não foi possível salvar.';});
+  db.collection('convidados').add(g).then(function(){fecharGav('cform','Convidado adicionado.');$('c-nome').value='';$('c-emp').value='';$('c-cargo').value='';$('c-temas').querySelectorAll('input').forEach(function(i){i.checked=false;});$('c-segs').querySelectorAll('input').forEach(function(i){i.checked=false;});}).catch(function(){$('cmsg').textContent='Não foi possível salvar.';});
 });
 $('c-addtema').addEventListener('click',function(){addOpt('tema');});$('c-addseg').addEventListener('click',function(){addOpt('seg');});
 $('c-newtema').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addOpt('tema');}});$('c-newseg').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addOpt('seg');}});
@@ -1166,9 +1205,11 @@ function renderDocs(){
       '<div class="evs">'+(ev.length?ev.map(function(id){return '<span class="chip neutral">'+esc(evName(id))+'</span>';}).join(''):'<span class="chip neutral">geral</span>')+'</div>'+
       '<div class="acts">'+(u?'<a class="open" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir →</a>':'<span class="note">Link inválido</span>')+'<button type="button" class="btn small ghost" data-dedit="'+esc(x.id)+'">Editar</button><button type="button" class="btn small ghost" data-ddel="'+esc(x.id)+'">Excluir</button></div></div>';}).join('')+'</div>';
 }
-function resetDocForm(){docEdit=null;['d-nome','d-url','d-versao','d-resp','d-resumo'].forEach(function(i){$(i).value='';});$('d-file').value='';$('d-evs').querySelectorAll('input').forEach(function(i){i.checked=false;});$('dformtitle').textContent='Novo documento';$('dsave').textContent='Adicionar documento';$('dcancel').hidden=true;}
+function resetDocForm(){docEdit=null;['d-nome','d-url','d-versao','d-resp','d-resumo'].forEach(function(i){$(i).value='';});$('d-file').value='';$('d-evs').querySelectorAll('input').forEach(function(i){i.checked=false;});$('dformtitle').textContent='Novo documento';$('dsave').textContent='Adicionar documento';}
 $('dsearch').addEventListener('input',renderDocs);$('dfilter').addEventListener('change',renderDocs);
-$('dcancel').addEventListener('click',function(){resetDocForm();$('dmsg').textContent='';});
+$('dcancel').addEventListener('click',function(){fecharGav('dform');});
+gavAoFechar.dform=function(){resetDocForm();$('dmsg').textContent='';};
+$('dnova').addEventListener('click',function(){resetDocForm();$('dmsg').textContent='';abrirGav('dform','d-nome');});
 $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('dmsg').textContent='Sem conexão com a base.';return;}
   var nome=$('d-nome').value.trim(),u=$('d-url').value.trim(),file=$('d-file').files[0];
   if(!nome){$('dmsg').textContent='Dê um nome ao documento.';$('d-nome').focus();return;}
@@ -1177,7 +1218,7 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
   if(u&&!safeUrl(u)){$('dmsg').textContent='Use um link que comece com https://';return;}
   var data={nome:nome,tipo:$('d-tipo').value,versao:$('d-versao').value.trim(),resp:$('d-resp').value.trim(),resumo:$('d-resumo').value.trim(),eventos:Array.prototype.map.call($('d-evs').querySelectorAll('input:checked'),function(i){return i.value;})};
   function save(){var pr=docEdit?db.doc('documentos/'+docEdit).update(data):db.collection('documentos').add(Object.assign({criadoEm:new Date().toISOString()},data));
-    pr.then(function(){$('dmsg').textContent=docEdit?'Alterações salvas.':'Adicionado.';resetDocForm();}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
+    pr.then(function(){var m=docEdit?'Alterações salvas.':'Documento adicionado.';resetDocForm();fecharGav('dform',m);}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
   if(file){if(file.size>10*1024*1024){$('dmsg').textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
     var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',csv:'text/csv',txt:'text/plain',md:'text/markdown'};
     if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';
@@ -1189,7 +1230,7 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
 $('dlist').addEventListener('click',function(e){var ed=e.target.dataset.dedit;if(ed){var x=docs.filter(function(d){return d.id===ed;})[0];if(!x)return;docEdit=ed;
     $('d-nome').value=x.nome||'';$('d-url').value=/^https:/.test(x.url||'')?x.url:'';$('d-tipo').value=x.tipo||'Drive';$('d-versao').value=x.versao||'';$('d-resp').value=x.resp||'';$('d-resumo').value=x.resumo||'';
     $('d-evs').querySelectorAll('input').forEach(function(i){i.checked=dEvs(x).indexOf(i.value)>=0;});
-    $('dformtitle').textContent='Editando: '+x.nome+(/^\/_blob/.test(x.url||'')?' (arquivo enviado; envie outro para trocar)':'');$('dsave').textContent='Salvar alterações';$('dcancel').hidden=false;$('dmsg').textContent='';window.scrollTo(0,0);$('d-nome').focus();return;}
+    $('dformtitle').textContent='Editando: '+x.nome+(/^\/_blob/.test(x.url||'')?' (arquivo enviado; envie outro para trocar)':'');$('dsave').textContent='Salvar alterações';$('dmsg').textContent='';abrirGav('dform','d-nome');return;}
   var id=e.target.dataset.ddel;if(!id||!db)return;if(e.target.dataset.sure){db.doc('documentos/'+id).delete().catch(function(){});}else{e.target.dataset.sure='1';e.target.textContent='Confirmar exclusão';}});
 renderDocs();
 /* ---------- salas ---------- */
@@ -1318,18 +1359,20 @@ var selA=null,selB=null,dragging=false,touchStep=0;
 function paintSel(){var a=selA,b=selB;if(a&&b&&b<a){var t=a;a=b;b=t;}document.querySelectorAll('#k-grid [data-day]').forEach(function(el){var k=el.dataset.day;el.classList.toggle('sel',!!(a&&b&&k>=a&&k<=b));});}
 function commitSel(){var a=selA,b=selB||selA;if(b<a){var t=a;a=b;b=t;}$('k-ini').value=a;$('k-fim').value=b;$('kmsg').textContent=a===b?'':'Selecionado: '+fmt(D(a))+' a '+fmt(D(b))+'.';paintSel();}
 $('k-grid').addEventListener('pointerdown',function(e){var el=e.target.closest('[data-day]');if(!el)return;
-  if(e.pointerType==='touch'){if(touchStep===1){selB=el.dataset.day;touchStep=0;commitSel();$('k-nome').focus();}else{selA=selB=el.dataset.day;touchStep=1;commitSel();$('kmsg').textContent='Toque no último dia para selecionar um período, ou preencha o nome.';}return;}
+  if(e.pointerType==='touch'){if(touchStep===1){selB=el.dataset.day;touchStep=0;$('k-hint').textContent='';commitSel();abrirGav('kform','k-nome');}else{selA=selB=el.dataset.day;touchStep=1;commitSel();$('k-hint').innerHTML='Toque no último dia do período (ou no mesmo dia de novo, se for um dia só).';}return;}
   e.preventDefault();dragging=true;selA=selB=el.dataset.day;paintSel();});
 $('k-grid').addEventListener('pointerover',function(e){if(!dragging)return;var el=e.target.closest('[data-day]');if(el&&el.dataset.day!==selB){selB=el.dataset.day;paintSel();}});
-document.addEventListener('pointerup',function(){if(!dragging)return;dragging=false;commitSel();$('k-nome').focus();});
-$('k-grid').addEventListener('keydown',function(e){var el=e.target.closest('[data-day]');if(el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selA=selB=el.dataset.day;commitSel();$('k-nome').focus();}});
+document.addEventListener('pointerup',function(){if(!dragging)return;dragging=false;commitSel();abrirGav('kform','k-nome');});
+$('k-grid').addEventListener('keydown',function(e){var el=e.target.closest('[data-day]');if(el&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selA=selB=el.dataset.day;commitSel();abrirGav('kform','k-nome');}});
+$('knova').addEventListener('click',function(){selA=selB=null;touchStep=0;paintSel();$('k-ini').value='';$('k-fim').value='';$('kmsg').textContent='';$('k-hint').textContent='';abrirGav('kform','k-nome');});
+gavAoFechar.kform=function(){selA=selB=null;touchStep=0;paintSel();$('k-ini').value='';$('k-fim').value='';$('kmsg').textContent='';};
 $('ktab').addEventListener('change',function(e){var t=e.target,id=t.dataset.cid,f=t.dataset.f;if(!id||!f||!db)return;var v;
   if(t.type==='checkbox')v=t.checked;else if(t.type==='number')v=t.value===''?null:+t.value;else v=t.value;
   var upd={};upd[f]=v;db.doc('calendario/'+id).update(upd).catch(function(){alertMsg('Não foi possível salvar a data.');});});
 $('ktab').addEventListener('click',function(e){var b=e.target.closest('[data-cdel]');if(!b||!db)return;if(b.dataset.sure){db.doc('calendario/'+b.dataset.cdel).delete().catch(function(){alertMsg('Não foi possível excluir.');});}else{b.dataset.sure='1';b.textContent='Confirmar exclusão';}});
 $('kform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('kmsg').textContent='Sem conexão com a base.';return;}
   var ini=$('k-ini').value,fim=$('k-fim').value||ini;if(fim<ini){$('kmsg').textContent='O fim precisa ser depois do início.';return;}
-  db.collection('calendario').add({nome:$('k-nome').value.trim(),inicio:ini,fim:fim,tipo:$('k-tipo').value,penalidade:null,obs:'',ativa:true}).then(function(){selA=selB=null;paintSel();$('kmsg').textContent='Adicionado.';$('k-nome').value='';$('k-ini').value='';$('k-fim').value='';}).catch(function(){$('kmsg').textContent='Não foi possível salvar.';});});
+  db.collection('calendario').add({nome:$('k-nome').value.trim(),inicio:ini,fim:fim,tipo:$('k-tipo').value,penalidade:null,obs:'',ativa:true}).then(function(){$('k-nome').value='';fecharGav('kform','Bloqueio adicionado.');}).catch(function(){$('kmsg').textContent='Não foi possível salvar.';});});
 renderCal();
 /* ---------- parâmetros ---------- */
 var PFORM=[['Compras',[['metaPresente','Meta de custo por presente (R$)','number','0.5'],['limiteAmarelo','Limite do amarelo no semáforo (R$)','number','0.5'],['faltaCoffee','Faltar coffee ou material é quantas vezes pior que sobrar','number','0.5']]],

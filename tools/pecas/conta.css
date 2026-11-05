@@ -68,7 +68,7 @@ a.btn{text-decoration:none;display:inline-block}
 @media (max-width:700px){.dviewer{padding:0}.dv-box{height:100vh;height:100dvh;width:100%;border-radius:0}.dv-head{flex-wrap:wrap}.dv-head b{flex-basis:100%}}
 /* ---------- permissões por cargo (a segurança de verdade está nas regras do Firestore) ---------- */
 body:not(.pode-excluir) :is([data-del],[data-delok],[data-gdel],[data-ddel],[data-sdel],[data-cdel]){display:none!important}
-body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,[data-dedit]){display:none!important}
+body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,#cnova,#knova,#dnova,[data-dedit]){display:none!important}
 body:not(.pode-editar) :is(#stable,#ctable,#ktab,#k-grid) :is(input,select,textarea,button){pointer-events:none;opacity:.6}
 body:not(.pode-editar) #k-grid{pointer-events:none}
 body:not(.pode-gerir) :is(#parsave,#parreset,#backup,#acesso,.mfoot .del-membro){display:none!important}
