@@ -1,0 +1,35 @@
+
+  <!-- MEU PERFIL (aberto pelo círculo no canto superior direito) -->
+  <section id="view-perfil" aria-labelledby="pf-title" hidden>
+    <div class="section-head"><div><h2 id="pf-title">Meu perfil</h2><p class="note">O que você preencher aqui aparece para o resto da equipe de Eventos na página Membros.</p></div></div>
+    <p class="note" id="pf-noid" hidden style="margin-bottom:12px">Não consegui identificar sua conta nesta página, então o perfil não pode ser salvo. Abra o Planejador com sua conta conectada.</p>
+    <div class="pgrid">
+      <div class="panel pcard">
+        <span class="av lg" id="pf-av"></span>
+        <div class="btns"><label class="btn small ghost" for="pf-foto" role="button" tabindex="0" id="pf-fotolbl">Enviar foto</label><input type="file" id="pf-foto" accept="image/*" class="sr" tabindex="-1"><button type="button" class="btn small ghost" id="pf-rmfoto" hidden>Remover</button></div>
+        <p class="note">JPG ou PNG. A foto é recortada em quadrado.</p>
+        <div class="ptheme"><h3>Aparência</h3>
+          <div class="seg" role="radiogroup" aria-label="Aparência"><button type="button" role="radio" data-themeopt="light">Claro</button><button type="button" role="radio" data-themeopt="dark">Escuro</button><button type="button" role="radio" data-themeopt="auto">Automático</button></div>
+          <p class="note">Automático segue o modo do seu celular ou computador. Vale só para você.</p>
+        </div>
+      </div>
+      <form class="panel" id="pfform" novalidate autocomplete="off">
+        <div class="pfields">
+          <div class="field"><label for="pf-nome">Nome completo <span class="rq">obrigatório</span></label><input id="pf-nome" maxlength="80" placeholder="Seu nome completo"></div>
+          <div class="field"><label for="pf-apelido">Como prefere ser chamado(a) <span class="rq opt">opcional</span></label><input id="pf-apelido" maxlength="40"></div>
+          <div class="field"><label for="pf-email">E-mail USP <span class="rq">obrigatório</span></label><input id="pf-email" type="email" placeholder="seu.nome@usp.br" maxlength="80"><span class="hint">É com ele que o login vai funcionar na versão final.</span></div>
+          <div class="field"><label for="pf-tel">Celular / WhatsApp <span class="rq opt">opcional</span></label><input id="pf-tel" type="tel" placeholder="(11) 91234-5678" maxlength="20"></div>
+          <div class="field"><label for="pf-cargo">Cargo <span class="rq">obrigatório</span></label><select id="pf-cargo"></select></div>
+          <div class="field"><label for="pf-entrada">Semestre de ingresso na Feashion <span class="rq">obrigatório</span></label><select id="pf-entrada"></select></div>
+        </div>
+        <div class="btns" style="margin-top:14px"><button class="btn" type="submit" id="pfsave">Salvar perfil</button><span class="msg" id="pfmsg" role="status"></span></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- MEMBROS (aberto pelo círculo no canto superior direito) -->
+  <section id="view-membros" aria-labelledby="mb-title" hidden>
+    <div class="section-head"><div><h2 id="mb-title">Membros</h2><p class="note">A equipe de Eventos que usa o Planejador. Cada pessoa cria o próprio perfil pelo círculo no canto superior direito.</p></div><span class="note" id="mcount"></span></div>
+    <div class="mtools"><label for="msearch" class="sr">Buscar membro</label><input id="msearch" type="search" placeholder="Buscar por nome" style="flex:1;min-width:200px;max-width:380px"><label for="mfilter" class="sr">Cargo</label><select id="mfilter"><option value="">Todos os cargos</option></select></div>
+    <div class="mgrid" id="mlist"></div>
+  </section>

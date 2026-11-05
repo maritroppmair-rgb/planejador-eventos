@@ -1,0 +1,110 @@
+
+<div class="dviewer" id="dviewer" hidden role="dialog" aria-modal="true" aria-labelledby="dv-title">
+  <div class="dv-box">
+    <div class="dv-head"><b id="dv-title">Documento</b><div class="btns"><button type="button" class="btn small" id="dv-dl" disabled>Baixar</button><a class="btn small ghost" id="dv-new" href="#" target="_blank" rel="noopener">Nova aba</a><button type="button" class="dv-x" id="dv-close" aria-label="Fechar documento">×</button></div></div>
+    <div class="dv-body" id="dv-body"></div>
+  </div>
+</div>
+<script>
+/* ---------- visualizador de documentos enviados (/_blob/...) dentro da própria página ---------- */
+(function(){
+"use strict";
+var V='3.11.174',BASE=window.PDFJS_BASE||('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+V+'/');
+var EXT={'application/pdf':'pdf','image/png':'png','image/jpeg':'jpg','image/webp':'webp','text/csv':'csv','text/plain':'txt','text/markdown':'md'};
+function $(i){return document.getElementById(i);}
+var pdfP=null,cur=null,lastFocus=null;
+function loadPdf(){
+  if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);
+  if(pdfP)return pdfP;
+  pdfP=new Promise(function(res,rej){
+    var s=document.createElement('script');s.src=BASE+'pdf.min.js';
+    s.onload=function(){if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc=BASE+'pdf.worker.min.js';res(window.pdfjsLib);}else{pdfP=null;rej(new Error('pdf.js'));}};
+    s.onerror=function(){pdfP=null;rej(new Error('pdf.js'));};
+    document.head.appendChild(s);
+  });
+  return pdfP;
+}
+function msg(t,err){var b=$('dv-body'),p=document.createElement('p');p.className='dv-msg'+(err?' err':'');p.textContent=t;b.textContent='';b.appendChild(p);}
+function fileName(name,type){
+  var ext=EXT[type]||'pdf';
+  var base=String(name||'documento').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w\- ]+/g,' ').trim().replace(/\s+/g,'-').toLowerCase().slice(0,80)||'documento';
+  return base+'.'+ext;
+}
+function closeV(){
+  if($('dviewer').hidden)return;
+  $('dviewer').hidden=true;document.body.style.overflow='';
+  if(cur&&cur.obj)URL.revokeObjectURL(cur.obj);cur=null;$('dv-body').textContent='';
+  if(lastFocus&&lastFocus.focus)lastFocus.focus();
+}
+function openV(url,name){
+  lastFocus=document.activeElement;
+  var my=cur={url:url,name:name};
+  $('dv-title').textContent=name;$('dv-new').href=url;$('dv-dl').disabled=true;
+  $('dviewer').hidden=false;document.body.style.overflow='hidden';$('dv-close').focus();
+  msg('Carregando…');
+  pegar(url).then(function(b){
+    if(cur!==my)return;
+    my.blob=b;$('dv-dl').disabled=false;
+    var t=b.type||'';
+    if(/pdf/.test(t))return renderPdf(b,my);
+    if(/^image\//.test(t)&&!/svg/.test(t)){my.obj=URL.createObjectURL(b);var i=new Image();i.className='dv-img';i.alt=name;i.src=my.obj;$('dv-body').textContent='';$('dv-body').appendChild(i);return;}
+    if(/^text\//.test(t)||/json|csv|markdown/.test(t))return b.text().then(function(tx){if(cur!==my)return;var pre=document.createElement('pre');pre.className='dv-pre';pre.textContent=tx;$('dv-body').textContent='';$('dv-body').appendChild(pre);});
+    msg('Este tipo de arquivo não tem visualização aqui. Use Baixar.');
+  }).catch(function(e){if(cur!==my)return;msg('Não consegui carregar o arquivo ('+(e&&e.message||'erro')+'). Tente Nova aba.',true);});
+}
+/* busca o arquivo: no app (Firebase) vem do banco; no Claude vem do armazenamento do artefato */
+function pegar(url){
+  var m=/^\/_blob\/([A-Za-z0-9]+)$/.exec(url);
+  if(m&&window.__arquivos)return window.__arquivos.get(m[1]);
+  return fetch(url,{credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error('o servidor respondeu '+r.status);return r.blob();});
+}
+function renderPdf(b,my){
+  return loadPdf().then(function(lib){return b.arrayBuffer().then(function(buf){return lib.getDocument({data:buf}).promise;});}).then(function(pdf){
+    if(cur!==my)return;
+    var body=$('dv-body');body.textContent='';
+    var info=document.createElement('p');info.className='dv-msg';info.textContent=pdf.numPages+(pdf.numPages===1?' página':' páginas');body.appendChild(info);
+    var w=Math.max(260,Math.min(body.clientWidth-24,900)),dpr=Math.min(window.devicePixelRatio||1,2),n=0;
+    function next(){
+      if(cur!==my||n>=pdf.numPages)return;
+      var k=++n;
+      pdf.getPage(k).then(function(pg){
+        if(cur!==my)return;
+        var sc=w/pg.getViewport({scale:1}).width,vp=pg.getViewport({scale:sc*dpr});
+        var c=document.createElement('canvas');c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);
+        c.style.width=Math.floor(vp.width/dpr)+'px';c.className='dv-page';c.setAttribute('role','img');c.setAttribute('aria-label','Página '+k+' de '+pdf.numPages);
+        body.appendChild(c);
+        return pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      }).then(next).catch(function(){if(cur===my){var p=document.createElement('p');p.className='dv-msg err';p.textContent='Não consegui mostrar a página '+k+'.';body.appendChild(p);next();}});
+    }
+    next();
+  }).catch(function(){if(cur!==my)return;msg('Não consegui mostrar o PDF aqui. Use Baixar ou Nova aba.',true);});
+}
+function fallbackSave(blob,fn){var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},4000);}
+$('dv-dl').addEventListener('click',function(){
+  if(!cur||!cur.blob)return;
+  var b=cur.blob,fn=fileName(cur.name,b.type);
+  var go=window.claude&&window.claude.use?window.claude.use('downloads'):Promise.resolve(null);
+  go.then(function(d){
+    if(!d){fallbackSave(b,fn);return;}
+    return d.save({filename:fn,data:b}).catch(function(e){
+      if(e&&e.code==='declined')return;
+      if(e&&e.code==='rate_limited'){msgTop('Já há um download aberto. Tente de novo em instantes.');return;}
+      fallbackSave(b,fn);
+    });
+  }).catch(function(){fallbackSave(b,fn);});
+});
+function msgTop(t){var p=document.createElement('p');p.className='dv-msg';p.textContent=t;$('dv-body').insertBefore(p,$('dv-body').firstChild);}
+$('dv-close').addEventListener('click',closeV);
+$('dv-new').addEventListener('click',function(e){if(!window.__arquivos)return;e.preventDefault();if(!cur||!cur.blob)return;var u=URL.createObjectURL(cur.blob);window.open(u,'_blank','noopener');setTimeout(function(){URL.revokeObjectURL(u);},60000);});
+$('dviewer').addEventListener('click',function(e){if(e.target===$('dviewer'))closeV();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('dviewer').hidden)closeV();});
+/* todo link para arquivo enviado abre no visualizador */
+document.addEventListener('click',function(e){
+  var a=e.target&&e.target.closest?e.target.closest('a[href^="/_blob/"]'):null;
+  if(!a||a.id==='dv-new')return;
+  e.preventDefault();
+  var card=a.closest('.dcard'),t=card&&card.querySelector('.t b');
+  openV(a.getAttribute('href'),((t?t.textContent:a.textContent)||'Documento').trim());
+},true);
+})();
+</script>

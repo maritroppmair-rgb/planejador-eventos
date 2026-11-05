@@ -1,13 +1,14 @@
 """Gera o index.html do app a partir das mesmas peças da Sandbox PH no Claude.
 
-Uso: python3 tools/build.py <pasta-das-pecas> <html-base>
+Uso: python3 tools/build.py   (usa tools/pecas/ e tools/pecas/base.html)
   <html-base>         página da Sandbox antes das peças de conta (sandbox-ph.backup-v2.html)
   <pasta-das-pecas>   conta.css, conta.html, conta.js, menu.html, viewer.html
 """
 import sys, time, os, re
 
-pecas, base = sys.argv[1], sys.argv[2]
 raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+pecas = sys.argv[1] if len(sys.argv) > 1 else os.path.join(raiz, 'tools', 'pecas')
+base = sys.argv[2] if len(sys.argv) > 2 else os.path.join(pecas, 'base.html')
 s = open(base, encoding='utf-8').read()
 P = lambda n: open(os.path.join(pecas, n), encoding='utf-8').read()
 
@@ -18,13 +19,13 @@ def troca(a, b, n=1):
 
 # peças de conta, menu e visualizador (as mesmas da Sandbox)
 k = s.index('@media (prefers-reduced-motion:reduce)'); k = s.index('</style>', k)
-s = s[:k] + P('conta.css') + s[k:]
+s = s[:k] + P('conta.css') + P('nav.css') + P('analytics.css') + s[k:]
 troca('<header class="app">', '<script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>\n<header class="app">')
 a = s.index('<div class="brand">'); b = s.index('\n    <nav class="tabs"')
 s = s[:a] + P('menu.html').replace('{{BRAND}}', s[a:b]) + s[b:]
-troca('</main>', P('conta.html') + '</main>')
+troca('</main>', P('conta.html') + P('analytics.html') + '</main>')
 e = s.rindex('</script>') + len('</script>')
-s = s[:e] + '\n' + P('conta.js') + '\n' + P('viewer.html') + s[e:]
+s = s[:e] + '\n' + P('conta.js') + '\n' + P('viewer.html') + '\n' + P('nav.js') + '\n' + P('analytics.js') + s[e:]
 
 # ajustes do app fora do Claude
 troca('<meta name="claude:viewport-fit-sides" content="cover">\n', '')

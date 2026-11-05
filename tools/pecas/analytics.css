@@ -1,0 +1,32 @@
+/* ---------- Analytics ---------- */
+#view-ana{--s-ins:#c08a1e;--s-pres:#9b1d24;--grid:#e6dfd5;--axis:#8c8178}
+@media (prefers-color-scheme: dark){:root:where(:not([data-theme="light"])) #view-ana{--s-ins:#b58c28;--s-pres:#c13f5c;--grid:#2c2725;--axis:#7d736d}}
+:root[data-theme="dark"] #view-ana{--s-ins:#b58c28;--s-pres:#c13f5c;--grid:#2c2725;--axis:#7d736d}
+.afilt{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.afilt select{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:4px;padding:7px 10px;font:inherit}
+.afilt label.check{font-size:13.5px}
+.akpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.akpis .kpi .v{font-size:30px}
+.akpis .kpi .chip{margin-top:6px}
+.acharts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:16px 18px;display:grid;gap:10px;align-content:start;min-width:0}
+.acard.full{grid-column:1/-1}
+.acard h3{color:var(--fg);font-family:var(--body);font-size:15px;letter-spacing:0;text-transform:none}
+.acard .sub{font-size:12.5px;color:var(--muted);margin-top:-6px}
+.alegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.alegend span{display:inline-flex;align-items:center;gap:6px}
+.alegend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.achart{width:100%;height:auto;display:block;overflow:visible}
+.achart text{font-family:var(--body);font-size:11px;fill:var(--muted)}
+.achart text.v{fill:var(--fg);font-weight:700;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.achart text.ref{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.achart .hit{fill:transparent;cursor:default}
+.achart .hit:hover+.hl,.achart g.m:hover .hl{opacity:1}
+.achart .hl{opacity:0;fill:var(--surface-2)}
+.aempty{padding:22px;text-align:center;color:var(--muted);font-size:13.5px;border:1px dashed var(--line);border-radius:4px}
+.acard details summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+.acard details table{min-width:0;font-size:13px;margin-top:6px}
+.acard details th,.acard details td{padding:5px 8px}
+.atip{position:fixed;z-index:90;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12.5px;line-height:1.4;padding:7px 10px;border-radius:4px;max-width:260px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.atip b{display:block}
+@media (max-width:800px){.acharts{grid-template-columns:1fr}}

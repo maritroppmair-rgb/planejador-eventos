@@ -1,0 +1,32 @@
+/* ---------- menu lateral ---------- */
+header.app nav.tabs{display:none!important}
+header.app #dbstatus{display:none}
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);align-items:start;min-height:calc(100vh - var(--hdr,64px))}
+.shell>main{min-width:0;width:100%}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--hdr,64px));height:calc(100vh - var(--hdr,64px) - env(safe-area-inset-top,0px));overflow-y:auto;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 12px 12px;gap:18px}
+.sgroup{display:grid;gap:2px}
+.sgroup h4{margin:0 0 4px;padding:0 10px;font-family:var(--label);font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.sitem{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--fg);padding:9px 10px;border-radius:4px;cursor:pointer;font:500 14px var(--body);text-align:left;position:relative}
+.sitem svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.sitem:hover{background:var(--surface-2)}
+.sitem[aria-current="page"]{background:var(--wine-soft);color:var(--wine);font-weight:700}
+.sitem[aria-current="page"] svg{color:var(--wine)}
+.sitem[aria-current="page"]::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--brand)}
+.sfoot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
+.sfoot .status{padding:0 10px;font-size:12px;color:var(--muted)}
+.sfoot .status b{color:var(--fg)}
+.hamb{display:none;width:38px;height:38px;border:1px solid rgba(241,238,232,.3);border-radius:4px;background:transparent;color:var(--on-ink);cursor:pointer;flex:none;place-items:center}
+.hamb svg{width:20px;height:20px}
+.sback{display:none}
+.toprow .brand{margin-right:auto}
+@media (max-width:999px){
+  .shell{display:block}
+  .hamb{display:grid}
+  .side{position:fixed;left:0;top:0;bottom:0;height:auto;width:min(280px,86vw);z-index:70;transform:translateX(-102%);transition:transform .2s ease;padding-top:calc(env(safe-area-inset-top,0px) + 18px);box-shadow:0 0 40px rgba(0,0,0,.35)}
+  .side:not(.open){visibility:hidden;transition:transform .2s ease,visibility 0s .2s}
+  .side.open{transform:none}
+  .sback{position:fixed;inset:0;z-index:65;background:rgba(10,8,8,.55)}
+  .sback.open{display:block}
+}
+@media (max-width:440px){.toprow .brand .bt{display:none}}
+@media (prefers-reduced-motion:reduce){.side,.side:not(.open){transition:none}}

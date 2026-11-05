@@ -1,0 +1,19 @@
+
+  <!-- ANALYTICS (aberta pelo menu lateral) -->
+  <section id="view-ana" aria-labelledby="ana-title" hidden>
+    <div class="section-head"><div><h2 id="ana-title">Analytics</h2><p class="note">Resultados dos eventos realizados, calculados a partir da Base de eventos e dos Convidados.</p></div></div>
+    <div class="afilt">
+      <label class="sr" for="a-sem">Semestre</label><select id="a-sem"><option value="">Todos os semestres</option></select>
+      <label class="sr" for="a-tipo">Tipo de evento</label><select id="a-tipo"><option value="">Todos os tipos</option></select>
+      <label class="check"><input type="checkbox" id="a-teste"> Incluir eventos de teste</label>
+    </div>
+    <div class="akpis" id="a-kpis"></div>
+    <div class="acharts">
+      <article class="acard full"><h3>Público por evento</h3><p class="sub">Inscritos e presentes de cada evento realizado, em ordem de data.</p><div id="a-c1"></div></article>
+      <article class="acard"><h3>Comparecimento por tipo</h3><p class="sub">Presentes ÷ inscritos, somando os eventos de cada tipo.</p><div id="a-c2"></div></article>
+      <article class="acard"><h3>Previsto × real</h3><p class="sub">Presentes previstos no Planejar e presentes de fato.</p><div id="a-c3"></div></article>
+      <article class="acard"><h3>Custo por presente</h3><p class="sub">Por evento, com a meta e o limite da aba Parâmetros.</p><div id="a-c4"></div></article>
+      <article class="acard"><h3>Ocupação das salas</h3><p class="sub">Presentes ÷ capacidade da sala.</p><div id="a-c5"></div></article>
+      <article class="acard full"><h3>Funil de convidados</h3><p class="sub">Quantos convidados estão em cada etapa hoje (não depende do filtro).</p><div id="a-c6"></div></article>
+    </div>
+  </section>
