@@ -195,6 +195,68 @@ tr:last-child td{border-bottom:0}
 #etable .ract .btn{padding:4px 10px;font-size:10.5px;white-space:nowrap}
 #etable td:nth-child(3){min-width:260px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+/* Salas: lista de leitura + painel lateral de edição */
+.sbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.sbar input[type=search]{flex:1 1 260px;max-width:420px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:9px 14px;font:inherit;font-size:14px}
+.sbar-num,.sbar-ck{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.sbar-num input{width:72px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:7px 8px;font:inherit;font-size:13px}
+.sbar-ck input{width:16px;height:16px;accent-color:var(--wine)}
+table.slist{min-width:720px}
+.slist th button{all:unset;cursor:pointer;display:inline-flex;gap:4px;align-items:center}
+.slist th button:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.slist th .ar{opacity:.35}.slist th[aria-sort] .ar{opacity:1;color:var(--fg)}
+.slist tbody tr{cursor:pointer}
+@media (hover:hover){.slist tbody tr:hover td{background:var(--surface-2)}}
+.slist tbody tr:active td{background:var(--surface-2)}
+.slist tbody tr:focus-visible{outline:2px solid var(--wine);outline-offset:-2px}
+.slist td{padding:10px 12px;vertical-align:top}
+.slist .sn{font-weight:700;color:var(--fg)}
+.slist .sub{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slist .cap{font-family:var(--display);font-size:20px;font-weight:600;line-height:1}
+.slist tr.off td{opacity:.55}
+.slist .tg{display:inline-block;margin-left:8px;font-family:var(--label);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--muted);vertical-align:2px}
+.rics{display:flex;gap:4px;flex-wrap:nowrap}
+.ric{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:6px;position:relative;vertical-align:middle}
+.ric.sim{background:var(--green-bg);color:var(--green)}
+.ric.nao{color:var(--muted);opacity:.55}
+.ric.nao::after{content:"";position:absolute;left:4px;right:4px;top:50%;height:1.6px;background:currentColor;transform:rotate(-45deg)}
+.ric.ns{color:var(--muted);border:1px dashed var(--line);opacity:.8}
+.slegend .ric{margin:0 2px 0 6px;width:22px;height:22px}.slegend .ric:first-child{margin-left:0}
+.sdrawer{position:fixed;inset:0;z-index:80}
+.sd-back{position:absolute;inset:0;background:rgba(0,0,0,.38)}
+.sd-panel{position:absolute;top:0;right:0;bottom:0;width:min(520px,100vw);background:var(--bg);border-left:1px solid var(--line);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.25);animation:sdin .18s ease}
+@keyframes sdin{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sd-panel{animation:none}}
+.sd-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 22px 12px;border-bottom:1px solid var(--line);padding-top:calc(env(safe-area-inset-top,0px) + 18px)}
+.sd-head h3{margin:0;font-family:var(--display);font-size:26px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fg);line-height:1.15}
+.sd-x{border:0;background:transparent;color:var(--fg);font-size:28px;line-height:1;cursor:pointer;width:36px;height:36px;border-radius:50%}.sd-x:hover{background:var(--surface-2)}
+.sd-body{flex:1;overflow:auto;border:0;margin:0;padding:16px 22px 20px;display:grid;gap:14px;align-content:start;min-width:0}
+.sd-body h4{margin:6px 0 -4px;font-family:var(--label);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.sd-grp{display:grid;gap:10px}
+.sd-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.sd-three{grid-template-columns:1.4fr 1fr 1fr}
+.sd-ativa{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;padding-bottom:9px}
+.sd-ativa input{width:18px;height:18px;accent-color:var(--wine)}
+.sd-body textarea{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:8px 10px;font:inherit;resize:vertical;width:100%}
+.sd-body .field input,.sd-body .field select{background:var(--surface);color:var(--fg)}
+.sd-body [aria-invalid=true]{border-color:var(--red);box-shadow:0 0 0 2px var(--red-bg)}
+.sd-res{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sd-rl{font-size:13.5px;font-weight:700}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--muted);min-width:46px;text-align:center}
+.seg label+label span{border-left:1px solid var(--line)}
+.seg input:checked+span{background:var(--surface-2);color:var(--fg)}
+.seg input[value=sim]:checked+span{background:var(--green);color:#fff}
+.seg input[value=nao]:checked+span{background:var(--fg);color:var(--bg)}
+.seg input:focus-visible+span{outline:2px solid var(--wine);outline-offset:-2px}
+.sd-body:disabled .seg label{cursor:default}
+.sd-foot{border-top:1px solid var(--line);padding:14px 22px calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface)}
+.sd-foot .note{max-width:300px}
+body.sd-aberto{overflow:hidden}
+@media (max-width:700px){.sd-three{grid-template-columns:1fr 1fr}.sd-three .field:first-child{grid-column:1/-1}table.slist{min-width:0}.slist thead{display:none}.slist tbody tr{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 14px;border-bottom:1px solid var(--line)}.slist tbody tr:last-child{border-bottom:0}.slist tbody td{display:block;padding:0;border:0}.slist tbody td:nth-child(2){grid-column:2;grid-row:1/3;align-self:start}.slist tbody td:nth-child(3),.slist tbody td:nth-child(5){grid-column:1;font-size:13px;color:var(--muted)}.slist tbody td:nth-child(3) .sub,.slist tbody td:nth-child(5) .sub{display:inline;margin-left:4px}.slist tbody td:nth-child(3) .sub::before{content:'· '}.slist tbody td:nth-child(5)::before{content:'Coffee: '}.slist tbody td:nth-child(5) .sub::before{content:'· '}.slist .c-custo{display:none!important}.slist tbody td:nth-child(6){grid-column:1/-1;margin-top:6px}.slist .sub{max-width:none;white-space:normal}.slist td.empty{grid-column:1/-1;padding:20px}}
+
 .inlineform{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:end;padding:10px 12px;background:var(--surface-2)}
 .inlineform .field input{background:var(--surface)}
 .note{font-size:12.5px;color:var(--muted)}
@@ -329,29 +391,59 @@ tr:last-child td{border-bottom:0}
   <!-- SALAS -->
   <section id="view-salas" role="tabpanel" aria-labelledby="tab-salas" hidden>
     <div class="section-head">
-      <div><h2>Salas</h2><p class="note">O Planejar usa só as salas ativas desta lista. Cada alteração é salva assim que você sai do campo. A antecedência define a data limite da reserva: passada essa data, a sala é descartada no planejamento. Disponibilidade no dia continua sendo confirmada com a FEA.</p></div>
+      <div><h2>Salas</h2><p class="note">O Planejar usa só as salas ativas desta lista. Clique numa sala para ver todos os detalhes e editar. O prazo define a data limite da reserva: passada essa data, a sala é descartada no planejamento. Disponibilidade no dia continua sendo confirmada com a FEA.</p></div>
+      <button class="btn" type="button" id="snova">+ Nova sala</button>
     </div>
-    <form class="panel" id="sform" style="margin-bottom:16px" autocomplete="off">
-      <div class="inlineform" style="background:transparent;padding:0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-        <div class="field"><label for="s-nome">Sala</label><input id="s-nome" required></div>
-        <div class="field"><label for="s-cap">Capacidade</label><input id="s-cap" type="number" min="1" required></div>
-        <div class="field"><label for="s-res">Reserva</label><select id="s-res"><option value="aula">Sala de aula</option><option value="email">E-mail à ADM da FEA</option><option value="oficio">Ofício (auditório)</option><option value="parceiro">Parceiro / externo</option></select></div>
-        <div class="field"><label for="s-ant">Prazo (dias úteis)</label><input id="s-ant" type="number" min="0" placeholder="5"></div>
-        <div class="field"><label for="s-custo">Custo (R$)</label><input id="s-custo" type="number" min="0" step="0.01" placeholder="0"></div>
-        <div class="field"><label for="s-mesas">Mesas móveis</label><select id="s-mesas"><option value="?">?</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div class="field"><label for="s-proj">Projetor</label><select id="s-proj"><option value="?">?</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div class="field"><label for="s-som">Som e microfone</label><select id="s-som"><option value="?">?</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div class="field"><label for="s-tom">Tomadas</label><select id="s-tom"><option value="?">?</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div class="field"><label for="s-acess">Acessível</label><select id="s-acess"><option value="?">?</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div class="field"><label for="s-ar">Ar-condicionado</label><select id="s-ar"><option value="?">?</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div class="field"><label for="s-cprox">Coffee</label><select id="s-cprox"><option value="?">?</option><option value="no-local">Na sala</option><option value="ao-lado">Ao lado</option><option value="perto">Até 5 min</option><option value="longe">Longe</option></select></div>
-        <div class="field"><label for="s-clocal">Espaço de coffee</label><input id="s-clocal" placeholder="ex.: Vão da FEA"></div>
-        <div class="field" style="grid-column:1/-1"><label for="s-obs">Observações</label><input id="s-obs"></div>
-      </div>
-      <div class="btns" style="margin-top:10px"><button class="btn" type="submit">Adicionar sala</button><span class="msg" id="smsg"></span></div>
-    </form>
-    <div class="tablewrap" role="region" aria-label="Salas" tabindex="0"><table id="stable" class="stable"></table></div>
+    <div class="sbar">
+      <input type="search" id="s-busca" placeholder="Buscar sala, espaço de coffee ou observação" aria-label="Buscar sala">
+      <label class="sbar-num">Capacidade mínima <input type="number" id="s-capmin" min="0" inputmode="numeric" placeholder="0"></label>
+      <label class="sbar-ck"><input type="checkbox" id="s-soativas" checked> Só ativas</label>
+      <span class="note" id="s-conta" aria-live="polite"></span>
+      <span class="msg" id="smsg" aria-live="polite"></span>
+    </div>
+    <div class="tablewrap" role="region" aria-label="Salas" tabindex="0"><table id="stable" class="slist"></table></div>
+    <p class="note slegend" style="margin-top:10px"><span class="ric sim" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="15.5" cy="12" r="2.6"/><path d="M6.5 10.5h4M6.5 13.5h3"/></svg></span> tem <span class="ric nao" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="15.5" cy="12" r="2.6"/><path d="M6.5 10.5h4M6.5 13.5h3"/></svg></span> não tem <span class="ric ns" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="15.5" cy="12" r="2.6"/><path d="M6.5 10.5h4M6.5 13.5h3"/></svg></span> não sabemos. Recursos, na ordem: projetor, som e microfone, ar-condicionado, tomadas, mesas móveis e acessibilidade. Passe o mouse num ícone para ver o nome.</p>
     <p class="note" style="margin-top:10px">Prazos padrão: ofício 20 dias úteis (Manual de Eventos; as orientações da FEA falam em 15 dias). Prazo em dias úteis. E-mail 10 e sala de aula 5 dias úteis são premissas: ajuste com a experiência da diretoria. Capacidades do relatório da FBW; o Manual cita 125 lugares para o Safra. Coffee: “Na sala” = pode servir na própria sala; “Ao lado”/“Até 5 min” = espaço próximo (Vão da FEA, Meia Lua, Espaço do FEA 5). Parceiro / externo: prazo padrão de 10 dias úteis; o custo entra nas compras do evento.</p>
+    <div class="sdrawer" id="sdrawer" hidden>
+      <div class="sd-back" data-sclose></div>
+      <form class="sd-panel" id="sdform" role="dialog" aria-modal="true" aria-labelledby="sd-title" autocomplete="off" novalidate>
+        <div class="sd-head"><h3 id="sd-title">Nova sala</h3><button type="button" class="sd-x" data-sclose aria-label="Fechar">&times;</button></div>
+        <fieldset class="sd-body" id="sd-fs">
+          <div class="sd-grp">
+            <div class="field"><label for="s-nome">Nome da sala</label><input id="s-nome" required></div>
+            <div class="sd-two">
+              <div class="field"><label for="s-cap">Capacidade (lugares)</label><input id="s-cap" type="number" min="1" inputmode="numeric" required></div>
+              <label class="sd-ativa"><input type="checkbox" id="s-ativa" checked> Ativa no Planejar</label>
+            </div>
+          </div>
+          <h4>Reserva</h4>
+          <div class="sd-grp sd-three">
+            <div class="field"><label for="s-res">Como reservar</label><select id="s-res"><option value="aula">Sala de aula</option><option value="email">E-mail à ADM da FEA</option><option value="oficio">Ofício (auditório)</option><option value="parceiro">Parceiro / externo</option></select></div>
+            <div class="field"><label for="s-ant">Prazo (dias úteis)</label><input id="s-ant" type="number" min="0" inputmode="numeric" placeholder="5"></div>
+            <div class="field"><label for="s-custo">Custo (R$)</label><input id="s-custo" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <h4>Recursos</h4>
+          <div class="sd-grp">
+            <div class="sd-res"><span class="sd-rl">Projetor</span><div class="seg" role="radiogroup" aria-label="Projetor"><label><input type="radio" name="sd-projetor" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-projetor" value="nao"><span>Não</span></label><label><input type="radio" name="sd-projetor" value="?"><span>?</span></label></div></div>
+            <div class="sd-res"><span class="sd-rl">Som e microfone</span><div class="seg" role="radiogroup" aria-label="Som e microfone"><label><input type="radio" name="sd-som" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-som" value="nao"><span>Não</span></label><label><input type="radio" name="sd-som" value="?"><span>?</span></label></div></div>
+            <div class="sd-res"><span class="sd-rl">Ar-condicionado</span><div class="seg" role="radiogroup" aria-label="Ar-condicionado"><label><input type="radio" name="sd-arCondicionado" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-arCondicionado" value="nao"><span>Não</span></label><label><input type="radio" name="sd-arCondicionado" value="?"><span>?</span></label></div></div>
+            <div class="sd-res"><span class="sd-rl">Tomadas</span><div class="seg" role="radiogroup" aria-label="Tomadas"><label><input type="radio" name="sd-tomadas" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-tomadas" value="nao"><span>Não</span></label><label><input type="radio" name="sd-tomadas" value="?"><span>?</span></label></div></div>
+            <div class="sd-res"><span class="sd-rl">Mesas móveis</span><div class="seg" role="radiogroup" aria-label="Mesas móveis"><label><input type="radio" name="sd-mesas" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-mesas" value="nao"><span>Não</span></label><label><input type="radio" name="sd-mesas" value="?"><span>?</span></label></div></div>
+            <div class="sd-res"><span class="sd-rl">Acessível</span><div class="seg" role="radiogroup" aria-label="Acessível"><label><input type="radio" name="sd-acessibilidade" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-acessibilidade" value="nao"><span>Não</span></label><label><input type="radio" name="sd-acessibilidade" value="?"><span>?</span></label></div></div>
+          </div>
+          <h4>Coffee</h4>
+          <div class="sd-grp sd-two">
+            <div class="field"><label for="s-cprox">Onde servir</label><select id="s-cprox"><option value="?">Não sei</option><option value="no-local">Na própria sala</option><option value="ao-lado">Espaço ao lado</option><option value="perto">Até 5 min a pé</option><option value="longe">Longe</option></select></div>
+            <div class="field"><label for="s-clocal">Espaço de coffee</label><input id="s-clocal" placeholder="ex.: Vão da FEA"></div>
+          </div>
+          <div class="field"><label for="s-obs">Observações</label><textarea id="s-obs" rows="3"></textarea></div>
+        </fieldset>
+        <div class="sd-foot">
+          <div class="btns"><button class="btn" type="submit" id="s-salvar">Salvar</button><button class="btn ghost" type="button" data-sclose>Cancelar</button><span class="msg" id="sd-msg" aria-live="polite"></span></div>
+          <div class="btns" id="sd-del"></div>
+        </div>
+      </form>
+    </div>
   </section>
 
   <!-- CALENDÁRIO -->
@@ -870,36 +962,86 @@ $('dlist').addEventListener('click',function(e){var ed=e.target.dataset.dedit;if
 renderDocs();
 /* ---------- salas ---------- */
 function sel(field,id,val,opts,lab){return '<select data-sid="'+id+'" data-f="'+field+'" aria-label="'+lab+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(String(val)===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';}
+var SICO={proj:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="15.5" cy="12" r="2.6"/><path d="M6.5 10.5h4M6.5 13.5h3"/></svg>',som:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></svg>',ar:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></svg>',tom:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/></svg>',mesa:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18M6 9v10M18 9v10M6 14h12"/></svg>',acess:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4.5" r="1.8"/><path d="M11 8v6h5.5l2 5M11 11h4.5"/><path d="M15 18.2A5 5 0 1 1 8 11.6"/></svg>'};
+var SRES={aula:'Sala de aula',email:'E-mail à ADM',oficio:'Ofício',parceiro:'Parceiro / externo'};
+var SCOF={'no-local':'Na sala','ao-lado':'Ao lado','perto':'Até 5 min','longe':'Longe'};
+var SRECS=[['projetor','proj','Projetor'],['som','som','Som e microfone'],['arCondicionado','ar','Ar-condicionado'],['tomadas','tom','Tomadas'],['mesas','mesa','Mesas móveis'],['acessibilidade','acess','Acessível']];
+var sOrd={k:'capacidade',dir:1},sAberta=null;
+function sPode(){return document.body.classList.contains('pode-editar');}
+function sNorm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function sRic(x){return '<span class="rics">'+SRECS.map(function(r){var v=x[r[0]]||'?',c=v==='sim'?'sim':v==='nao'?'nao':'ns',t=r[2]+': '+(v==='sim'?'tem':v==='nao'?'não tem':'não sabemos');return '<span class="ric '+c+'" title="'+t+'" role="img" aria-label="'+t+'">'+SICO[r[1]]+'</span>';}).join('')+'</span>';}
 function renderSalas(){
-  if(!salas.length){$('stable').innerHTML='<tr><td class="empty">Nenhuma sala cadastrada'+(db?'':' (sem conexão com a base: o Planejar usa a lista padrão)')+'.</td></tr>';return;}
-  var YN=[['?','?'],['sim','Sim'],['nao','Não']];
-  var h='<thead><tr><th>Ativa</th><th style="min-width:200px">Sala</th><th class="r">Capacidade</th><th style="min-width:125px">Reserva</th><th class="r" title="dias úteis">Prazo (d.u.)</th><th class="r">Custo (R$)</th><th style="min-width:70px">Mesas móveis</th><th style="min-width:70px">Projetor</th><th style="min-width:70px">Som e microfone</th><th style="min-width:70px">Tomadas</th><th style="min-width:70px">Acessível</th><th style="min-width:70px">Ar-condic.</th><th style="min-width:120px">Coffee</th><th style="min-width:150px">Espaço de coffee</th><th style="min-width:140px">Observações</th><th></th></tr></thead><tbody>';
-  salas.slice().sort(function(a,b){return (+a.capacidade||0)-(+b.capacidade||0);}).forEach(function(x){var id=esc(x.id);
-    h+='<tr><td><input type="checkbox" data-sid="'+id+'" data-f="ativa" aria-label="Ativa"'+(x.ativa!==false?' checked':'')+'></td>'+
-      '<td><input data-sid="'+id+'" data-f="nome" aria-label="Sala" value="'+esc(x.nome||'')+'"></td>'+
-      '<td><input type="number" min="1" data-sid="'+id+'" data-f="capacidade" aria-label="Capacidade" value="'+esc(x.capacidade==null?'':x.capacidade)+'" style="width:70px;text-align:right"></td>'+
-      '<td>'+sel('reserva',id,x.reserva||'aula',[['aula','Sala de aula'],['email','E-mail'],['oficio','Ofício'],['parceiro','Parceiro / externo']],'Reserva')+'</td>'+
-      '<td><input type="number" min="0" data-sid="'+id+'" data-f="antecedencia" aria-label="Antecedência" value="'+esc(x.antecedencia==null?'':x.antecedencia)+'" placeholder="'+ANT0[x.reserva||'aula']+'" style="width:60px;text-align:right"></td>'+
-      '<td><input type="number" min="0" step="0.01" data-sid="'+id+'" data-f="custo" aria-label="Custo" value="'+esc(x.custo==null?'':x.custo)+'" placeholder="0" style="width:80px;text-align:right"></td>'+
-      '<td>'+sel('mesas',id,x.mesas||'?',YN,'Mesas móveis')+'</td><td>'+sel('projetor',id,x.projetor||'?',YN,'Projetor')+'</td><td>'+sel('som',id,x.som||'?',YN,'Som e microfone')+'</td><td>'+sel('tomadas',id,x.tomadas||'?',YN,'Tomadas')+'</td><td>'+sel('acessibilidade',id,x.acessibilidade||'?',YN,'Acessível')+'</td><td>'+sel('arCondicionado',id,x.arCondicionado||'?',YN,'Ar-condicionado')+'</td>'+
-      '<td>'+sel('coffeeProx',id,x.coffeeProx||'?',[['?','?'],['no-local','Na sala'],['ao-lado','Ao lado'],['perto','Até 5 min'],['longe','Longe']],'Coffee')+'</td>'+
-      '<td><input data-sid="'+id+'" data-f="coffeeLocal" aria-label="Espaço de coffee mais próximo" value="'+esc(x.coffeeLocal||'')+'" placeholder="ex.: Vão da FEA"></td>'+
-      '<td><input data-sid="'+id+'" data-f="obs" aria-label="Observações" value="'+esc(x.obs||'')+'"></td>'+
-      '<td><button type="button" class="btn small ghost" data-sdel="'+id+'">Excluir</button></td></tr>';});
+  if(!salas.length){$('stable').innerHTML='<tbody><tr><td class="empty">Nenhuma sala cadastrada'+(db?'':' (sem conexão com a base: o Planejar usa a lista padrão)')+'.</td></tr></tbody>';$('s-conta').textContent='';return;}
+  var q=sNorm($('s-busca').value).trim(),mn=+$('s-capmin').value||0,so=$('s-soativas').checked;
+  var lst=salas.filter(function(x){if(so&&x.ativa===false)return false;if(mn&&(+x.capacidade||0)<mn)return false;if(q&&sNorm([x.nome,x.coffeeLocal,x.obs].join(' ')).indexOf(q)<0)return false;return true;});
+  var k=sOrd.k,d=sOrd.dir;
+  lst.sort(function(a,b){var va=a[k],vb=b[k];if(k==='nome')return d*String(va||'').localeCompare(String(vb||''),'pt',{numeric:true});return d*((+va||0)-(+vb||0))||String(a.nome||'').localeCompare(String(b.nome||''),'pt',{numeric:true});});
+  var at=salas.filter(function(x){return x.ativa!==false;}).length;
+  $('s-conta').textContent=lst.length+' de '+salas.length+' salas'+(at<salas.length?' · '+at+' ativas':'');
+  function th(key,lab,cls){var on=sOrd.k===key;return '<th'+(cls?' class="'+cls+'"':'')+(on?' aria-sort="'+(d>0?'ascending':'descending')+'"':'')+'><button type="button" data-sord="'+key+'">'+lab+' <span class="ar" aria-hidden="true">'+(on&&d<0?'▼':'▲')+'</span></button></th>';}
+  var h='<thead><tr>'+th('nome','Sala')+th('capacidade','Lugares','r')+'<th>Reserva</th>'+th('custo','Custo','r c-custo')+'<th>Coffee</th><th>Recursos</th></tr></thead><tbody>';
+  if(!lst.length)h+='<tr><td colspan="6" class="empty">Nenhuma sala com esses filtros.</td></tr>';
+  lst.forEach(function(x){var id=esc(x.id),r=x.reserva||'aula',ant=(x.antecedencia===''||x.antecedencia==null)?ANT0[r]:+x.antecedencia;
+    var cof=SCOF[x.coffeeProx]||'Não sei';
+    h+='<tr data-sopen="'+id+'" tabindex="0"'+(x.ativa===false?' class="off"':'')+'>'+
+      '<td><span class="sn">'+esc(x.nome||'Sala sem nome')+'</span>'+(x.ativa===false?'<span class="tg">inativa</span>':'')+(x.obs?'<span class="sub" title="'+esc(x.obs)+'">'+esc(x.obs)+'</span>':'')+'</td>'+
+      '<td class="r"><span class="cap">'+esc(x.capacidade==null?'–':x.capacidade)+'</span></td>'+
+      '<td>'+esc(SRES[r]||r)+'<span class="sub">'+ant+' dias úteis antes</span></td>'+
+      '<td class="r c-custo">'+(+x.custo?'R$ '+(+x.custo).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2}):'<span class="note">grátis</span>')+'</td>'+
+      '<td>'+esc(cof)+(x.coffeeLocal?'<span class="sub" title="'+esc(x.coffeeLocal)+'">'+esc(x.coffeeLocal)+'</span>':'')+'</td>'+
+      '<td>'+sRic(x)+'</td></tr>';});
   $('stable').innerHTML=h+'</tbody>';
 }
-$('stable').addEventListener('change',function(e){var t=e.target,id=t.dataset.sid,f=t.dataset.f;if(!id||!f||!db)return;var v;
-  if(t.type==='checkbox')v=t.checked;else if(t.type==='number')v=t.value===''?null:+t.value;else v=t.value;
-  var upd={};upd[f]=v;db.doc('salas/'+id).update(upd).catch(function(){alertMsg('Não foi possível salvar a sala.');});});
-$('stable').addEventListener('click',function(e){
-  var dv=e.target.closest('[data-sdeact]');if(dv&&db){db.doc('salas/'+dv.dataset.sdeact).update({ativa:false}).then(function(){$('smsg').textContent='Sala desativada.';}).catch(function(){alertMsg('Não foi possível desativar.');});return;}
+['s-busca','s-capmin'].forEach(function(k){$(k).addEventListener('input',renderSalas);});
+$('s-soativas').addEventListener('change',renderSalas);
+function sSeg(f,v){var rs=document.querySelectorAll('input[name="sd-'+f+'"]');for(var i=0;i<rs.length;i++)rs[i].checked=rs[i].value===(v||'?');}
+function sSegV(f){var r=document.querySelector('input[name="sd-'+f+'"]:checked');return r?r.value:'?';}
+function sAbrir(id){
+  var x=id?salas.filter(function(s){return s.id===id;})[0]:null;if(id&&!x)return;
+  sAberta=id||null;var pode=sPode();
+  $('sd-title').textContent=x?(x.nome||'Sala'):'Nova sala';
+  $('s-nome').value=x?x.nome||'':'';$('s-cap').value=x&&x.capacidade!=null?x.capacidade:'';
+  $('s-ativa').checked=x?x.ativa!==false:true;
+  $('s-res').value=x?x.reserva||'aula':'aula';$('s-ant').placeholder=ANT0[$('s-res').value];
+  $('s-ant').value=x&&x.antecedencia!=null&&x.antecedencia!==''?x.antecedencia:'';
+  $('s-custo').value=x&&x.custo!=null?x.custo:'';
+  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});
+  $('s-cprox').value=x?x.coffeeProx||'?':'?';$('s-clocal').value=x?x.coffeeLocal||'':'';$('s-obs').value=x?x.obs||'':'';
+  ['s-nome','s-cap','s-ant','s-custo'].forEach(function(k){$(k).removeAttribute('aria-invalid');});
+  $('sd-msg').textContent=pode?'':'Seu cargo permite só visualizar.';$('sd-msg').style.color='';
+  $('sd-fs').disabled=!pode;$('s-salvar').hidden=!pode;
+  $('sd-del').innerHTML=x&&pode?'<button type="button" class="btn small ghost" data-sdel="'+esc(x.id)+'">Excluir sala</button>':'';
+  $('sdrawer').hidden=false;document.body.classList.add('sd-aberto');
+  setTimeout(function(){(pode&&matchMedia('(pointer:fine)').matches?$('s-nome'):$('sdform').querySelector('.sd-x')).focus();},30);
+}
+function sFechar(){if($('sdrawer').hidden)return;$('sdrawer').hidden=true;document.body.classList.remove('sd-aberto');var r=sAberta&&$('stable').querySelector('[data-sopen="'+sAberta+'"]');sAberta=null;if(r)r.focus();if(pendente['view-salas'])adiar('view-salas',pendente['view-salas']);}
+$('snova').addEventListener('click',function(){sAbrir(null);});
+$('stable').addEventListener('click',function(e){var o=e.target.closest('[data-sord]');if(o){var k=o.dataset.sord;sOrd=sOrd.k===k?{k:k,dir:-sOrd.dir}:{k:k,dir:k==='nome'?1:-1};renderSalas();return;}var tr=e.target.closest('[data-sopen]');if(tr)sAbrir(tr.dataset.sopen);});
+$('stable').addEventListener('keydown',function(e){var tr=e.target.closest('[data-sopen]');if(tr&&e.target===tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();sAbrir(tr.dataset.sopen);}});
+$('sdrawer').addEventListener('click',function(e){if(e.target.closest('[data-sclose]'))sFechar();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('sdrawer').hidden){e.preventDefault();sFechar();}});
+$('s-res').addEventListener('change',function(){$('s-ant').placeholder=ANT0[$('s-res').value];});
+$('sd-del').addEventListener('click',function(e){
+  var dv=e.target.closest('[data-sdeact]');if(dv&&db){db.doc('salas/'+dv.dataset.sdeact).update({ativa:false}).then(function(){$('smsg').textContent='Sala desativada.';sFechar();}).catch(function(){alertMsg('Não foi possível desativar.');});return;}
   var b=e.target.closest('[data-sdel]');if(!b||!db)return;var sid=b.dataset.sdel;var sx=salas.filter(function(x){return x.id===sid;})[0];var today=iso(new Date());
   var uses=events.filter(function(ev){return ev.status!=='realizado'&&ev.data&&ev.data>=today&&sx&&ev.sala===sx.nome;});
-  if(uses.length){b.outerHTML='<span class="note" style="color:var(--red)">'+uses.length+' evento(s) planejado(s) usa(m) esta sala ('+uses.map(function(u){return esc(u.nome);}).join(', ')+'). Não dá para excluir.</span> <button type="button" class="btn small" data-sdeact="'+esc(sid)+'">Desativar</button>';return;}
-  if(b.dataset.sure){db.doc('salas/'+sid).delete().catch(function(){alertMsg('Não foi possível excluir a sala.');});}else{b.dataset.sure='1';b.textContent='Confirmar exclusão';}});
-$('s-res').addEventListener('change',function(){$('s-ant').placeholder=ANT0[$('s-res').value];});
-$('sform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('smsg').textContent='Sem conexão com a base.';return;}
-  var r=$('s-res').value;db.collection('salas').add({nome:$('s-nome').value.trim(),capacidade:+$('s-cap').value,reserva:r,antecedencia:$('s-ant').value===''?ANT0[r]:+$('s-ant').value,mesas:$('s-mesas').value,projetor:$('s-proj').value,som:$('s-som').value,tomadas:$('s-tom').value,acessibilidade:$('s-acess').value,arCondicionado:$('s-ar').value,custo:$('s-custo').value===''?null:+$('s-custo').value,coffeeProx:$('s-cprox').value,coffeeLocal:$('s-clocal').value.trim(),obs:$('s-obs').value.trim(),ativa:true}).then(function(){$('smsg').textContent='Sala adicionada.';['s-nome','s-cap','s-ant','s-custo','s-clocal','s-obs'].forEach(function(k){$(k).value='';});['s-mesas','s-proj','s-som','s-tom','s-acess','s-ar','s-cprox'].forEach(function(k){$(k).value='?';});}).catch(function(){$('smsg').textContent='Não foi possível salvar.';});});
+  if(uses.length){$('sd-del').innerHTML='<span class="note" style="color:var(--red)">'+uses.length+' evento(s) planejado(s) usa(m) esta sala ('+uses.map(function(u){return esc(u.nome);}).join(', ')+'). Não dá para excluir.</span> <button type="button" class="btn small" data-sdeact="'+esc(sid)+'">Desativar</button>';return;}
+  if(b.dataset.sure){db.doc('salas/'+sid).delete().then(function(){$('smsg').textContent='Sala excluída.';sFechar();}).catch(function(){alertMsg('Não foi possível excluir a sala.');});}else{b.dataset.sure='1';b.textContent='Confirmar exclusão';}});
+$('sdform').addEventListener('submit',function(e){e.preventDefault();if(!sPode())return;
+  if(!db){$('sd-msg').textContent='Sem conexão com a base.';return;}
+  var erros=[],nome=$('s-nome').value.trim(),cap=$('s-cap').value,ant=$('s-ant').value,cus=$('s-custo').value;
+  ['s-nome','s-cap','s-ant','s-custo'].forEach(function(k){$(k).removeAttribute('aria-invalid');});
+  if(!nome){erros.push('dê um nome à sala');$('s-nome').setAttribute('aria-invalid','true');}
+  else if(salas.some(function(x){return x.id!==sAberta&&sNorm(x.nome).trim()===sNorm(nome);})){erros.push('já existe uma sala com esse nome');$('s-nome').setAttribute('aria-invalid','true');}
+  if(!(+cap>=1)){erros.push('capacidade precisa ser pelo menos 1');$('s-cap').setAttribute('aria-invalid','true');}
+  if(ant!==''&&!(+ant>=0)){erros.push('prazo não pode ser negativo');$('s-ant').setAttribute('aria-invalid','true');}
+  if(cus!==''&&!(+cus>=0)){erros.push('custo não pode ser negativo');$('s-custo').setAttribute('aria-invalid','true');}
+  if(erros.length){$('sd-msg').textContent='Confira: '+erros.join('; ')+'.';$('sd-msg').style.color='var(--red)';return;}
+  var r=$('s-res').value,dados={nome:nome,capacidade:+cap,reserva:r,antecedencia:ant===''?(sAberta?null:ANT0[r]):+ant,custo:cus===''?null:+cus,coffeeProx:$('s-cprox').value,coffeeLocal:$('s-clocal').value.trim(),obs:$('s-obs').value.trim(),ativa:$('s-ativa').checked};
+  SRECS.forEach(function(x){dados[x[0]]=sSegV(x[0]);});
+  var bt=$('s-salvar');bt.disabled=true;$('sd-msg').style.color='';$('sd-msg').textContent='Salvando…';
+  var op=sAberta?db.doc('salas/'+sAberta).update(dados):db.collection('salas').add(dados);
+  op.then(function(){$('smsg').textContent=sAberta?'Sala atualizada.':'Sala adicionada.';bt.disabled=false;sFechar();}).catch(function(){bt.disabled=false;$('sd-msg').textContent='Não foi possível salvar.';$('sd-msg').style.color='var(--red)';});});
 renderSalas();
 /* ---------- calendário ---------- */
 function renderCal(){
