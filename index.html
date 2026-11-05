@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261105171717"></script>
-<script src="plataforma.js?v=20261105171717"></script>
+<script src="config.js?v=20261105172633"></script>
+<script src="plataforma.js?v=20261105172633"></script>
 </head>
 <body>
 
@@ -302,13 +302,16 @@ header.app #dbstatus{display:none}
 .sfoot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
 .sfoot .status{padding:0 10px;font-size:12px;color:var(--muted)}
 .sfoot .status b{color:var(--fg)}
-.hamb{display:none;width:38px;height:38px;border:1px solid rgba(241,238,232,.3);border-radius:4px;background:transparent;color:var(--on-ink);cursor:pointer;flex:none;place-items:center}
+.hamb{display:grid;width:38px;height:38px;border:1px solid rgba(241,238,232,.3);border-radius:4px;background:transparent;color:var(--on-ink);cursor:pointer;flex:none;place-items:center}
 .hamb svg{width:20px;height:20px}
 .sback{display:none}
 .toprow .brand{margin-right:auto}
+@media (min-width:1000px){
+  body.side-off .shell{grid-template-columns:0 minmax(0,1fr)}
+  body.side-off .side{visibility:hidden;padding:0;border:0;overflow:hidden}
+}
 @media (max-width:999px){
   .shell{display:block}
-  .hamb{display:grid}
   .side{position:fixed;left:0;top:0;bottom:0;height:auto;width:min(280px,86vw);z-index:70;transform:translateX(-102%);transition:transform .2s ease;padding-top:calc(env(safe-area-inset-top,0px) + 18px);box-shadow:0 0 40px rgba(0,0,0,.35)}
   .side:not(.open){visibility:hidden;transition:transform .2s ease,visibility 0s .2s}
   .side.open{transform:none}
@@ -1571,12 +1574,17 @@ var st=$('dbstatus');if(st)foot.appendChild(st);
 side.appendChild(foot);
 
 /* botão ☰ no celular */
-var hb=document.createElement('button');hb.type='button';hb.className='hamb';hb.setAttribute('aria-label','Abrir menu');hb.setAttribute('aria-controls','side');hb.setAttribute('aria-expanded','false');
+var hb=document.createElement('button');hb.type='button';hb.className='hamb';hb.setAttribute('aria-label','Mostrar ou esconder o menu');hb.title='Mostrar ou esconder o menu';hb.setAttribute('aria-controls','side');hb.setAttribute('aria-expanded','false');
 hb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 var tr=document.querySelector('.toprow');if(tr)tr.insertBefore(hb,tr.firstChild);
+var CHAVE='feashion-menu';
+function pc(){return window.innerWidth>=1000;}
+function aplicarPc(){var off=false;try{off=localStorage.getItem(CHAVE)==='fechado';}catch(e){}document.body.classList.toggle('side-off',off);if(pc())hb.setAttribute('aria-expanded',String(!off));}
+function alternarPc(){var off=!document.body.classList.contains('side-off');document.body.classList.toggle('side-off',off);hb.setAttribute('aria-expanded',String(!off));try{localStorage.setItem(CHAVE,off?'fechado':'aberto');}catch(e){}}
+aplicarPc();
 function abrir(){side.classList.add('open');back.classList.add('open');hb.setAttribute('aria-expanded','true');var f=side.querySelector('.sitem');if(f)f.focus();}
 function fechar(){if(!side.classList.contains('open'))return;side.classList.remove('open');back.classList.remove('open');hb.setAttribute('aria-expanded','false');}
-hb.addEventListener('click',function(){side.classList.contains('open')?fechar():abrir();});
+hb.addEventListener('click',function(){if(pc()){alternarPc();return;}side.classList.contains('open')?fechar():abrir();});
 back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
@@ -1608,7 +1616,7 @@ marcar();
 /* altura do cabeçalho para o menu grudar logo abaixo dele */
 function medir(){if(hdr)document.documentElement.style.setProperty('--hdr',hdr.offsetHeight+'px');}
 medir();if(window.ResizeObserver&&hdr)new ResizeObserver(medir).observe(hdr);
-window.addEventListener('resize',function(){if(window.innerWidth>=1000)fechar();});
+window.addEventListener('resize',function(){if(pc()){fechar();aplicarPc();}else hb.setAttribute('aria-expanded',String(side.classList.contains('open')));});
 })();
 </script>
 

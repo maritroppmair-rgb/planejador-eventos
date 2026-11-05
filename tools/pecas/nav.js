@@ -47,12 +47,17 @@ var st=$('dbstatus');if(st)foot.appendChild(st);
 side.appendChild(foot);
 
 /* botão ☰ no celular */
-var hb=document.createElement('button');hb.type='button';hb.className='hamb';hb.setAttribute('aria-label','Abrir menu');hb.setAttribute('aria-controls','side');hb.setAttribute('aria-expanded','false');
+var hb=document.createElement('button');hb.type='button';hb.className='hamb';hb.setAttribute('aria-label','Mostrar ou esconder o menu');hb.title='Mostrar ou esconder o menu';hb.setAttribute('aria-controls','side');hb.setAttribute('aria-expanded','false');
 hb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
 var tr=document.querySelector('.toprow');if(tr)tr.insertBefore(hb,tr.firstChild);
+var CHAVE='feashion-menu';
+function pc(){return window.innerWidth>=1000;}
+function aplicarPc(){var off=false;try{off=localStorage.getItem(CHAVE)==='fechado';}catch(e){}document.body.classList.toggle('side-off',off);if(pc())hb.setAttribute('aria-expanded',String(!off));}
+function alternarPc(){var off=!document.body.classList.contains('side-off');document.body.classList.toggle('side-off',off);hb.setAttribute('aria-expanded',String(!off));try{localStorage.setItem(CHAVE,off?'fechado':'aberto');}catch(e){}}
+aplicarPc();
 function abrir(){side.classList.add('open');back.classList.add('open');hb.setAttribute('aria-expanded','true');var f=side.querySelector('.sitem');if(f)f.focus();}
 function fechar(){if(!side.classList.contains('open'))return;side.classList.remove('open');back.classList.remove('open');hb.setAttribute('aria-expanded','false');}
-hb.addEventListener('click',function(){side.classList.contains('open')?fechar():abrir();});
+hb.addEventListener('click',function(){if(pc()){alternarPc();return;}side.classList.contains('open')?fechar():abrir();});
 back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
@@ -84,6 +89,6 @@ marcar();
 /* altura do cabeçalho para o menu grudar logo abaixo dele */
 function medir(){if(hdr)document.documentElement.style.setProperty('--hdr',hdr.offsetHeight+'px');}
 medir();if(window.ResizeObserver&&hdr)new ResizeObserver(medir).observe(hdr);
-window.addEventListener('resize',function(){if(window.innerWidth>=1000)fechar();});
+window.addEventListener('resize',function(){if(pc()){fechar();aplicarPc();}else hb.setAttribute('aria-expanded',String(side.classList.contains('open')));});
 })();
 </script>
