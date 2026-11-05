@@ -3,8 +3,8 @@ rules_version = '2';
 // - Só quem está em "permitidos" (ou é o DEV) lê qualquer coisa.
 // - O que cada um pode fazer depende do cargo, gravado no próprio perfil (membros/{uid}):
 //     DEV e Diretor(a): tudo.
-//     Coordenador(a): edita e exclui dados de eventos; não mexe em Parâmetros, Membros e acesso.
-//     Membro(a) e Trainee: editam dados de eventos, mas não excluem; não mexem em Parâmetros, Membros e acesso.
+//     Coordenador(a) e Membro(a): editam e excluem dados de eventos; não mexem em Parâmetros, Membros e acesso.
+//     Trainee: edita dados de eventos, mas não exclui; não mexe em Parâmetros, Membros e acesso.
 //     Sem cargo: só visualiza (e edita o próprio perfil).
 // - Cada pessoa edita o próprio perfil, mas não o próprio cargo. Só a diretoria atribui cargos.
 // No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
@@ -38,7 +38,7 @@ service cloud.firestore {
       return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee']);
     }
     function podeExcluir() {
-      return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)']);
+      return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)', 'Membro(a)']);
     }
     function cargoNovo() {
       return request.resource.data.get('cargo', '');

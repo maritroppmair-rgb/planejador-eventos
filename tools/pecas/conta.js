@@ -13,7 +13,7 @@ function gestor(){return souDev()||cargoOf(myDoc)==='Diretor(a)';}
 /* o que cada cargo pode fazer (igual às regras do Firestore) */
 var PODE={
   'DEV':{editar:1,excluir:1,gerir:1},'Diretor(a)':{editar:1,excluir:1,gerir:1},
-  'Coordenador(a)':{editar:1,excluir:1,gerir:0},'Membro(a)':{editar:1,excluir:0,gerir:0},
+  'Coordenador(a)':{editar:1,excluir:1,gerir:0},'Membro(a)':{editar:1,excluir:1,gerir:0},
   'Trainee':{editar:1,excluir:0,gerir:0},'':{editar:0,excluir:0,gerir:0}
 };
 function permissoes(){var c=souDev()?'DEV':cargoOf(myDoc);return PODE[c]||PODE[''];}
