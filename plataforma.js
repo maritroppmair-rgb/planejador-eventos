@@ -135,8 +135,8 @@ function aoMudarConta(u){
   ref.get().then(function(s){
     if(s.exists)return;
     return ref.set({email:email,adicionadoEm:new Date().toISOString(),por:'primeiro acesso'}); /* só funciona para o e-mail inicial das regras */
-  }).then(function(){
-    gate.hidden=true;liberar();posEntrada(u,email);
+  }).then(function(){return ehDev(email);}).then(function(dev){
+    window.__souDev=dev;gate.hidden=true;liberar();posEntrada(u,email,dev);
   }).catch(function(e){
     if(e&&e.code==='permission-denied')estado('negado',email);
     else if(e&&e.code==='unavailable')estado('erro','Sem conexão com o banco. Verifique a internet e tente de novo.');
@@ -145,12 +145,19 @@ function aoMudarConta(u){
 }
 
 /* ---------- depois de entrar ---------- */
-function posEntrada(u,email){
+function ehDev(email){
+  if(!window.DEV_EMAIL_SHA256||!crypto.subtle)return Promise.resolve(false);
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(email)).then(function(b){
+    var h=Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');return h===window.DEV_EMAIL_SHA256;
+  }).catch(function(){return false;});
+}
+function posEntrada(u,email,dev){
   /* perfil vindo do backup da versão no Claude: vira o perfil desta conta no primeiro acesso */
   var meu=fs.doc('membros/'+u.uid),imp=fs.doc('perfisImportados/'+email);
-  meu.get().then(function(s){if(s.exists)return;return imp.get().then(function(i){if(!i.exists)return;var d=i.data();
-    var novo={nome:d.nome||'',apelido:d.apelido||'',email:email,telefone:d.telefone||'',cargo:d.cargo||'',entrada:d.entrada||'',foto:d.foto||'',tema:d.tema||'auto',criadoEm:d.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()};
-    if(!novo.cargo&&Array.isArray(d.diretorias)&&d.diretorias[0])novo.cargo=d.diretorias[0].cargo||'';
+  meu.get().then(function(s){
+    if(s.exists){if(dev&&s.data().cargo!=='DEV')return meu.update({cargo:'DEV'});return;}
+    return imp.get().then(function(i){if(!i.exists)return;var d=i.data();
+    var novo={nome:d.nome||'',apelido:d.apelido||'',email:email,telefone:d.telefone||'',cargo:dev?'DEV':'',entrada:d.entrada||'',foto:d.foto||'',tema:d.tema||'auto',criadoEm:d.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()};
     return meu.set(novo).then(function(){return imp.delete();});});}).catch(function(){});
   montarSair();montarAcesso(email);montarBackup();
 }
@@ -169,7 +176,7 @@ function montarAcesso(meuEmail){
   var view=document.getElementById('view-membros');if(!view||document.getElementById('acesso'))return;
   var sec=el('section','panel acesso');sec.id='acesso';
   sec.appendChild(el('h3',null,'Quem pode entrar'));
-  sec.appendChild(el('p','note','Só os e-mails desta lista conseguem abrir o app. Todos têm as mesmas permissões. Depois de adicionado, a pessoa entra com a conta Google desse e-mail.'));
+  sec.appendChild(el('p','note','Só os e-mails desta lista conseguem abrir o app. Depois de liberada, a pessoa entra com a conta Google desse e-mail e cria o próprio perfil; o cargo é atribuído pela diretoria.'));
   var f=el('form');f.noValidate=true;
   var lb=el('label','sr','E-mail para liberar');lb.htmlFor='pm-email';
   var inp=el('input');inp.type='email';inp.id='pm-email';inp.placeholder='nome@usp.br';inp.autocomplete='off';

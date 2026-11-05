@@ -6,7 +6,10 @@ function $(id){return document.getElementById(id);}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function cmp(a,b){return String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base'});}
 var THEMEKEY='feashion-tema';
-var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee'];
+var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee']; /* os que a diretoria pode atribuir */
+var ORDEM=['DEV'].concat(CARGOS);
+function souDev(){return !!window.__souDev;}
+function gestor(){return souDev()||cargoOf(myDoc)==='Diretor(a)';}
 var TONES=['#8a0d10','#2b2424','#5e1a1d','#7a5c52','#a8483f'];
 var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/></svg>';
 var db=null,meInfo=null,meId=null,members=[],myDoc=null,pendingFoto,pfDirty=false;
@@ -65,7 +68,7 @@ function renderMe(){
   var fb=meInfo&&meInfo.id?meInfo.avatarUrl:null;
   fillAvatar($('avbtn'),myDoc,fb);fillAvatar($('m-av'),myDoc,fb);
   $('m-nome').textContent=myName();
-  $('m-sub').textContent=myDoc?(cargoOf(myDoc)||'Perfil preenchido'):'Perfil ainda não preenchido';
+  $('m-sub').textContent=myDoc?(cargoOf(myDoc)||'Sem cargo'):'Perfil ainda não preenchido';
   $('m-count').textContent=members.length?String(members.length):'';
   $('avbtn').setAttribute('aria-label','Conta de '+myName()+': perfil, membros e aparência');
 }
@@ -82,7 +85,7 @@ function cargoOf(m){
   }
   return '';
 }
-function rank(c){var i=CARGOS.indexOf(c);return i<0?9:i;}
+function rank(c){var i=ORDEM.indexOf(c);return i<0?9:i;}
 function semestres(){var d=new Date(),y=d.getFullYear(),s=d.getMonth()>=6?2:1,out=[];while(y>=2019){out.push(y+'.'+s);if(s===2)s=1;else{s=2;y--;}}return out;}
 function fillSelect(sel,first,list,val){
   sel.textContent='';sel.appendChild(new Option(first,''));
@@ -97,9 +100,9 @@ function renderPerfil(){
   $('pfsave').textContent=myDoc?'Salvar perfil':'Criar perfil';
   if(!pfDirty){
     Object.keys(FIELDS).forEach(function(k){var i=$(FIELDS[k]);i.value=(myDoc&&myDoc[k])||'';i.removeAttribute('aria-invalid');});
-    fillSelect($('pf-cargo'),'Escolha o cargo',CARGOS,cargoOf(myDoc));
+    $('pf-cargo-ro').textContent=cargoOf(myDoc)||'Ainda sem cargo';
     fillSelect($('pf-entrada'),'Escolha o semestre',semestres(),myDoc&&myDoc.entrada);
-    $('pf-cargo').removeAttribute('aria-invalid');$('pf-entrada').removeAttribute('aria-invalid');
+    $('pf-entrada').removeAttribute('aria-invalid');
     pendingFoto=undefined;
   }
   var shown=pendingFoto!==undefined?(pendingFoto?{foto:pendingFoto}:{nome:$('pf-nome').value,id:meId}):(myDoc||null);
@@ -133,13 +136,12 @@ $('pfform').addEventListener('submit',function(e){
   var bad=[],msg='';
   if(!v('pf-nome'))bad.push($('pf-nome'));
   if(!/^[^\s@]+@usp\.br$/i.test(v('pf-email'))){bad.push($('pf-email'));if(v('pf-email'))msg='Use o e-mail USP (termina em @usp.br).';}
-  if(!v('pf-cargo'))bad.push($('pf-cargo'));
   if(!v('pf-entrada'))bad.push($('pf-entrada'));
   if(bad.length){bad.forEach(function(x){x.setAttribute('aria-invalid','true');});bad[0].focus();
     pmsg(bad.length===1&&msg?msg:'Preencha os campos obrigatórios.'+(msg?' '+msg:''),1);return;}
   var now=new Date().toISOString(),data={};
   Object.keys(FIELDS).forEach(function(k){data[k]=v(FIELDS[k]);});
-  data.email=data.email.toLowerCase();data.cargo=v('pf-cargo');data.entrada=v('pf-entrada');
+  data.email=data.email.toLowerCase();data.cargo=(myDoc&&myDoc.cargo)||(souDev()?'DEV':'');data.entrada=v('pf-entrada');
   var dup=members.filter(function(m){return m.id!==meId&&String(m.email||'').toLowerCase()===data.email;})[0];
   if(dup){$('pf-email').setAttribute('aria-invalid','true');pmsg('Esse e-mail já está no perfil de '+(dup.nome||'outro membro')+'.',1);return;}
   data.foto=pendingFoto!==undefined?pendingFoto:((myDoc&&okFoto(myDoc.foto))?myDoc.foto:'');
@@ -156,7 +158,7 @@ function card(m){
   var c=el('article','mcard'+(m.id===meId?' me':''));
   var top=el('div','mtop'),av=el('span','av md');fillAvatar(av,m,null);top.appendChild(av);
   var t=el('div','mt');t.appendChild(el('b',null,m.nome||'Sem nome'));
-  var cg=cargoOf(m);if(cg)t.appendChild(el('small',null,cg));
+  var cg=cargoOf(m);t.appendChild(cg==='DEV'?el('span','chip dev','DEV'):el('small',null,cg||'Sem cargo'));
   if(m.id===meId)t.appendChild(el('span','chip neutral you','você'));
   top.appendChild(t);c.appendChild(top);
   var meta=[];if(m.apelido&&m.apelido!==m.nome)meta.push('Prefere “'+m.apelido+'”');if(m.entrada)meta.push('Na Feashion desde '+m.entrada);
@@ -166,9 +168,22 @@ function card(m){
   var ph=String(m.telefone||'').replace(/\D/g,'');
   if(ph.length>=10&&ph.length<=13){if(ph.length<=11)ph='55'+ph;var w=el('a',null,'WhatsApp');w.href='https://wa.me/'+ph;w.target='_blank';w.rel='noopener';lk.appendChild(w);}
   if(lk.childNodes.length)c.appendChild(lk);
-  /* todos têm as mesmas permissões: qualquer membro pode tirar outro da lista (com dupla confirmação) */
-  if(m.id!==meId){
+  /* cargo: só a diretoria (e o DEV) atribui; o DEV não aparece como opção e só o próprio DEV mexe no cargo dele */
+  var protegido=cg==='DEV'&&!souDev();
+  if(m.id!==meId&&!protegido){
     var foot=el('div','mfoot');
+    if(gestor()){
+      var at=el('button','btn small','Atribuir cargo');at.type='button';
+      at.addEventListener('click',function(){
+        var box=el('div','mcargo'),s=el('select');s.setAttribute('aria-label','Cargo de '+(m.nome||'membro'));
+        s.appendChild(new Option('Sem cargo',''));CARGOS.forEach(function(x){s.appendChild(new Option(x,x));});s.value=CARGOS.indexOf(cg)>=0?cg:'';
+        var ok=el('button','btn small','Salvar');ok.type='button';var no=el('button','btn small ghost','Cancelar');no.type='button';var ms=el('span','msg');
+        ok.addEventListener('click',function(){ok.disabled=true;db.doc('membros/'+m.id).update({cargo:s.value,cargoPor:meId,cargoEm:new Date().toISOString()}).catch(function(){ms.textContent='Não foi possível salvar.';ok.disabled=false;});});
+        no.addEventListener('click',function(){renderMembros();});
+        box.appendChild(s);box.appendChild(ok);box.appendChild(no);box.appendChild(ms);foot.replaceChild(box,at);s.focus();
+      });
+      foot.appendChild(at);
+    }
     var del=el('button','btn small ghost','Excluir');del.type='button';
     del.addEventListener('click',function(){
       if(!del.dataset.sure){del.dataset.sure='1';del.textContent='Confirmar exclusão';clearTimeout(del._t);del._t=setTimeout(function(){delete del.dataset.sure;del.textContent='Excluir';},5000);return;}
@@ -181,13 +196,14 @@ function card(m){
 function renderMembros(){
   var sel=$('mfilter'),cur=sel.value,extra={};
   members.forEach(function(m){var c=cargoOf(m);if(c&&CARGOS.indexOf(c)<0)extra[c]=1;});
-  var opts=CARGOS.concat(Object.keys(extra));
+  var opts=CARGOS.concat(Object.keys(extra).sort(function(a,b){return rank(a)-rank(b);}));
+  if(members.some(function(m){return !cargoOf(m);}))opts.push('Sem cargo');
   sel.textContent='';sel.appendChild(new Option('Todos os cargos',''));
   opts.forEach(function(c){sel.appendChild(new Option(c,c));});
   sel.value=opts.indexOf(cur)>=0?cur:'';
   var fc=sel.value,q=$('msearch').value.toLowerCase().trim();
   var rows=members.filter(function(m){
-    if(fc&&cargoOf(m)!==fc)return false;if(!q)return true;
+    if(fc&&(cargoOf(m)||'Sem cargo')!==fc)return false;if(!q)return true;
     return [m.nome,m.apelido,m.email,cargoOf(m)].join(' ').toLowerCase().indexOf(q)>=0;
   }).sort(function(a,b){return rank(cargoOf(a))-rank(cargoOf(b))||cmp(a.nome,b.nome);});
   $('mcount').textContent=members.length?(rows.length===members.length?members.length+(members.length===1?' membro':' membros'):rows.length+' de '+members.length):'';

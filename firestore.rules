@@ -1,7 +1,9 @@
 rules_version = '2';
 // Planejador de Eventos · Feashion
-// Só quem está na coleção "permitidos" (ou é o e-mail inicial abaixo) lê e grava qualquer coisa.
-// Todos os permitidos têm as mesmas permissões.
+// - Só quem está em "permitidos" (ou é o DEV) lê e grava.
+// - Perfis (membros): cada pessoa edita o próprio perfil, mas não o próprio cargo.
+//   Só a diretoria (cargo "Diretor(a)") e o DEV atribuem cargos. O cargo "DEV" é exclusivo do e-mail do DEV.
+// No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
 service cloud.firestore {
   match /databases/{database}/documents {
     function emailLogado() {
@@ -12,14 +14,54 @@ service cloud.firestore {
         && request.auth.token.email != null
         && request.auth.token.email_verified == true;
     }
+    function ehDev() {
+      return logadoComEmail() && emailLogado() == 'EMAIL_DO_DEV@usp.br';
+    }
     function liberado() {
       return logadoComEmail() && (
-        emailLogado() in ['EMAIL_INICIAL@usp.br']
+        ehDev()
         || exists(/databases/$(database)/documents/permitidos/$(emailLogado()))
       );
     }
-    match /{documento=**} {
-      allow read, write: if liberado();
+    function meuCargo() {
+      let m = /databases/$(database)/documents/membros/$(request.auth.uid);
+      return exists(m) ? get(m).data.get('cargo', '') : '';
+    }
+    function diretoria() {
+      return ehDev() || meuCargo() == 'Diretor(a)';
+    }
+    function cargoNovo() {
+      return request.resource.data.get('cargo', '');
+    }
+    function cargoAntigo() {
+      return resource.data.get('cargo', '');
+    }
+    function cargoAtribuivel() {
+      return cargoNovo() in ['', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'];
+    }
+
+    match /membros/{uid} {
+      allow read: if liberado();
+      // perfil novo: sempre sem cargo (o DEV cria o dele já como DEV)
+      allow create: if liberado() && request.auth.uid == uid
+        && (cargoNovo() == '' || (cargoNovo() == 'DEV' && ehDev()));
+      allow update: if liberado() && (
+        // a própria pessoa: edita tudo, menos o cargo
+        (request.auth.uid == uid && cargoNovo() == cargoAntigo())
+        // o DEV: tudo; o cargo DEV só nele mesmo
+        || (ehDev() && (cargoAtribuivel() || (cargoNovo() == 'DEV' && request.auth.uid == uid)))
+        // a diretoria: só o cargo de outra pessoa, nunca o do DEV
+        || (diretoria() && request.auth.uid != uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cargo', 'cargoPor', 'cargoEm'])
+            && cargoAntigo() != 'DEV' && cargoAtribuivel())
+      );
+      allow delete: if liberado() && (cargoAntigo() != 'DEV' || ehDev());
+    }
+
+    // todo o resto (eventos, salas, convidados, documentos, arquivos, permitidos...)
+    match /{colecao}/{documento=**} {
+      allow read: if liberado();
+      allow write: if liberado() && colecao != 'membros';
     }
   }
 }
