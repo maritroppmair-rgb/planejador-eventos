@@ -10,6 +10,24 @@ var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee']; /* os que a di
 var ORDEM=['DEV'].concat(CARGOS);
 function souDev(){return !!window.__souDev;}
 function gestor(){return souDev()||cargoOf(myDoc)==='Diretor(a)';}
+/* o que cada cargo pode fazer (igual às regras do Firestore) */
+var PODE={
+  'DEV':{editar:1,excluir:1,gerir:1},'Diretor(a)':{editar:1,excluir:1,gerir:1},
+  'Coordenador(a)':{editar:1,excluir:1,gerir:0},'Membro(a)':{editar:1,excluir:0,gerir:0},
+  'Trainee':{editar:1,excluir:0,gerir:0},'':{editar:0,excluir:0,gerir:0}
+};
+function permissoes(){var c=souDev()?'DEV':cargoOf(myDoc);return PODE[c]||PODE[''];}
+function aplicarPermissoes(){
+  var p=permissoes(),b=document.body;
+  b.classList.toggle('pode-editar',!!p.editar);b.classList.toggle('pode-excluir',!!p.excluir);b.classList.toggle('pode-gerir',!!p.gerir);
+  var av=document.getElementById('aviso-perm');
+  var msg=!meId?'':!myDoc&&!souDev()?'Crie seu perfil (círculo no canto superior direito). Depois que a diretoria atribuir seu cargo, você poderá editar.':!p.editar?'Você ainda não tem cargo: por enquanto só pode visualizar. A diretoria atribui o cargo na página Membros.':'';
+  if(msg){if(!av){av=el('div','aviso-perm');av.id='aviso-perm';av.setAttribute('role','status');var mn=document.querySelector('main');mn.insertBefore(av,mn.firstChild);}av.textContent=msg;}
+  else if(av)av.remove();
+  var pn=document.getElementById('par-aviso');
+  if(!p.gerir){if(!pn){pn=el('p','aviso-perm','Só a diretoria altera os parâmetros. Você pode consultar os valores atuais.');pn.id='par-aviso';var v=document.getElementById('view-par');if(v){var h=v.querySelector('.section-head');v.insertBefore(pn,h?h.nextSibling:v.firstChild);}}}
+  else if(pn)pn.remove();
+}
 var TONES=['#8a0d10','#2b2424','#5e1a1d','#7a5c52','#a8483f'];
 var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/></svg>';
 var db=null,meInfo=null,meId=null,members=[],myDoc=null,pendingFoto,pfDirty=false;
@@ -71,6 +89,7 @@ function renderMe(){
   $('m-sub').textContent=myDoc?(cargoOf(myDoc)||'Sem cargo'):'Perfil ainda não preenchido';
   $('m-count').textContent=members.length?String(members.length):'';
   $('avbtn').setAttribute('aria-label','Conta de '+myName()+': perfil, membros e aparência');
+  aplicarPermissoes();
 }
 
 /* Meu perfil (só a equipe de Eventos: nome, apelido, e-mail USP, celular, cargo, semestre de ingresso e foto) */
@@ -184,7 +203,7 @@ function card(m){
       });
       foot.appendChild(at);
     }
-    var del=el('button','btn small ghost','Excluir');del.type='button';
+    var del=el('button','btn small ghost del-membro','Excluir');del.type='button';
     del.addEventListener('click',function(){
       if(!del.dataset.sure){del.dataset.sure='1';del.textContent='Confirmar exclusão';clearTimeout(del._t);del._t=setTimeout(function(){delete del.dataset.sure;del.textContent='Excluir';},5000);return;}
       db.doc('membros/'+m.id).delete().catch(function(){});

@@ -36,7 +36,7 @@ function chip(r,t){return '<span class="chip '+r+'">'+t+'</span>';}
 function kpis(L){
   var I=0,Pi=0,Pr=0,C=0,CP=0,T=0,X=0,erros=[];
   L.forEach(function(e){var p=num(e.presentes)||0,i=num(e.inscritos);Pr+=p;
-    if(i){I+=i;Pi+=p;}
+    if(i){I+=i;Pi+=Math.max(0,p-(num(e.semInscricao)||0));}
     if(num(e.custo)&&p){C+=+e.custo;CP+=p;}
     if(num(e.membros)!=null&&p){T+=p;X+=Math.max(0,p-e.membros);}
     if(num(e.presentesPrev)&&p)erros.push(Math.abs(p-e.presentesPrev)/p);});
@@ -99,8 +99,8 @@ function barrasH(el,rows,opt){
 
 /* 2. comparecimento por tipo */
 function g2(L){
-  var t={};L.forEach(function(e){var i=num(e.inscritos);if(!i||!e.tipo)return;t[e.tipo]=t[e.tipo]||{i:0,p:0,n:0};t[e.tipo].i+=i;t[e.tipo].p+=num(e.presentes)||0;t[e.tipo].n++;});
-  var rows=Object.keys(t).map(function(k){var v=t[k].p/t[k].i;return {l:k,v:v,t:pct(v),tip:'<b>'+esc(k)+'</b>'+t[k].p+' presentes de '+t[k].i+' inscritos<br>'+t[k].n+' evento'+(t[k].n===1?'':'s'),linha:[k,t[k].n,t[k].i,t[k].p,pct(v)]};}).sort(function(a,b){return b.v-a.v;});
+  var t={};L.forEach(function(e){var i=num(e.inscritos);if(!i||!e.tipo)return;t[e.tipo]=t[e.tipo]||{i:0,p:0,n:0};t[e.tipo].i+=i;t[e.tipo].p+=Math.max(0,(num(e.presentes)||0)-(num(e.semInscricao)||0));t[e.tipo].n++;});
+  var rows=Object.keys(t).map(function(k){var v=t[k].p/t[k].i;return {l:k,v:v,t:pct(v),tip:'<b>'+esc(k)+'</b>'+t[k].p+' inscritos presentes de '+t[k].i+' inscritos<br>'+t[k].n+' evento'+(t[k].n===1?'':'s'),linha:[k,t[k].n,t[k].i,t[k].p,pct(v)]};}).sort(function(a,b){return b.v-a.v;});
   barrasH($('a-c2'),rows,{titulo:'Comparecimento por tipo',vazio:'Sem eventos com inscritos neste filtro.',max:Math.max(1,teto(Math.max.apply(null,rows.map(function(r){return r.v;}).concat([1])))),refs:[{v:P('tcVerde')/100,t:'meta '+P('tcVerde')+'%'}],cab:['Tipo','Eventos','Inscritos','Presentes','Comparec.']});
 }
 

@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261105173912"></script>
-<script src="plataforma.js?v=20261105173912"></script>
+<script src="config.js?v=20261105185147"></script>
+<script src="plataforma.js?v=20261105185147"></script>
 </head>
 <body>
 
@@ -117,6 +117,8 @@ main{padding-block:24px 48px}
 .parform{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
 .parform fieldset{border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:12px 16px 16px;display:grid;gap:10px;margin:0}
 .parform legend{font-weight:700;padding:0 6px}
+.parform [aria-invalid="true"]{border-color:var(--red)!important;box-shadow:0 0 0 2px var(--red-bg)}
+#parmsg{font-weight:600}
 .parform .field input{width:100%}
 .rq{font-weight:400;font-size:11.5px;color:var(--muted);opacity:.85;margin-left:4px;text-transform:none;letter-spacing:0}
 .rq.opt{opacity:.65}
@@ -211,6 +213,9 @@ tr:last-child td{border-bottom:0}
 .kpi{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--brand);border-radius:4px;padding:12px 14px}
 .kpi .v{font-family:var(--display);font-size:30px;font-weight:600}
 .kpi .l{font-size:12.5px;color:var(--muted)}
+#etable .ract{margin-top:6px;gap:6px;flex-wrap:nowrap}
+#etable .ract .btn{padding:4px 10px;font-size:10.5px;white-space:nowrap}
+#etable td:nth-child(3){min-width:260px}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 .inlineform{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:end;padding:10px 12px;background:var(--surface-2)}
 .inlineform .field input{background:var(--surface)}
@@ -290,6 +295,14 @@ label.btn{display:inline-block}
 .dv-msg{color:var(--muted);font-size:13px}.dv-msg.err{color:var(--red);font-weight:700}
 a.btn{text-decoration:none;display:inline-block}
 @media (max-width:700px){.dviewer{padding:0}.dv-box{height:100vh;height:100dvh;width:100%;border-radius:0}.dv-head{flex-wrap:wrap}.dv-head b{flex-basis:100%}}
+/* ---------- permissões por cargo (a segurança de verdade está nas regras do Firestore) ---------- */
+body:not(.pode-excluir) :is([data-del],[data-delok],[data-gdel],[data-ddel],[data-sdel],[data-cdel]){display:none!important}
+body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#sform,#kform,#dform,[data-dedit]){display:none!important}
+body:not(.pode-editar) :is(#stable,#ctable,#ktab,#k-grid) :is(input,select,textarea,button){pointer-events:none;opacity:.6}
+body:not(.pode-editar) #k-grid{pointer-events:none}
+body:not(.pode-gerir) :is(#parsave,#parreset,#backup,#acesso,.mfoot .del-membro){display:none!important}
+body:not(.pode-gerir) #parform :is(input,select){pointer-events:none;background:var(--surface-2)}
+.aviso-perm{background:var(--amber-bg);border:1px solid var(--amber);border-radius:4px;padding:8px 12px;font-size:13.5px;margin-bottom:14px}
 /* ---------- menu lateral ---------- */
 header.app nav.tabs{display:none!important}
 header.app #dbstatus{display:none}
@@ -410,8 +423,8 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
         <div class="row2">
           <div class="field"><label for="f-insc">Inscrições esperadas <span class="rq">obrigatório</span></label><input id="f-insc" type="number" min="5" max="600" value=""></div>
         </div>
-        <div class="field"><label for="f-conf">Confiança usada na sala e nas inscrições <span class="rq">obrigatório</span></label>
-          <select id="f-conf"><option value="0.7">70%</option><option value="0.8">80%</option><option value="0.9" selected>90%</option></select></div>
+        <div class="field"><label for="f-conf">Margem de segurança da sala <span class="rq">obrigatório</span></label>
+          <select id="f-conf"><option value="0.7">Normal</option><option value="0.8">Alta</option><option value="0.9" selected>Muito alta</option></select><span class="hint">Quanto maior, maior a sala sugerida para não faltar lugar.</span></div>
         <label class="check"><input type="checkbox" id="f-aud">Evento de destaque (preferir auditório) <span class="rq opt">opcional</span></label>
         <label class="check"><input type="checkbox" id="f-coffee" checked>Terá coffee <span class="rq opt">opcional</span></label>
         <label class="check"><input type="checkbox" id="f-mat">Terá material impresso <span class="rq opt">opcional</span></label>
@@ -458,6 +471,7 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
       <div><h2>Base de eventos</h2><p class="note">Cada evento realizado calibra o planejamento dos próximos. Semáforo pelas faixas do relatório da Feashion.</p></div>
     </div>
     <div class="kpis" id="kpis"></div>
+    <p class="note" style="margin:-8px 0 14px">Os indicadores não contam eventos com “[teste]” no nome. Comparecimento = presentes que se inscreveram ÷ inscritos.</p>
     <div class="btns" style="margin-bottom:10px"><label for="bfilter" class="note">Tipo</label><select id="bfilter" style="max-width:240px"><option value="">Todos os tipos</option></select></div>
     <div class="tablewrap" role="region" aria-label="Eventos" tabindex="0"><table id="etable"></table></div>
   </section>
@@ -627,7 +641,7 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
     <div class="akpis" id="a-kpis"></div>
     <div class="acharts">
       <article class="acard full"><h3>Público por evento</h3><p class="sub">Inscritos e presentes de cada evento realizado, em ordem de data.</p><div id="a-c1"></div></article>
-      <article class="acard"><h3>Comparecimento por tipo</h3><p class="sub">Presentes ÷ inscritos, somando os eventos de cada tipo.</p><div id="a-c2"></div></article>
+      <article class="acard"><h3>Comparecimento por tipo</h3><p class="sub">Presentes que se inscreveram ÷ inscritos, somando os eventos de cada tipo.</p><div id="a-c2"></div></article>
       <article class="acard"><h3>Previsto × real</h3><p class="sub">Presentes previstos no Planejar e presentes de fato.</p><div id="a-c3"></div></article>
       <article class="acard"><h3>Custo por presente</h3><p class="sub">Por evento, com a meta e o limite da aba Parâmetros.</p><div id="a-c4"></div></article>
       <article class="acard"><h3>Ocupação das salas</h3><p class="sub">Presentes ÷ capacidade da sala.</p><div id="a-c5"></div></article>
@@ -792,7 +806,7 @@ function plan(){
   var alts=[];for(var i=-10;i<=10;i++){if(!i)continue;var dd=add(d,i);var x=scoreDate(dd,tipo,savedId);if(x.s>sc.s)alts.push({d:dd,s:x.s});}
   alts.sort(function(a,b){return b.s-a.s||Math.abs(a.d-d)-Math.abs(b.d-d);});alts=alts.slice(0,3);
   $('r-score').innerHTML='<div class="btns"><span class="big num">'+sc.s+'<small>/100</small></span><span class="chip '+lab[1]+'">'+lab[0]+'</span></div>'+
-   '<p class="note">'+fmtLong(d)+', das '+hora+' às '+fimTxt+'</p>'+(foraJ?'<p class="chip warn" style="margin:4px 0">Fora da janela padrão de '+tipo+': o evento precisa caber entre '+hfmt(JANELA[0])+' e '+hfmt(JANELA[1])+'</p>':'')+'<ul class="factors">'+sc.f.map(function(x){return '<li><span>'+x[0]+'</span><span class="d '+(x[1]<0?'neg':'pos')+'">'+(x[1]?x[1]:'0')+'</span></li>';}).join('')+'</ul>'+
+   '<p class="note">'+fmtLong(d)+', das '+hora+' às '+fimTxt+'</p>'+(foraJ?'<p class="chip warn" style="margin:4px 0">Fora da janela padrão de '+tipo+': o evento precisa caber entre '+hfmt(JANELA[0])+' e '+hfmt(JANELA[1])+'</p>':'')+'<ul class="factors">'+sc.f.map(function(x){return '<li><span>'+esc(x[0])+'</span><span class="d '+(x[1]<0?'neg':'pos')+'">'+(x[1]?x[1]:'0')+'</span></li>';}).join('')+'</ul>'+
    (alts.length?'<p class="note">Datas melhores perto desta:</p><div class="alts">'+alts.map(function(a){return '<button type="button" data-d="'+iso(a.d)+'">'+fmtLong(a.d)+' · '+a.s+'</button>';}).join('')+'</div>':'');
 
   /* sala */
@@ -817,14 +831,17 @@ function plan(){
   function pct(c){return Math.round(c*100)+'%';}
   var roomHtml;
   if(!cards.length){roomHtml='<p class="chip bad">Nenhuma sala viável para '+sMin+' pessoas (70% de confiança) nesta data: veja as descartadas, limite as inscrições ou busque um espaço parceiro.</p>';}
-  else roomHtml='<p class="note" style="margin:4px 0 6px">'+cards.length+' sala(s) possíveis, da melhor para a pior pelo custo esperado (cadeira vazia pesa 3; pessoa além da folga de 10% pesa 1). Cada uma mostra o maior nível de confiança que atende.</p><div class="rooms" style="max-height:520px;overflow:auto;padding-right:2px">'+cards.map(function(o,i){var r=o.r,occ=Math.round(m/r.c*100),pfit=0;for(var k=0;k<=capEff(r.c)&&k<p.length;k++)pfit+=p[k];var maxN=maxInsc(capEff(r.c),h,o.cs[0],walk);
-    var lab='Atende '+pct(o.cs[0])+' de confiança';var isC=chosen&&chosen.r===r;
-    return '<div class="room'+(isC?' best':'')+'"><span class="chip'+(isC?' ok':'')+'">'+lab+(isC?' · escolhida':'')+'</span><b>'+(i+1)+'. '+esc(r.n)+'</b><span class="num">'+r.c+' lugares</span><small>'+Math.min(99,Math.round(pfit*100))+'% de chance de caber todos (até '+capEff(r.c)+' com aperto) · em média '+Math.round(r.rc.vazias)+' cadeira(s) vazia(s)'+(r.rc.excesso>=0.5?' e '+Math.round(r.rc.excesso)+' pessoa(s) além do aperto':'')+' · '+resTxt(r,r.dl)+' · '+(COFFEE[r.coffee]||COFFEE['?'])+(r.coffeeLocal?' ('+esc(r.coffeeLocal)+')':'')+(r.infDet&&r.infDet.length?' · infraestrutura '+(r.inf>0?'+':'')+r.inf+' ('+r.infDet.join(', ')+')':'')+' · ocupação prevista '+occ+'% · aceitar até '+maxN+' inscrições</small></div>';}).join('')+'</div>';
+  else{function isC0(r){return chosen&&chosen.r===r;}var card=function(o,i){var r=o.r,occ=Math.round(m/r.c*100),pfit=0;for(var k=0;k<=capEff(r.c)&&k<p.length;k++)pfit+=p[k];var maxN=maxInsc(capEff(r.c),h,o.cs[0],walk);
+    var MG={'0.9':'margem muito alta','0.8':'margem alta','0.7':'margem normal'};var lab=isC0(r)?'sugerida':'alternativa · '+MG[String(o.cs[0])];var isC=chosen&&chosen.r===r;
+    var falta=(r.infDet||[]).filter(function(t){return / ✗$/.test(t);}).map(function(t){return t.replace(' ✗','');});
+    return '<div class="room'+(isC?' best':'')+'"><span class="chip'+(isC?' ok':'')+'">'+lab+'</span><b>'+esc(r.n)+'</b><span class="num">'+r.c+' lugares</span><small>'+Math.min(99,Math.round(pfit*100))+'% de chance de caber todo mundo · ocupação prevista '+occ+'% · aceita até '+maxN+' inscrições</small><small>'+resTxt(r,r.dl)+' · '+(COFFEE[r.coffee]||COFFEE['?'])+(r.coffeeLocal?' ('+esc(r.coffeeLocal)+')':'')+(falta.length?' · <span style="color:var(--red)">sem '+esc(falta.join(', '))+'</span>':'')+'</small></div>';};
+  var topo=cards.slice(0,3),resto=cards.slice(3);
+  roomHtml='<p class="note" style="margin:4px 0 6px">A sala sugerida e duas alternativas, da que melhor equilibra cadeira sobrando e falta de lugar.</p><div class="rooms">'+topo.map(card).join('')+'</div>'+(resto.length?'<details class="note" style="margin-top:8px"><summary>Ver as outras '+resto.length+' salas possíveis</summary><div class="rooms" style="margin-top:8px">'+resto.map(function(o,i){return card(o,i+3);}).join('')+'</div></details>':'');}
   var nPrazo=discarded.filter(function(x){return x.r.c>=sMin&&/prazo/.test(x.why);}).length;
   if(cfgT.externo){roomHtml='<p class="note">'+tipo+' acontece fora da FEA: sem sugestão de sala.</p>';discarded=[];best=[];chosen=null;}
-  if(discarded.length)roomHtml+='<details class="note" style="margin-top:8px"><summary>Salas descartadas ('+discarded.length+(nPrazo?', '+nPrazo+' por prazo':'')+')</summary><ul class="factors" style="margin-top:6px">'+discarded.sort(function(a,b){return b.r.c-a.r.c;}).map(function(x){return '<li><span>'+esc(x.r.n)+' ('+x.r.c+')</span><span class="d neg">'+x.why+'</span></li>';}).join('')+'</ul></details>';
+  if(discarded.length)roomHtml+='<details class="note" style="margin-top:8px"><summary>Salas descartadas ('+discarded.length+(nPrazo?', '+nPrazo+' por prazo':'')+')</summary><ul class="factors" style="margin-top:6px">'+discarded.sort(function(a,b){return b.r.c-a.r.c;}).map(function(x){return '<li><span>'+esc(x.r.n)+' ('+x.r.c+')</span><span class="d neg">'+esc(x.why)+'</span></li>';}).join('')+'</ul></details>';
   $('r-room').innerHTML='<div class="btns"><span class="big num">'+Math.round(m)+'<small>presentes previstos</small></span></div>'+
-   '<dl class="kv"><dt>Faixa provável (80% dos casos)</dt><dd class="num">'+p10+' a '+p90+'</dd><dt>Lugares para '+Math.round(conf*100)+'% de segurança</dt><dd class="num">'+seats+'</dd><dt>Comparecimento estimado</dt><dd class="num">'+Math.round(rate*100)+'%</dd></dl>'+roomHtml+'<p class="note">'+h.src+'</p>'+(h.missing?'<p class="note" style="color:var(--amber)">'+h.missing+' evento(s) deste tipo sem registro de "sem inscrição": a taxa pode estar superestimada.</p>':'')+'<details class="note"><summary>Base do cálculo</summary><dl class="kv" style="margin-top:6px"><dt>Média geral da base</dt><dd class="num">'+Math.round(h.muG*100)+'%</dd><dt>Média do tipo (puxada com M = '+M_POOL+')</dt><dd class="num">'+Math.round(h.mu*100)+'%</dd><dt>Concentração κ ('+h.kSrc+')</dt><dd class="num">'+h.kappa.toFixed(1)+'</dd><dt>Sem inscrição, média da Poisson ('+h.lSrc+')</dt><dd class="num">'+walk.toFixed(1)+'</dd></dl></details>';
+   '<dl class="kv"><dt>Na maioria dos cenários, entre</dt><dd class="num">'+p10+' e '+p90+' pessoas</dd><dt>Lugares a garantir</dt><dd class="num">'+seats+'</dd><dt>Comparecimento estimado</dt><dd class="num">'+Math.round(rate*100)+'%</dd></dl>'+roomHtml+'<p class="note">'+h.src+'</p>'+(h.missing?'<p class="note" style="color:var(--amber)">'+h.missing+' evento(s) deste tipo sem registro de "sem inscrição": a taxa pode estar superestimada.</p>':'')+'<details class="note"><summary>Detalhes técnicos do cálculo</summary><dl class="kv" style="margin-top:6px"><dt>Média geral da base</dt><dd class="num">'+Math.round(h.muG*100)+'%</dd><dt>Média do tipo (puxada com M = '+M_POOL+')</dt><dd class="num">'+Math.round(h.mu*100)+'%</dd><dt>Concentração κ ('+h.kSrc+')</dt><dd class="num">'+h.kappa.toFixed(1)+'</dd><dt>Sem inscrição, média da Poisson ('+h.lSrc+')</dt><dd class="num">'+walk.toFixed(1)+'</dd></dl></details>';
 
   /* compras */
   var coffee=$('f-coffee').checked, mat=$('f-mat').checked, cpp=+$('f-cpp').value||0;
@@ -838,18 +855,19 @@ function plan(){
   var hist=events.filter(function(e){return e.status==='realizado'&&e.custo&&e.presentes;});var hC=0,hP=0;hist.forEach(function(e){hC+=+e.custo;hP+=+e.presentes;});
   $('r-buy').innerHTML='<div class="btns"><span class="big num">'+brl(perP)+'<small>por presente previsto</small></span><span class="chip '+stP[1]+'">'+stP[0]+'</span></div>'+
    '<dl class="kv"><dt>Investimento total previsto</dt><dd class="num">'+brl(total)+'</dd><dt>Por inscrito</dt><dd class="num">'+brl(perI)+'</dd><dt>Comprando pelas inscrições</dt><dd class="num">'+brl(perPN)+' por presente</dd>'+(hP?'<dt>Média da base ('+hist.length+' eventos)</dt><dd class="num">'+brl(hC/hP)+' por presente</dd>':'')+'</dl>'+
-   (coffee?'<p class="note"><b>'+portions+' porções de coffee</b>: cobre '+Math.round(fracC*100)+'% dos cenários de público (faltar pesa '+P.faltaCoffee+'× sobrar)'+(LR.consumo?'; consumo da base: '+LR.consumo.f.toFixed(2).replace('.',',')+' porção por pessoa ('+LR.consumo.n+' eventos)':'')+(eq?', mais '+eq+' da equipe do convidado':'')+'.</p>':'<p class="note">Sem coffee neste evento.</p>')+
+   (coffee?'<p class="note"><b>'+portions+' porções de coffee</b>: cobre '+Math.round(fracC*100)+'% dos cenários de público, porque faltar é pior que sobrar'+(LR.consumo?'; consumo da base: '+LR.consumo.f.toFixed(2).replace('.',',')+' porção por pessoa ('+LR.consumo.n+' eventos)':'')+(eq?', mais '+eq+' da equipe do convidado':'')+'.</p>':'<p class="note">Sem coffee neste evento.</p>')+
    '<dl class="kv">'+(coffee?'<dt>Orçamento do coffee</dt><dd class="num">R$ '+cost.toFixed(2).replace('.',',')+'</dd><dt>Se comprasse pelas inscrições</dt><dd class="num">R$ '+naive.toFixed(2).replace('.',',')+'</dd>'+(naive>=cost?'<dt>Economia estimada</dt><dd class="num" style="color:var(--green)">'+brl(naive-cost)+'</dd>':'<dt>Gasto a mais (público previsto acima das inscrições)</dt><dd class="num" style="color:var(--amber)">'+brl(cost-naive)+'</dd>')+'':'')+
    (mat?'<dt>Material impresso (mesma regra do coffee)</dt><dd class="num">'+prints+' cópias</dd><dt>Para o resto</dt><dd>versão digital por QR</dd>':'')+'</dl>'+
    (coffee?(function(){var rr=best.length?best[0].r:null;if(rr&&rr.coffee==='no-local')return '<p class="note">Coffee pode ser servido na própria sala ('+esc(rr.n)+').</p>';if(rr&&rr.coffeeLocal)return '<p class="note">Servir o coffee em <b>'+esc(rr.coffeeLocal)+'</b>'+(COFFEE[rr.coffee]&&rr.coffee!=='?'?' ('+COFFEE[rr.coffee]+')':'')+', perto da '+esc(rr.n)+'.</p>';return '<p class="note">Espaço de coffee da sala ainda não cadastrado (aba Salas). A FEA só permite coffee no Vão da FEA, na Meia Lua e no Espaço do FEA 5.</p>';})():'');
 
   /* check-in */
   var lam=(+P.picoFrac/100)*n/(Math.max(1,+P.picoMin)*60), tPap=+P.tPapel, tQ=+P.tQR, paper=stations(lam,tPap,+P.esperaMax), qr=stations(lam,tQ,+P.esperaMax);
-  $('r-check').innerHTML='<div class="btns"><span class="big num">'+qr.s+'<small>estação(ões) com QR</small></span></div><dl class="kv"><dt>Com lista de papel seriam</dt><dd class="num">'+paper.s+' estações</dd><dt>Espera média com QR</dt><dd class="num">'+Math.round(qr.wq)+' s</dd></dl><p class="note">Conta feita com as '+n+' inscrições esperadas. Pico de chegada: '+P.picoFrac+'% do público nos últimos '+P.picoMin+' minutos; '+tPap+' s por pessoa no papel e '+tQ+' s com QR; meta de espera de até '+P.esperaMax+' s (fila M/M/s). Ajuste na aba Parâmetros.</p>';
+  $('r-check').innerHTML='<div class="btns"><span class="big num">'+qr.s+'<small>estação(ões) com QR</small></span></div><dl class="kv"><dt>Com lista de papel seriam</dt><dd class="num">'+paper.s+' estações</dd><dt>Espera média com QR</dt><dd class="num">'+Math.round(qr.wq)+' s</dd></dl><p class="note">Conta feita com as '+n+' inscrições esperadas. Pico de chegada: '+P.picoFrac+'% do público nos últimos '+P.picoMin+' minutos; '+tPap+' s por pessoa no papel e '+tQ+' s com QR; meta de espera de até '+P.esperaMax+' s. Ajuste na aba Parâmetros.</p>';
 
   document.querySelectorAll('#r-score .alts button').forEach(function(b){b.addEventListener('click',function(){$('f-data').value=b.getAttribute('data-d');doCalc();});});
   alertas=[];
   if(sc.s===0)alertas.push('Nota da data 0: '+sc.f.filter(function(x){return x[1]<0;}).map(function(x){return x[0];}).join('; ')+'.');
+  else if(label(sc.s)[0]==='Arriscada')alertas.push('Data arriscada (nota '+sc.s+'/100): '+sc.f.filter(function(x){return x[1]<0;}).map(function(x){return x[0];}).join('; ')+'.');
   if(!cfgT.externo&&!cards.length)alertas.push('Nenhuma sala viável para este público nesta data.');
   if(foraJ)alertas.push('Fora da janela padrão de '+tipo+': das '+hora+' às '+fimTxt+' (padrão: '+hfmt(JANELA[0])+' às '+hfmt(JANELA[1])+').');
   current={nome:nome,tipo:tipo,data:dStr,hora:hora,duracao:dur,inscritosMeta:n,semInscricaoPrev:Math.round(walk*10)/10,sala:best.length?best[0].r.n:'',capacidade:best.length?best[0].r.c:null,presentesPrev:Math.round(m),notaData:sc.s,convidado:$('f-conv').value.trim(),equipeConvidado:Math.max(0,Math.round(+$('f-eq').value||0)),custoPrev:Math.round(total*100)/100,custoPorPresentePrev:Math.round(perP*100)/100,form:formSnap()};
@@ -866,18 +884,18 @@ function renderBase(){
   var all=events.slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
   var real=all.filter(function(e){return e.status==='realizado';});
   var pend=all.filter(function(e){return e.status!=='realizado'&&e.data&&e.data<today;});
-  var I=0,Pr=0,C=0,CP=0;real.forEach(function(e){I+=+e.inscritos||0;Pr+=+e.presentes||0;if(e.custo){C+=+e.custo;CP+=+e.presentes||0;}});
-  $('kpis').innerHTML=[['Eventos realizados',real.length,''],['Próximos',all.length-real.length-pend.length,''],['Resultados pendentes',pend.length,pend.length?'bad':''],['Público externo',(function(){var t=0,x=0;real.forEach(function(e){if(e.membros!=null&&+e.presentes){t+=+e.presentes;x+=Math.max(0,+e.presentes-e.membros);}});return t?Math.round(x/t*100)+'%':'—';})(),''],['Comparecimento geral',I?Math.round(Pr/I*100)+'%':'—',''],['Custo por presente',CP?'R$ '+(C/CP).toFixed(2).replace('.',','):'—','']].map(function(k){return '<div class="kpi'+(k[2]?' kbad':'')+'"><div class="v num">'+k[1]+'</div><div class="l">'+k[0]+'</div></div>';}).join('');
+  var I=0,Pr=0,C=0,CP=0,realK=real.filter(function(e){return !/\[teste\]/i.test(e.nome||'');});realK.forEach(function(e){if(+e.inscritos){I+=+e.inscritos;Pr+=Math.max(0,(+e.presentes||0)-(+e.semInscricao||0));}if(e.custo){C+=+e.custo;CP+=+e.presentes||0;}});
+  $('kpis').innerHTML=[['Eventos realizados',realK.length,''],['Próximos',all.length-real.length-pend.length,''],['Resultados pendentes',pend.length,pend.length?'bad':''],['Público externo',(function(){var t=0,x=0;realK.forEach(function(e){if(e.membros!=null&&+e.presentes){t+=+e.presentes;x+=Math.max(0,+e.presentes-e.membros);}});return t?Math.round(x/t*100)+'%':'—';})(),''],['Comparecimento geral',I?Math.round(Pr/I*100)+'%':'—',''],['Custo por presente',CP?'R$ '+(C/CP).toFixed(2).replace('.',','):'—','']].map(function(k){return '<div class="kpi'+(k[2]?' kbad':'')+'"><div class="v num">'+k[1]+'</div><div class="l">'+k[0]+'</div></div>';}).join('');
   var types={};all.forEach(function(e){if(e.tipo)types[e.tipo]=1;});
   var fsel=$('bfilter');if(fsel){var cur=fsel.value;fsel.innerHTML='<option value="">Todos os tipos</option>'+Object.keys(types).sort().map(function(t){return '<option'+(t===cur?' selected':'')+'>'+esc(t)+'</option>';}).join('');}
   if(!all.length){$('etable').innerHTML='<tr><td class="empty">A base está vazia. Planeje um evento e clique em “Salvar evento”, ou registre os eventos já realizados.</td></tr>';return;}
   var list=all.filter(function(e){return !ft||e.tipo===ft;});
   var nxt=list.filter(function(e){return e.status!=='realizado';}), done=list.filter(function(e){return e.status==='realizado';}).reverse();
-  var NC=12, h='<thead><tr><th></th><th>Data</th><th>Evento</th><th>Tipo</th><th>Sala</th><th class="r">Inscr.</th><th class="r">Pres.</th><th>Comparec.</th><th>Ocupação</th><th>Atraso</th><th>Custo/pres.</th><th></th></tr></thead><tbody>';
+  var NC=11, h='<thead><tr><th></th><th>Data</th><th>Evento</th><th>Tipo</th><th>Sala</th><th class="r">Inscr.</th><th class="r">Pres.</th><th>Comparec.</th><th>Ocupação</th><th>Atraso</th><th>Custo/pres.</th></tr></thead><tbody>';
   function row(e){
     var dn=e.status==='realizado', late=!dn&&e.data&&e.data<today, op=!!openSet[e.id];
-    var tc=dn&&e.inscritos?e.presentes/e.inscritos:null, pv=dn&&e.capacidade?e.presentes/e.capacidade:null, cp=dn&&e.custo&&e.presentes?e.custo/e.presentes:null;
-    var r='<tr'+(late?' class="late"':'')+'><td><button type="button" class="tog" data-tog="'+e.id+'" aria-expanded="'+op+'" aria-label="Detalhes de '+esc(e.nome)+'">'+(op?'▾':'▸')+'</button></td><td class="num">'+(e.data?fmt(D(e.data))+'/'+e.data.slice(2,4):'—')+'</td><td><b>'+esc(e.nome)+'</b>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+(late?' <span class="chip bad">registrar resultado</span>':dn?'':' <span class="chip neutral">planejado</span>')+'</td><td>'+esc(e.tipo||'')+'</td><td>'+esc(e.sala||'')+(e.capacidade?' ('+e.capacidade+')':'')+'</td><td class="r num">'+(dn?e.inscritos:(e.inscritosMeta||'—'))+'</td><td class="r num">'+(dn?e.presentes:'—')+'</td><td>'+semaf(tc,'tc')+'</td><td>'+semaf(pv,'pv')+'</td><td>'+(dn?semaf(e.atraso,'at'):semaf(null))+'</td><td>'+semaf(cp,'cp')+'</td><td><div class="btns">'+(dn?'<button class="btn small ghost" data-reg="'+e.id+'">Editar resultado</button>':'<button class="btn small" data-reg="'+e.id+'">Registrar resultado</button><button class="btn small ghost" data-open="'+e.id+'">Abrir no Planejar</button>')+'<button class="btn small ghost" data-del="'+e.id+'">Excluir</button></div></td></tr>';
+    var tc=dn&&e.inscritos?Math.max(0,e.presentes-(+e.semInscricao||0))/e.inscritos:null, pv=dn&&e.capacidade?e.presentes/e.capacidade:null, cp=dn&&e.custo&&e.presentes?e.custo/e.presentes:null;
+    var r='<tr'+(late?' class="late"':'')+'><td><button type="button" class="tog" data-tog="'+e.id+'" aria-expanded="'+op+'" aria-label="Detalhes de '+esc(e.nome)+'">'+(op?'▾':'▸')+'</button></td><td class="num">'+(e.data?fmt(D(e.data))+'/'+e.data.slice(2,4):'—')+'</td><td><b>'+esc(e.nome)+'</b>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+(late?' <span class="chip bad">registrar resultado</span>':dn?'':' <span class="chip neutral">planejado</span>')+'<div class="btns ract">'+(dn?'<button class="btn small ghost" data-reg="'+e.id+'">Editar resultado</button>':'<button class="btn small" data-reg="'+e.id+'">Registrar resultado</button><button class="btn small ghost" data-open="'+e.id+'">Abrir no Planejar</button>')+'<button class="btn small ghost" data-del="'+e.id+'">Excluir</button></div></td><td>'+esc(e.tipo||'')+'</td><td>'+esc(e.sala||'')+(e.capacidade?' ('+e.capacidade+')':'')+'</td><td class="r num">'+(dn?e.inscritos:(e.inscritosMeta||'—'))+'</td><td class="r num">'+(dn?e.presentes:'—')+'</td><td>'+semaf(tc,'tc')+'</td><td>'+semaf(pv,'pv')+'</td><td>'+(dn?semaf(e.atraso,'at'):semaf(null))+'</td><td>'+semaf(cp,'cp')+'</td></tr>';
     if(op)r+='<tr class="det"><td colspan="'+NC+'">'+detail(e)+'</td></tr>';
     if(regOpen===e.id)r+='<tr><td colspan="'+NC+'" style="padding:0"><form class="inlineform" data-regform="'+e.id+'">'+
       fld('ri','Inscrições',dn?e.inscritos:(e.inscritosMeta||''),1)+fld('rp','Presentes (total)',dn?e.presentes:'',1)+fld('rw','Sem inscrição',dn&&e.semInscricao!=null?e.semInscricao:'',0)+fld('rm','Membros presentes',dn&&e.membros!=null?e.membros:'',0)+fld('rd','Duração real (min)',dn&&e.duracaoReal!=null?e.duracaoReal:'',0)+fld('rpc','Porções compradas',dn&&e.porcoesCompradas!=null?e.porcoesCompradas:'',0)+fld('rpu','Porções consumidas',dn&&e.porcoesConsumidas!=null?e.porcoesConsumidas:'',0)+'<div class="field"><label for="rmt-'+e.id+'">Método de check-in</label><select id="rmt-'+e.id+'"><option value="">—</option><option value="papel"'+(e.metodoCheckin==='papel'?' selected':'')+'>Lista de papel</option><option value="qr"'+(e.metodoCheckin==='qr'?' selected':'')+'>QR</option></select></div>'+fld('rcb','Custo básico (R$)',dn?(e.custoBasico!=null?e.custoBasico:(e.custo!=null?e.custo:'')):'',0,'0.01')+fld('rcn','Custo não previsto (R$)',dn&&e.custoNaoPrev!=null?e.custoNaoPrev:'',0,'0.01')+fld('ra','Atraso (min)',dn&&e.atraso!=null?e.atraso:'',0)+
@@ -914,7 +932,12 @@ function detail(e){
 }
 var openSet={};
 var regOpen=null, delOpen=null;
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+/* não redesenhar uma tela enquanto alguém digita nela: a atualização espera o campo perder o foco */
+var pendente={};
+function editando(id){var c=$(id),a=document.activeElement;return !!(c&&a&&c.contains(a)&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));}
+function adiar(id,fn,ocupado){if(editando(id)||(ocupado&&ocupado())){pendente[id]=fn;return;}delete pendente[id];fn();}
+document.addEventListener('focusout',function(ev){Object.keys(pendente).forEach(function(id){var c=$(id);if(!c||!c.contains(ev.target))return;setTimeout(function(){if(pendente[id]&&!editando(id)){var f=pendente[id];delete pendente[id];f();}},0);});});
 
 /* ---------- convidados ---------- */
 var SEG={'Luxo global':15,'Grupo nacional':12,'Beleza':12,'Circular / revenda':12,'Varejo de massa':10,'Nicho / autoral':6}, SEGNOVO=10;
@@ -968,12 +991,12 @@ function validate(){
   if($('f-coffee').checked)chk.push(['f-cpp','Custo por porção']);
   if($('f-mat').checked)chk.push(['f-copy','Custo por cópia']);
   ['f-nome','f-tipo','f-hora','f-data','f-dur','f-insc','f-conf','f-cpp','f-copy'].forEach(function(id){$(id).removeAttribute('aria-invalid');});
-  chk.forEach(function(c){var v=$(c[0]).value;var bad=v.trim()===''||(c[0]==='f-insc'&&!(+v>0))||((c[0]==='f-cpp'||c[0]==='f-copy')&&!(+v>=0));if(bad){miss.push(c);$(c[0]).setAttribute('aria-invalid','true');}});
+  chk.forEach(function(c){var v=$(c[0]).value;var bad=v.trim()===''||(c[0]==='f-insc'&&!(+v>=5&&+v<=600))||((c[0]==='f-cpp'||c[0]==='f-copy')&&!(+v>=0));if(bad){miss.push(c);$(c[0]).setAttribute('aria-invalid','true');}});
   return miss;}
 $('f-tipo').addEventListener('change',function(){setNeeds($('f-tipo').value);});
 setNeeds($('f-tipo').value);
 $('pform').addEventListener('submit',function(e){e.preventDefault();var miss=validate();
-  if(miss.length){$('calcmsg').className='msg err';$('calcmsg').textContent='Preencha antes de calcular: '+miss.map(function(c){return c[1];}).join(', ')+'.';$(miss[0][0]).focus();return;}
+  if(miss.length){var foraFaixa=miss.length===1&&miss[0][0]==='f-insc'&&$('f-insc').value.trim()!=='';$('calcmsg').className='msg err';$('calcmsg').textContent=foraFaixa?'Inscrições esperadas: use um número entre 5 e 600.':'Preencha antes de calcular: '+miss.map(function(c){return c[1]+(c[0]==='f-insc'?' (de 5 a 600)':'');}).join(', ')+'.';$(miss[0][0]).focus();return;}
   $('calcmsg').className='msg';doCalc();});
 function doSave(exc){
   if(!db){$('savemsg').textContent='Sem conexão com a base: o plano não foi salvo.';return;}
@@ -1002,8 +1025,20 @@ $('etable').addEventListener('click',function(e){var t=e.target;
 });
 $('etable').addEventListener('submit',function(e){e.preventDefault();var f=e.target,id=f.dataset.regform;if(!id||!db)return;
   function v(p){var x=$(p+'-'+id).value;return x===''?null:+x;}
-  var cb=v('rcb'),cn=v('rcn');var upd={status:'realizado',inscritos:v('ri'),presentes:v('rp'),semInscricao:v('rw'),custoBasico:cb,custoNaoPrev:cn,membros:v('rm'),duracaoReal:v('rd'),porcoesCompradas:v('rpc'),porcoesConsumidas:v('rpu'),metodoCheckin:$('rmt-'+id).value||null,custo:(cb==null&&cn==null)?null:Math.round(((cb||0)+(cn||0))*100)/100,atraso:v('ra')};
-  db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
+  var cb=v('rcb'),cn=v('rcn');
+  var erro=(function(){var pr=v('rp'),ins=v('ri'),sw=v('rw')||0,mb=v('rm'),pc=v('rpc'),pu=v('rpu');
+    var campos=[['ri',ins],['rp',pr],['rw',v('rw')],['rm',mb],['rd',v('rd')],['rpc',pc],['rpu',pu],['rcb',cb],['rcn',cn]];
+    for(var i=0;i<campos.length;i++){if(campos[i][1]!=null&&campos[i][1]<0)return 'Os números não podem ser negativos.';}
+    if(pr==null)return 'Informe quantas pessoas estiveram presentes.';
+    if(sw>pr)return 'Sem inscrição não pode passar do total de presentes ('+pr+').';
+    if(mb!=null&&mb>pr)return 'Membros presentes não pode passar do total de presentes ('+pr+').';
+    if(ins!=null&&pr-sw>ins)return 'Presentes inscritos ('+(pr-sw)+') passa do número de inscritos ('+ins+'): registre o excedente em "sem inscrição".';
+    if(pc!=null&&pu!=null&&pu>pc)return 'Porções consumidas não pode passar das compradas.';
+    return '';})();
+  var em=f.querySelector('.regerro');if(!em){em=document.createElement('p');em.className='msg regerro';em.setAttribute('role','alert');em.style.cssText='color:var(--red);font-weight:700;margin:8px 0 0';f.appendChild(em);}
+  em.textContent=erro;if(erro)return;
+  var upd={status:'realizado',inscritos:v('ri'),presentes:v('rp'),semInscricao:v('rw'),custoBasico:cb,custoNaoPrev:cn,membros:v('rm'),duracaoReal:v('rd'),porcoesCompradas:v('rpc'),porcoesConsumidas:v('rpu'),metodoCheckin:$('rmt-'+id).value||null,custo:(cb==null&&cn==null)?null:Math.round(((cb||0)+(cn||0))*100)/100,atraso:v('ra')};
+  db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
 });
 function alertMsg(m){$('dbstatus').textContent=m;}
 $('cform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('cmsg').textContent='Sem conexão com a base.';return;}
@@ -1156,7 +1191,7 @@ $('kform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('k
 renderCal();
 /* ---------- parâmetros ---------- */
 var PFORM=[['Compras',[['metaPresente','Meta de custo por presente (R$)','number','0.5'],['limiteAmarelo','Limite do amarelo no semáforo (R$)','number','0.5'],['faltaCoffee','Faltar coffee ou material é quantas vezes pior que sobrar','number','0.5']]],
- ['Salas',[['folga','Folga "dá pra enfiar" (% da capacidade)','number','1'],['wVazia','Peso da cadeira vazia','number','0.5'],['wExcesso','Peso da pessoa além da folga','number','0.5'],['wInfra','Peso de cada ponto de infraestrutura na ordem','number','0.05']]],
+ ['Salas',[['folga','Aperto aceitável acima da capacidade (%)','number','1'],['wVazia','Peso da cadeira vazia','number','0.5'],['wExcesso','Peso da pessoa além da folga','number','0.5'],['wInfra','Peso de cada ponto de infraestrutura na ordem','number','0.05']]],
  ['Janela de horário',[['janIni','Início da janela padrão','time',''],['janFim','Fim da janela padrão','time','']]],
  ['Semáforo da base de eventos',[['tcVerde','Comparecimento: verde a partir de (%)','number','1'],['tcAmarelo','Comparecimento: amarelo a partir de (%)','number','1'],['pvVerde','Ocupação: verde a partir de (%)','number','1'],['pvAmarelo','Ocupação: amarelo a partir de (%)','number','1'],['atVerde','Atraso: verde até (min)','number','1'],['atAmarelo','Atraso: amarelo até (min)','number','1']]],
  ['Check-in',[['picoFrac','Público que chega no pico (%)','number','5'],['picoMin','Duração do pico (minutos antes do início)','number','1'],['tPapel','Tempo por pessoa na lista de papel (s)','number','1'],['tQR','Tempo por pessoa com QR (s)','number','1'],['esperaMax','Espera máxima aceitável (s)','number','10']]]];
@@ -1166,7 +1201,23 @@ var parDirty=false;
 function armBtn(b,txt,orig){if(b.dataset.sure){return true;}b.dataset.sure='1';b.textContent=txt;clearTimeout(b._t);b._t=setTimeout(function(){delete b.dataset.sure;b.textContent=orig;},5000);return false;}
 function disarm(b,orig){delete b.dataset.sure;b.textContent=orig;clearTimeout(b._t);}
 $('parform').addEventListener('input',function(e){if(!e.target.dataset.pk)return;parDirty=true;$('parmsg').textContent='Alterações não salvas.';});
-$('parsave').addEventListener('click',function(){var b=$('parsave');if(!parDirty){$('parmsg').textContent='Nada para salvar.';return;}if(!armBtn(b,'Confirmar: salvar parâmetros','Salvar parâmetros'))return;disarm(b,'Salvar parâmetros');
+function checarPar(){
+  var c={};$('parform').querySelectorAll('[data-pk]').forEach(function(i){i.removeAttribute('aria-invalid');var v=i.value===''?PDEF[i.dataset.pk]:i.value;c[i.dataset.pk]=i.type==='number'?+v:v;});
+  var erros=[],ruim={};function err(ks,m){erros.push(m);ks.forEach(function(k){ruim[k]=1;});}
+  Object.keys(c).forEach(function(k){if(typeof c[k]==='number'&&(!isFinite(c[k])||c[k]<0))err([k],'Nenhum valor pode ser negativo.');});
+  ['tcVerde','tcAmarelo','pvVerde','pvAmarelo','picoFrac','folga'].forEach(function(k){if(c[k]>100)err([k],'Percentuais vão de 0 a 100.');});
+  ['faltaCoffee','tPapel','tQR','picoMin','esperaMax'].forEach(function(k){if(!(c[k]>0))err([k],'Pesos e tempos precisam ser maiores que zero.');});
+  if(c.tcVerde<c.tcAmarelo)err(['tcVerde','tcAmarelo'],'Comparecimento: o verde precisa ser maior ou igual ao amarelo.');
+  if(c.pvVerde<c.pvAmarelo)err(['pvVerde','pvAmarelo'],'Ocupação: o verde precisa ser maior ou igual ao amarelo.');
+  if(c.atVerde>c.atAmarelo)err(['atVerde','atAmarelo'],'Atraso: o verde precisa ser menor ou igual ao amarelo.');
+  if(c.metaPresente>c.limiteAmarelo)err(['metaPresente','limiteAmarelo'],'A meta de custo precisa ser menor ou igual ao limite do amarelo.');
+  if(!(c.janIni<c.janFim))err(['janIni','janFim'],'O início da janela precisa ser antes do fim.');
+  Object.keys(ruim).forEach(function(k){var i=$('par-'+k);if(i)i.setAttribute('aria-invalid','true');});
+  return erros.filter(function(m,i){return erros.indexOf(m)===i;});
+}
+$('parsave').addEventListener('click',function(){var b=$('parsave');if(!parDirty){$('parmsg').textContent='Nada para salvar.';return;}
+  var pe=checarPar();if(pe.length){disarm(b,'Salvar parâmetros');$('parmsg').textContent='Não salvo: '+pe.join(' ');var f=$('parform').querySelector('[aria-invalid="true"]');if(f)f.focus();return;}
+  if(!armBtn(b,'Confirmar: salvar parâmetros','Salvar parâmetros'))return;disarm(b,'Salvar parâmetros');
   $('parform').querySelectorAll('[data-pk]').forEach(function(i){var k=i.dataset.pk,v=i.value;if(v===''){v=PDEF[k];i.value=v;}P[k]=i.type==='number'?+v:v;});
   parDirty=false;applyP();savePar();refresh();renderBase();});
 $('parform').addEventListener('submit',function(e){e.preventDefault();});
@@ -1186,12 +1237,12 @@ function connect(){
   window.claude.use('db').then(function(d){
     if(!d){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>. Nada é salvo.';return;}
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
-    db.collection('eventos').onSnapshot(function(s){events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});$('ncount').textContent=events.length+' eventos';renderBase();renderCal();renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
+    db.collection('eventos').onSnapshot(function(s){events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
     db.collection('parametros').onSnapshot(function(s){s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}});},function(){});
-    db.collection('calendario').onSnapshot(function(s){calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();renderCal();refresh();},function(){});
-    db.collection('salas').onSnapshot(function(s){salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderSalas();refresh();},function(){});
+    db.collection('calendario').onSnapshot(function(s){calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
+    db.collection('salas').onSnapshot(function(s){salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
     db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();refresh();},function(){});
-    db.collection('convidados').onSnapshot(function(s){guests=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderGuests();renderChks();},function(){});
+    db.collection('convidados').onSnapshot(function(s){guests=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-conv',renderGuests);renderChks();},function(){});
     db.collection('listas').onSnapshot(function(s){s.docs.forEach(function(x){if(x.id==='convidados'){var d=x.data();listas={temas:d.temas||[],segmentos:d.segmentos||[]};renderChks();renderGuests();}});},function(){});
   }).catch(function(){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>.';});
 }
@@ -1210,6 +1261,24 @@ var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee']; /* os que a di
 var ORDEM=['DEV'].concat(CARGOS);
 function souDev(){return !!window.__souDev;}
 function gestor(){return souDev()||cargoOf(myDoc)==='Diretor(a)';}
+/* o que cada cargo pode fazer (igual às regras do Firestore) */
+var PODE={
+  'DEV':{editar:1,excluir:1,gerir:1},'Diretor(a)':{editar:1,excluir:1,gerir:1},
+  'Coordenador(a)':{editar:1,excluir:1,gerir:0},'Membro(a)':{editar:1,excluir:0,gerir:0},
+  'Trainee':{editar:1,excluir:0,gerir:0},'':{editar:0,excluir:0,gerir:0}
+};
+function permissoes(){var c=souDev()?'DEV':cargoOf(myDoc);return PODE[c]||PODE[''];}
+function aplicarPermissoes(){
+  var p=permissoes(),b=document.body;
+  b.classList.toggle('pode-editar',!!p.editar);b.classList.toggle('pode-excluir',!!p.excluir);b.classList.toggle('pode-gerir',!!p.gerir);
+  var av=document.getElementById('aviso-perm');
+  var msg=!meId?'':!myDoc&&!souDev()?'Crie seu perfil (círculo no canto superior direito). Depois que a diretoria atribuir seu cargo, você poderá editar.':!p.editar?'Você ainda não tem cargo: por enquanto só pode visualizar. A diretoria atribui o cargo na página Membros.':'';
+  if(msg){if(!av){av=el('div','aviso-perm');av.id='aviso-perm';av.setAttribute('role','status');var mn=document.querySelector('main');mn.insertBefore(av,mn.firstChild);}av.textContent=msg;}
+  else if(av)av.remove();
+  var pn=document.getElementById('par-aviso');
+  if(!p.gerir){if(!pn){pn=el('p','aviso-perm','Só a diretoria altera os parâmetros. Você pode consultar os valores atuais.');pn.id='par-aviso';var v=document.getElementById('view-par');if(v){var h=v.querySelector('.section-head');v.insertBefore(pn,h?h.nextSibling:v.firstChild);}}}
+  else if(pn)pn.remove();
+}
 var TONES=['#8a0d10','#2b2424','#5e1a1d','#7a5c52','#a8483f'];
 var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/></svg>';
 var db=null,meInfo=null,meId=null,members=[],myDoc=null,pendingFoto,pfDirty=false;
@@ -1271,6 +1340,7 @@ function renderMe(){
   $('m-sub').textContent=myDoc?(cargoOf(myDoc)||'Sem cargo'):'Perfil ainda não preenchido';
   $('m-count').textContent=members.length?String(members.length):'';
   $('avbtn').setAttribute('aria-label','Conta de '+myName()+': perfil, membros e aparência');
+  aplicarPermissoes();
 }
 
 /* Meu perfil (só a equipe de Eventos: nome, apelido, e-mail USP, celular, cargo, semestre de ingresso e foto) */
@@ -1384,7 +1454,7 @@ function card(m){
       });
       foot.appendChild(at);
     }
-    var del=el('button','btn small ghost','Excluir');del.type='button';
+    var del=el('button','btn small ghost del-membro','Excluir');del.type='button';
     del.addEventListener('click',function(){
       if(!del.dataset.sure){del.dataset.sure='1';del.textContent='Confirmar exclusão';clearTimeout(del._t);del._t=setTimeout(function(){delete del.dataset.sure;del.textContent='Excluir';},5000);return;}
       db.doc('membros/'+m.id).delete().catch(function(){});
@@ -1681,7 +1751,7 @@ function chip(r,t){return '<span class="chip '+r+'">'+t+'</span>';}
 function kpis(L){
   var I=0,Pi=0,Pr=0,C=0,CP=0,T=0,X=0,erros=[];
   L.forEach(function(e){var p=num(e.presentes)||0,i=num(e.inscritos);Pr+=p;
-    if(i){I+=i;Pi+=p;}
+    if(i){I+=i;Pi+=Math.max(0,p-(num(e.semInscricao)||0));}
     if(num(e.custo)&&p){C+=+e.custo;CP+=p;}
     if(num(e.membros)!=null&&p){T+=p;X+=Math.max(0,p-e.membros);}
     if(num(e.presentesPrev)&&p)erros.push(Math.abs(p-e.presentesPrev)/p);});
@@ -1744,8 +1814,8 @@ function barrasH(el,rows,opt){
 
 /* 2. comparecimento por tipo */
 function g2(L){
-  var t={};L.forEach(function(e){var i=num(e.inscritos);if(!i||!e.tipo)return;t[e.tipo]=t[e.tipo]||{i:0,p:0,n:0};t[e.tipo].i+=i;t[e.tipo].p+=num(e.presentes)||0;t[e.tipo].n++;});
-  var rows=Object.keys(t).map(function(k){var v=t[k].p/t[k].i;return {l:k,v:v,t:pct(v),tip:'<b>'+esc(k)+'</b>'+t[k].p+' presentes de '+t[k].i+' inscritos<br>'+t[k].n+' evento'+(t[k].n===1?'':'s'),linha:[k,t[k].n,t[k].i,t[k].p,pct(v)]};}).sort(function(a,b){return b.v-a.v;});
+  var t={};L.forEach(function(e){var i=num(e.inscritos);if(!i||!e.tipo)return;t[e.tipo]=t[e.tipo]||{i:0,p:0,n:0};t[e.tipo].i+=i;t[e.tipo].p+=Math.max(0,(num(e.presentes)||0)-(num(e.semInscricao)||0));t[e.tipo].n++;});
+  var rows=Object.keys(t).map(function(k){var v=t[k].p/t[k].i;return {l:k,v:v,t:pct(v),tip:'<b>'+esc(k)+'</b>'+t[k].p+' inscritos presentes de '+t[k].i+' inscritos<br>'+t[k].n+' evento'+(t[k].n===1?'':'s'),linha:[k,t[k].n,t[k].i,t[k].p,pct(v)]};}).sort(function(a,b){return b.v-a.v;});
   barrasH($('a-c2'),rows,{titulo:'Comparecimento por tipo',vazio:'Sem eventos com inscritos neste filtro.',max:Math.max(1,teto(Math.max.apply(null,rows.map(function(r){return r.v;}).concat([1])))),refs:[{v:P('tcVerde')/100,t:'meta '+P('tcVerde')+'%'}],cab:['Tipo','Eventos','Inscritos','Presentes','Comparec.']});
 }
 

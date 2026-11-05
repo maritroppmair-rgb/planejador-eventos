@@ -1,8 +1,12 @@
 rules_version = '2';
 // Planejador de Eventos · Feashion
-// - Só quem está em "permitidos" (ou é o DEV) lê e grava.
-// - Perfis (membros): cada pessoa edita o próprio perfil, mas não o próprio cargo.
-//   Só a diretoria (cargo "Diretor(a)") e o DEV atribuem cargos. O cargo "DEV" é exclusivo do e-mail do DEV.
+// - Só quem está em "permitidos" (ou é o DEV) lê qualquer coisa.
+// - O que cada um pode fazer depende do cargo, gravado no próprio perfil (membros/{uid}):
+//     DEV e Diretor(a): tudo.
+//     Coordenador(a): edita e exclui dados de eventos; não mexe em Parâmetros, Membros e acesso.
+//     Membro(a) e Trainee: editam dados de eventos, mas não excluem; não mexem em Parâmetros, Membros e acesso.
+//     Sem cargo: só visualiza (e edita o próprio perfil).
+// - Cada pessoa edita o próprio perfil, mas não o próprio cargo. Só a diretoria atribui cargos.
 // No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -28,7 +32,13 @@ service cloud.firestore {
       return exists(m) ? get(m).data.get('cargo', '') : '';
     }
     function diretoria() {
-      return ehDev() || meuCargo() == 'Diretor(a)';
+      return liberado() && (ehDev() || meuCargo() == 'Diretor(a)');
+    }
+    function podeEditar() {
+      return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee']);
+    }
+    function podeExcluir() {
+      return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)']);
     }
     function cargoNovo() {
       return request.resource.data.get('cargo', '');
@@ -40,6 +50,7 @@ service cloud.firestore {
       return cargoNovo() in ['', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'];
     }
 
+    // perfis
     match /membros/{uid} {
       allow read: if liberado();
       // perfil novo: sempre sem cargo (o DEV cria o dele já como DEV)
@@ -55,13 +66,37 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cargo', 'cargoPor', 'cargoEm'])
             && cargoAntigo() != 'DEV' && cargoAtribuivel())
       );
-      allow delete: if liberado() && (cargoAntigo() != 'DEV' || ehDev());
+      allow delete: if diretoria() && (cargoAntigo() != 'DEV' || ehDev());
     }
 
-    // todo o resto (eventos, salas, convidados, documentos, arquivos, permitidos...)
+    // perfis vindos de um backup: a diretoria grava; cada pessoa lê e apaga o seu ao entrar
+    match /perfisImportados/{email} {
+      allow read: if liberado();
+      allow create, update: if diretoria();
+      allow delete: if diretoria() || (liberado() && email == emailLogado());
+    }
+
+    // lista de acesso, parâmetros e quem é o DEV: só a diretoria
+    match /permitidos/{email} {
+      allow read: if liberado();
+      allow write: if diretoria() || (ehDev() && email == emailLogado());
+    }
+    match /parametros/{doc} {
+      allow read: if liberado();
+      allow write: if diretoria();
+    }
+    match /config/{doc} {
+      allow read: if liberado();
+      allow write: if ehDev() && (doc != 'dev' || request.resource.data.email == emailLogado());
+    }
+
+    // dados de eventos: eventos, salas, calendário, convidados, listas, documentos e arquivos
     match /{colecao}/{documento=**} {
       allow read: if liberado();
-      allow write: if liberado() && colecao != 'membros';
+      allow create, update: if podeEditar()
+        && !(colecao in ['membros', 'perfisImportados', 'permitidos', 'parametros', 'config']);
+      allow delete: if podeExcluir()
+        && !(colecao in ['membros', 'perfisImportados', 'permitidos', 'parametros', 'config']);
     }
   }
 }

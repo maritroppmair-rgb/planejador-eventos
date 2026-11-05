@@ -7,6 +7,7 @@
 "use strict";
 var EMU=/[?&]emulador\b/.test(location.search);
 var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados'];
+var saindo=false;
 var PARTE=700000; /* caracteres base64 por parte de arquivo (o Firestore aceita até 1 MiB por documento) */
 
 firebase.initializeApp(window.FIREBASE_CONFIG);
@@ -126,6 +127,7 @@ function entrar(){
 
 /* acesso: só quem está na lista "permitidos" lê e grava (as regras do Firestore garantem isso) */
 function aoMudarConta(u){
+  if(saindo)return;
   if(liberado&&(!u||!usuario||u.uid!==usuario.uid)){location.reload();return;}
   usuario=u;
   if(!u){estado('entrar');return;}
@@ -145,10 +147,12 @@ function aoMudarConta(u){
 }
 
 /* ---------- depois de entrar ---------- */
+/* quem é o DEV fica no banco (config/dev), não no código público. As regras só deixam o próprio DEV gravar esse documento. */
 function ehDev(email){
-  if(!window.DEV_EMAIL_SHA256||!crypto.subtle)return Promise.resolve(false);
-  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(email)).then(function(b){
-    var h=Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');return h===window.DEV_EMAIL_SHA256;
+  var ref=fs.doc('config/dev');
+  return ref.get().then(function(s){
+    if(s.exists)return String(s.data().email||'').toLowerCase()===email;
+    return ref.set({email:email,em:new Date().toISOString()}).then(function(){return true;},function(){return false;});
   }).catch(function(){return false;});
 }
 function posEntrada(u,email,dev){
@@ -161,11 +165,16 @@ function posEntrada(u,email,dev){
     return meu.set(novo).then(function(){return imp.delete();});});}).catch(function(){});
   montarSair();montarAcesso(email);montarBackup();
 }
+/* ao sair, apaga também a cópia dos dados guardada neste navegador (importante em computador compartilhado) */
+function sair(){
+  saindo=true;
+  auth.signOut().catch(function(){}).then(function(){return fs.terminate();}).then(function(){return fs.clearPersistence();}).catch(function(){}).then(function(){location.reload();});
+}
 function montarSair(){
   var menu=document.getElementById('acctmenu');if(!menu||document.getElementById('m-sair'))return;
   var b=el('button','mitem','Sair');b.type='button';b.id='m-sair';
   var sp=el('span',null,usuario&&usuario.email||'');b.appendChild(sp);
-  b.addEventListener('click',function(){auth.signOut();});
+  b.addEventListener('click',sair);
   menu.appendChild(b);
 }
 function armar(b,txt,orig,fn){
@@ -253,6 +262,8 @@ function importar(o,prog){
   var ops=[];
   COLECOES.forEach(function(c){var col=o.colecoes[c];if(!col)return;Object.keys(col).forEach(function(id){
     var d=Object.assign({},col[id]);
+    /* perfis não podem ser gravados por outra pessoa: viram perfis "a reivindicar", que cada um recebe no próximo login */
+    if(c==='membros'){if(usuario&&id===usuario.uid)return;var em=String(d.email||'').toLowerCase();if(!em)return;delete d.cargo;ops.push({p:'perfisImportados/'+em,d:d,t:JSON.stringify(d).length});return;}
     if(c==='arquivos'){var ps=d.__partes||[];delete d.__partes;ps.forEach(function(x,i){ops.push({p:'arquivos/'+id+'/partes/'+i,d:{d:x},t:x.length});});d.partes=ps.length;}
     ops.push({p:c+'/'+id,d:d,t:JSON.stringify(d).length});
   });});
