@@ -25,6 +25,21 @@ Pronto: na Base, abrindo um evento (▸), aparece **Inscrições → Criar Forms
 - **Lembrete:** sai sozinho a partir de 48 h antes do evento para cada inscrito, uma vez por pessoa. Quem se inscreve depois recebe na rodada seguinte. "Enviar lembrete agora" manda na hora para quem ainda não recebeu.
 - **Limite:** Gmail comum manda no máximo **100 e-mails por dia** por script. O que passar disso fica na fila e sai no dia seguinte (o app mostra "N na fila"). Para eventos grandes, aumente `HORAS_AVISO` (por exemplo, 72).
 
+## E-mails
+
+No painel do evento (Base), o bloco **E-mails para os inscritos** mostra cada tipo, quem já recebeu e a cota do dia:
+
+| Tipo | Quando sai | Padrão |
+| --- | --- | --- |
+| Confirmação de inscrição | até 10 min depois de cada inscrição | ligado |
+| Lembrete | a partir de 48 h antes | ligado |
+| Aviso no dia | 3 h antes do início | desligado |
+| Agradecimento (com link de avaliação) | no dia seguinte ao evento | ligado |
+| Aviso de mudança | quando data, horário, sala ou nome mudam; o app pergunta antes | manual |
+| Convite para a lista de novidades | quando alguém clica em "Convidar"; vai para quem marcou "quero receber novidades" em outras inscrições, com link para sair da lista | manual |
+
+Cada tipo tem o botão **Texto** (editar, ver a prévia e mandar um teste para si) e **Enviar agora**. Os textos padrão ficam em `MODELOS`, no código; o texto próprio de cada evento fica em `eventos/{id}.emails`. Quem recebeu fica em `inscricoes/{id}.envios`; quem saiu da lista de novidades fica em `descadastros`.
+
 ## Quando mudar o código
 
 Depois de colar uma versão nova do `Codigo.gs`: **Implantar → Gerenciar implantações → ✏️ → Versão: Nova versão → Implantar**. Assim a URL continua a mesma.

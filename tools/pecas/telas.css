@@ -87,3 +87,15 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
 .tmob{display:none}
 @media (max-width:700px){.tmob{display:inline}}
 .tresp{display:flex;align-items:center;gap:12px;font-size:14px}.tresp span{color:var(--muted);min-width:110px}.tresp select{flex:1;max-width:320px}
+.temr{display:flex;justify-content:space-between;gap:10px 14px;align-items:flex-start;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.temr:first-child{border-top:0;padding-top:0}
+.temr-t{min-width:0;flex:1 1 220px}.temr-t .tsub{white-space:normal}
+.temr-a{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tsw{display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:700;color:var(--muted)}.tsw input{accent-color:var(--wine);width:16px;height:16px}
+.temr-f{justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.tem-alerta{background:var(--amber-bg);color:var(--fg);border-left:4px solid var(--amber);border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:14px}
+.tem-alerta .btns{margin-top:8px}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}.tchips button{border:1px dashed var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:4px 8px;font:inherit;font-size:12px;font-family:ui-monospace,monospace;cursor:pointer}.tchips button:hover{border-color:var(--wine)}
+.tprev{width:100%;height:460px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.thist{min-width:0;width:100%;font-size:13px}.thist th,.thist td{padding:6px 8px;border-top:1px solid var(--line);text-align:left}
+#ed-corpo{font:inherit;font-size:14px;line-height:1.5}

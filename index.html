@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261106113822"></script>
-<script src="plataforma.js?v=20261106113822"></script>
+<script src="config.js?v=20261106120131"></script>
+<script src="plataforma.js?v=20261106120131"></script>
 </head>
 <body>
 
@@ -540,6 +540,18 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
 .tmob{display:none}
 @media (max-width:700px){.tmob{display:inline}}
 .tresp{display:flex;align-items:center;gap:12px;font-size:14px}.tresp span{color:var(--muted);min-width:110px}.tresp select{flex:1;max-width:320px}
+.temr{display:flex;justify-content:space-between;gap:10px 14px;align-items:flex-start;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.temr:first-child{border-top:0;padding-top:0}
+.temr-t{min-width:0;flex:1 1 220px}.temr-t .tsub{white-space:normal}
+.temr-a{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tsw{display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:700;color:var(--muted)}.tsw input{accent-color:var(--wine);width:16px;height:16px}
+.temr-f{justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.tem-alerta{background:var(--amber-bg);color:var(--fg);border-left:4px solid var(--amber);border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:14px}
+.tem-alerta .btns{margin-top:8px}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}.tchips button{border:1px dashed var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:4px 8px;font:inherit;font-size:12px;font-family:ui-monospace,monospace;cursor:pointer}.tchips button:hover{border-color:var(--wine)}
+.tprev{width:100%;height:460px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.thist{min-width:0;width:100%;font-size:13px}.thist th,.thist td{padding:6px 8px;border-top:1px solid var(--line);text-align:left}
+#ed-corpo{font:inherit;font-size:14px;line-height:1.5}
 </style>
 
 <script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
@@ -1248,15 +1260,14 @@ function inscHtml(e){
     if(e.status==='realizado')return '<span class="note">Sem Forms do app.</span>';
     return '<button type="button" class="btn small" data-iform="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando o Forms…':'Criar Forms de inscrição')+'</button>'+m+'<div class="note">O robô copia o Forms padrão com nome, data, horário, sala e convidado deste evento.</div>';}
   var u=safeUrl(i.url),ed=safeUrl(i.editUrl),pl=safeUrl(i.planilhaUrl);
-  var aviso=i.avisoEm?'lembrete enviado para '+(i.avisoEnviados||0)+(i.avisoPendentes?' · <b>'+i.avisoPendentes+' na fila</b> (limite diário de e-mails)':''):'lembrete automático '+(window.ROBO_HORAS||48)+' h antes';
   return '<div class="insc"><div class="inum"><b>'+(+i.total||0)+'</b> inscritos'+(i.novidades?' · '+i.novidades+' querem receber novidades':'')+' · '+(i.aberto===false?'<span class="chip neutral">fechado</span>':'<span class="chip ok">aberto</span>'+(i.fechaEm?' <span class="note">até '+esc(hhmm(i.fechaEm))+'</span>':''))+'</div>'+
     '<div class="ilinks">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">Link para divulgar ↗</a><button type="button" class="btn small ghost" data-icopy="'+esc(u)+'">Copiar link</button>':'')+(ed?'<a href="'+esc(ed)+'" target="_blank" rel="noopener">Editar Forms</a>':'')+(pl?'<a href="'+esc(pl)+'" target="_blank" rel="noopener">Planilha de respostas</a>':'')+'</div>'+
-    '<div class="note">'+aviso+' · atualizado '+esc(hhmm(i.sincronizadoEm))+'. Se o evento mudar, o Forms se atualiza sozinho em até 10 min.</div>'+
-    (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-isync="'+id+'"'+(oc?' disabled':'')+'>Atualizar inscritos</button><button type="button" class="btn small ghost" data-iatual="'+id+'"'+(oc?' disabled':'')+' title="Reaplica nome, data, horário, sala e convidado do evento no mesmo Forms">Atualizar Forms</button><button type="button" class="btn small ghost" data-iaviso="'+id+'"'+(oc?' disabled':'')+'>Enviar lembrete agora</button></div>')+m+'</div>';
+    '<div class="note">Atualizado '+esc(hhmm(i.sincronizadoEm))+'. Se o evento mudar, o Forms se atualiza sozinho em até 10 min.</div>'+
+    (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-isync="'+id+'"'+(oc?' disabled':'')+'>Atualizar inscritos</button><button type="button" class="btn small ghost" data-iatual="'+id+'"'+(oc?' disabled':'')+' title="Reaplica nome, data, horário, sala e convidado do evento no mesmo Forms">Atualizar Forms</button></div>')+m+'</div>';
 }
-function robo(acao,eid){
+function robo(acao,eid,extra){
   var u=window.firebase&&firebase.auth().currentUser;if(!u)return Promise.reject(new Error('Faça login de novo.'));
-  return u.getIdToken().then(function(t){return fetch(window.ROBO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:acao,evento:eid,idToken:t})});})
+  return u.getIdToken().then(function(t){return fetch(window.ROBO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({},extra||{},{acao:acao,evento:eid,idToken:t}))});})
     .then(function(r){return r.json();},function(){throw new Error('Não deu para falar com o robô. Confira a internet.');})
     .then(function(j){if(!j||!j.ok)throw new Error(j&&j.erro||'O robô não respondeu.');return j;});
 }
@@ -1848,18 +1859,88 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       fld(e,'rcb','Custo básico (R$)',dn?(e.custoBasico!=null?e.custoBasico:(e.custo!=null?e.custo:'')):'',0,'0.01')+fld(e,'rcn','Custo não previsto (R$)',g('custoNaoPrev'),0,'0.01')+
       '<div class="field"><label for="rmt-'+esc(e.id)+'">Método de check-in</label><select id="rmt-'+esc(e.id)+'"><option value="">—</option><option value="papel"'+(e.metodoCheckin==='papel'?' selected':'')+'>Lista de papel</option><option value="qr"'+(e.metodoCheckin==='qr'?' selected':'')+'>QR</option></select></div></div>'+
       '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">Salvar resultado</button>'+(dn?'<button class="btn ghost" type="button" data-treg="">Cancelar</button>':'')+'</div></form>';}
+  /* ----- e-mails para os inscritos ----- */
+  var ETIPOS=[['confirmacao','Confirmação de inscrição','até 10 min depois de cada inscrição',true],['lembrete','Lembrete','a partir de 48 h antes',true],['dia','Aviso no dia','3 h antes do início',false],['agradecimento','Agradecimento','no dia seguinte ao evento',true]];
+  var bEmail=null,rasc={},prevHtml={},emMsg={},emOcup={},alcance={},hist={},modelos=null;
+  function enome(t){var x={mudanca:'Aviso de mudança',divulgacao:'Convite para a lista de novidades'}[t];if(x)return x;for(var i=0;i<ETIPOS.length;i++)if(ETIPOS[i][0]===t)return ETIPOS[i][1];return t;}
+  function estado(i,t){var x=(i.emails||{})[t];if(!x||!x.enviados&&!x.erros)return 'nada enviado ainda';
+    return 'enviado para '+x.enviados+(x.pendentes?' · <b>'+x.pendentes+' na fila</b>':'')+(x.erros?' · <span style="color:var(--red)">'+x.erros+' com erro</span>':'')+(x.em?' · último em '+esc(hhmm(x.em)):'');}
+  function emailsBlk(e){var i=e.inscricao,cfg=e.emails||{},id=esc(e.id),oc=emOcup[e.id],ed=pode('editar'),h='';
+    if(i.mudanca&&i.mudanca.pendente)h+='<div class="tem-alerta"><b>O evento mudou</b>: '+esc(i.mudanca.texto||'')+'. Avisar os '+(+i.total||0)+' inscritos?'+(ed?'<div class="btns"><button type="button" class="btn small" data-em-env="mudanca">Avisar inscritos</button><button type="button" class="btn small ghost" data-em-txt="mudanca">Ver texto</button><button type="button" class="btn small ghost" data-em-ign="1">Não avisar</button></div>':'')+'</div>';
+    ETIPOS.forEach(function(T){var t=T[0],c=cfg[t]||{},auto=c.auto!=null?!!c.auto:T[3];
+      h+='<div class="temr"><div class="temr-t"><b>'+T[1]+'</b>'+(c.corpo?' <span class="ttag">texto próprio</span>':'')+'<span class="tsub">'+(auto?'automático: '+T[2]:'desligado')+'</span><span class="tsub">'+estado(i,t)+'</span></div>'+
+        (ed?'<div class="temr-a"><label class="tsw"><input type="checkbox" data-em-auto="'+t+'"'+(auto?' checked':'')+'> automático</label><button type="button" class="btn small ghost" data-em-txt="'+t+'">Texto</button><button type="button" class="btn small ghost" data-em-env="'+t+'"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';});
+    if(i.mudanca&&!i.mudanca.pendente)h+='<div class="temr"><div class="temr-t"><b>Aviso de mudança</b><span class="tsub">'+esc(i.mudanca.texto||'')+'</span><span class="tsub">'+estado(i,'mudanca')+'</span></div>'+(ed?'<div class="temr-a"><button type="button" class="btn small ghost" data-em-txt="mudanca">Texto</button><button type="button" class="btn small ghost" data-em-env="mudanca"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';
+    var aberto=i.aberto!==false,al=alcance[e.id];
+    h+='<div class="temr"><div class="temr-t"><b>Convite para a lista de novidades</b><span class="tsub">'+(aberto?'manda o link de inscrição para quem pediu novidades em outras inscrições'+(al!=null?' · <b>'+al+' pessoas</b> na lista (fora quem já se inscreveu)':''):'só com inscrições abertas')+'</span><span class="tsub">'+estado(i,'divulgacao')+(i.divulgacaoAtiva?' · continua sozinho quando a cota renovar':'')+'</span></div>'+
+      (ed?'<div class="temr-a"><button type="button" class="btn small ghost" data-em-txt="divulgacao">Texto</button>'+(aberto?'<button type="button" class="btn small ghost" data-em-env="divulgacao"'+(oc?' disabled':'')+'>Convidar'+(al!=null?' '+al:'')+'</button>':'')+'</div>':'')+'</div>';
+    h+='<div class="btns temr-f"><span class="note">'+(i.cota!=null?'Cota de e-mails hoje: <b>'+i.cota+'</b> restantes (Gmail comum: 100 por dia).':'Gmail comum: até 100 e-mails por dia; o que passar fica na fila.')+'</span><button type="button" class="btn small ghost" data-em-hist="1">'+(hist[e.id]?'Atualizar lista':'Ver quem recebeu')+'</button></div>';
+    if(hist[e.id])h+=histTab(hist[e.id]);
+    if(emMsg[e.id])h+='<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>';
+    return blk('E-mails para os inscritos',h);}
+  function histTab(d){var env=d.envios||{},rs=(d.respostas||[]).filter(function(r){return r.email;}),tps=['confirmacao','lembrete','dia','agradecimento','mudanca'].filter(function(t){return env[t]||t==='lembrete'&&d.avisados;});
+    if(!rs.length)return '<p class="note">Ninguém com e-mail inscrito ainda.</p>';
+    var lem=(env.lembrete&&env.lembrete.emails||[]).concat(d.avisados||[]);
+    function tem(t,m){if(t==='lembrete')return lem.indexOf(m)>=0;var x=env[t]||{};if((x.emails||[]).indexOf(m)>=0)return 1;if((x.erros||[]).some(function(y){return y.email===m;}))return -1;return 0;}
+    return '<div class="tablewrap" style="margin-top:8px"><table class="thist"><thead><tr><th>Inscrito</th>'+tps.map(function(t){return '<th>'+esc(enome(t).split(' ')[0])+'</th>';}).join('')+'</tr></thead><tbody>'+
+      rs.map(function(r){return '<tr><td><span class="tn">'+esc(r.nome||r.email)+'</span><span class="tsub">'+esc(r.email)+(r.novidades?' · quer novidades':'')+'</span></td>'+tps.map(function(t){var v=tem(t,r.email);return '<td>'+(v===1||v===true?'<span class="chip ok">✓</span>':v===-1?'<span class="chip bad">erro</span>':'<span class="note">—</span>')+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';}
+  var CAMPOS=[['{nome}','primeiro nome'],['{evento}','nome do evento'],['{quando}','data e hora'],['{sala}','sala'],['{convidado}','convidado'],['{detalhes}','quadro com quando/onde/com'],['{link_inscricao}','botão de inscrição'],['{link_avaliacao}','botão de avaliação'],['{mudanca}','o que mudou']];
+  function editor(e,t){var k=e.id+'|'+t,r=rasc[k],ph=prevHtml[k];
+    var corpo=blk('',(e.inscricao&&e.inscricao.mudanca&&t==='mudanca'?'<p class="note" style="margin:0 0 10px">O que mudou: '+esc(e.inscricao.mudanca.texto||'')+'</p>':'')+
+      '<div class="field"><label for="ed-assunto">Assunto</label><input id="ed-assunto" data-ed="assunto" value="'+esc(r.assunto)+'"></div>'+
+      '<div class="field" style="margin-top:10px"><label for="ed-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ed-corpo" data-ed="corpo" rows="10">'+esc(r.corpo)+'</textarea></div>'+
+      (t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
+      '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='divulgacao');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" title="'+c[1]+'">'+c[0]+'</button>';}).join('')+'</div>')+
+      blk('Prévia',ph?'<iframe class="tprev" sandbox="" srcdoc="'+esc(ph)+'" title="Prévia do e-mail"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia” para ver o e-mail como chega, com o nome de exemplo.</p>')+
+      (emMsg[e.id]?'<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>':'');
+    var oc=emOcup[e.id];
+    var rod='<div class="btns"><button type="button" class="btn" data-ed-salvar="1"'+(oc?' disabled':'')+'>Salvar texto</button><button type="button" class="btn ghost" data-ed-prev="1"'+(oc?' disabled':'')+'>Ver prévia</button><button type="button" class="btn ghost" data-ed-teste="1"'+(oc?' disabled':'')+'>Enviar teste para mim</button></div><div class="btns"><button type="button" class="btn small ghost" data-ed-pad="1">Voltar ao texto padrão</button><button type="button" class="btn small ghost" data-ed-voltar="1">← Voltar</button></div>';
+    return {titulo:enome(t),sub:esc(e.nome||''),corpo:corpo,rodape:rod};}
+  function emAcao(id,acao,extra,ok){emOcup[id]=1;delete emMsg[id];painelAtualizar('view-base');
+    robo(acao,id,extra).then(function(j){var m=ok(j);if(m)emMsg[id]={t:m};},function(err){emMsg[id]={t:err.message,erro:1};}).then(function(){delete emOcup[id];painelAtualizar('view-base');});}
+  function carregarModelos(){if(modelos)return Promise.resolve(modelos);return robo('modelos','x').then(function(j){modelos=j.modelos;return modelos;});}
   function montar(id){var e=events.filter(function(x){return x.id===id;})[0];if(!e)return null;
+    if(bEmail&&bEmail.id===id)return editor(e,bEmail.tipo);
     var today=iso(new Date()),dn=e.status==='realizado',late=!dn&&e.data&&e.data<today,reg=pode('editar')&&(bReg===id||late);
     var quando=e.data?D(e.data).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'sem data';
     var sub=quando+(e.hora?' · '+e.hora:'')+(e.sala?' · '+esc(e.sala):'')+' '+situ(e,today);
     var corpo=blk('',pode('editar')?'<label class="tresp"><span>Responsável</span><select data-tresp="'+esc(id)+'"></select></label>':'<p class="tresp" style="margin:0"><span>Responsável</span><b>'+esc(e.responsavel||'—')+'</b></p>');
     if(reg)corpo+=blk(dn?'Editar resultado':'Registrar resultado',(dn?'':'<p class="note" style="margin:0 0 10px">O evento já aconteceu. Preencha com a lista de presença: é isso que calibra os próximos.</p>')+regForm(e));
     corpo+=blk(dn?'Resultado e previsto × real':'Detalhes',detail(e));
+    if(window.ROBO_URL&&e.inscricao&&e.inscricao.formId)corpo+=emailsBlk(e);
     var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Registrar resultado</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
-  function abrir(id){painelAbrir({sec:'view-base',montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
+  function abrir(id){var ev0=events.filter(function(x){return x.id===id;})[0];
+    if(window.ROBO_URL&&ev0&&ev0.inscricao&&ev0.inscricao.formId&&ev0.inscricao.aberto!==false&&alcance[id]==null&&pode('editar'))robo('alcance',id).then(function(j){alcance[id]=j.alcance;painelAtualizar('view-base');},function(){});
+    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
   function clique(e){var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
   $('etable').addEventListener('click',clique);$('etable').addEventListener('keydown',clique);
+  var ultimoCampo=null;
+  sec.addEventListener('input',function(e){var f=e.target.dataset&&e.target.dataset.ed;if(!f||!bEmail)return;var k=bEmail.id+'|'+bEmail.tipo;rasc[k][f]=e.target.value;});
+  sec.addEventListener('focusin',function(e){if(e.target.dataset&&(e.target.dataset.ed==='assunto'||e.target.dataset.ed==='corpo'))ultimoCampo=e.target;});
+  sec.addEventListener('change',function(e){var a=e.target.closest('[data-em-auto]');if(!a||!TP||!db)return;var id=TP.o.chave,up={};up['emails.'+a.dataset.emAuto+'.auto']=a.checked;
+    db.doc('eventos/'+id).update(up).catch(function(){alertMsg('Não foi possível salvar.');});});
+  sec.addEventListener('click',function(e){if(!TP||TP.o.sec!=='view-base')return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;var b;
+    if((b=e.target.closest('[data-em-env]'))){var t=b.dataset.emEnv,n=t==='divulgacao'?alcance[id]:(+ev.inscricao.total||0);
+      confirma(b,'Confirmar: enviar'+(n!=null?' para '+n:''),function(){emAcao(id,'enviar',{tipo:t},function(j){return j.enviados?'Enviado para '+j.enviados+(j.pendentes?'; '+j.pendentes+' ficaram na fila (limite diário).':'.'):(j.pendentes?'A cota de hoje acabou: '+j.pendentes+' na fila.':'Ninguém novo para receber esse e-mail.');});});return;}
+    if((b=e.target.closest('[data-em-ign]'))){db.doc('eventos/'+id).update({'inscricao.mudanca.pendente':false}).catch(function(){});return;}
+    if((b=e.target.closest('[data-em-hist]'))){db.doc('inscricoes/'+id).get().then(function(d){hist[id]=d.exists?d.data():{};painelAtualizar('view-base');},function(){emMsg[id]={t:'Não foi possível carregar a lista.',erro:1};painelAtualizar('view-base');});return;}
+    if((b=e.target.closest('[data-em-txt]'))){var t2=b.dataset.emTxt;emOcup[id]=1;
+      carregarModelos().then(function(M){var k=id+'|'+t2,c=(ev.emails||{})[t2]||{};if(!rasc[k])rasc[k]={assunto:c.assunto||M[t2].assunto,corpo:c.corpo||M[t2].corpo,link:ev.linkAvaliacao||''};bEmail={id:id,tipo:t2};},function(err){emMsg[id]={t:err.message,erro:1};})
+        .then(function(){delete emOcup[id];painelAtualizar('view-base');var x=TP&&TP.dr.querySelector('.tp-body');if(x)x.scrollTop=0;});return;}
+    if(!bEmail)return;var k=bEmail.id+'|'+bEmail.tipo,tp=bEmail.tipo,r=rasc[k];
+    if((b=e.target.closest('[data-ed-ins]'))){var c=ultimoCampo||TP.dr.querySelector('[data-ed=corpo]');if(c){var a0=c.selectionStart==null?c.value.length:c.selectionStart,a1=c.selectionEnd==null?a0:c.selectionEnd,txt=b.dataset.edIns;
+      if(txt.charAt(1)==='d'||txt.indexOf('link_')>0)txt=(a0&&c.value.charAt(a0-1)!=='\n'?'\n\n':'')+txt+'\n\n';
+      c.value=c.value.slice(0,a0)+txt+c.value.slice(a1);r[c.dataset.ed]=c.value;c.focus();c.selectionStart=c.selectionEnd=a0+txt.length;}return;}
+    if(e.target.closest('[data-ed-voltar]')){bEmail=null;painelAtualizar('view-base');return;}
+    if(e.target.closest('[data-ed-pad]')){carregarModelos().then(function(M){r.assunto=M[tp].assunto;r.corpo=M[tp].corpo;delete prevHtml[k];emMsg[id]={t:'Texto padrão de volta. Salve para valer.'};painelAtualizar('view-base');});return;}
+    var texto={assunto:r.assunto,corpo:r.corpo,linkAvaliacao:r.link||''};
+    if(e.target.closest('[data-ed-prev]')){emAcao(id,'previa',{tipo:tp,texto:texto},function(j){prevHtml[k]=j.html;return '';});return;}
+    if(e.target.closest('[data-ed-teste]')){emAcao(id,'teste',{tipo:tp,texto:texto},function(j){return 'Teste enviado para '+j.enviadoPara+'.';});return;}
+    if(e.target.closest('[data-ed-salvar]')&&db){var up={};
+      carregarModelos().then(function(M){var pad=r.assunto===M[tp].assunto&&r.corpo===M[tp].corpo;up['emails.'+tp+'.assunto']=pad?null:r.assunto;up['emails.'+tp+'.corpo']=pad?null:r.corpo;if(tp==='agradecimento')up.linkAvaliacao=r.link||'';
+        return db.doc('eventos/'+id).update(up);}).then(function(){emMsg[id]={t:'Texto salvo. Os próximos envios usam este texto.'};painelAtualizar('view-base');},function(){emMsg[id]={t:'Não foi possível salvar.',erro:1};painelAtualizar('view-base');});}
+  });
   sec.addEventListener('change',function(e){var r=e.target.closest('[data-tresp]');if(!r||!db)return;var nm=r.value,m=(window.__membros||[]).filter(function(x){return x.nome===nm;})[0];
     db.doc('eventos/'+r.dataset.tresp).update({responsavel:nm,responsavelId:m?m.id:''}).catch(function(){alertMsg('Não foi possível salvar o responsável.');});});
   document.addEventListener('membros',function(){painelAtualizar('view-base');});
