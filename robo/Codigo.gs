@@ -37,16 +37,19 @@ function doPost(e) {
     var u = quemChama(b.idToken);
     if (CFG.CARGOS_QUE_EDITAM.indexOf(u.cargo) < 0) throw new Error('Seu cargo não permite usar as inscrições.');
     if (b.acao === 'modelos') out = { modelos: MODELOS, tipos: TIPOS };
+    else if (b.acao === 'mailingAtualizar') { atualizarMailing(); out = {}; }
     else {
-      if (!b.evento) throw new Error('Evento não informado.');
-      if (b.acao === 'criarForm') out = criarForm(b.evento, u);
+      if (b.acao === 'mailingPrevia') out = mailingPrevia(b.evento, b.texto, null);
+      else if (b.acao === 'mailingTeste') out = mailingPrevia(b.evento, b.texto, u.email);
+      else if (!b.evento) throw new Error('Evento não informado.');
+      else if (b.acao === 'criarForm') out = criarForm(b.evento, u);
       else if (b.acao === 'sincronizar') out = sincronizarEvento(b.evento);
       else if (b.acao === 'atualizarForm') out = sincronizarEvento(b.evento, null, true);
       else if (b.acao === 'enviarAviso') out = enviarTipo(b.evento, 'lembrete');
       else if (b.acao === 'enviar') out = enviarManual(b.evento, b.tipo);
       else if (b.acao === 'previa') out = previa(b.evento, b.tipo, b.texto, null);
       else if (b.acao === 'teste') out = previa(b.evento, b.tipo, b.texto, u.email);
-      else if (b.acao === 'alcance') out = { alcance: listaNovidades(fsGet('eventos/' + b.evento) || {}).length };
+      else if (b.acao === 'mailingAgora') out = mailingEnviarAgora(b.evento, b.envio);
       else throw new Error('Ação desconhecida.');
     }
     out.ok = true;
@@ -59,6 +62,7 @@ function doPost(e) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  if (p.c) return clique(p);
   if (p.sair) {
     var email = '';
     try { email = Utilities.newBlob(Utilities.base64DecodeWebSafe(p.sair)).getDataAsString(); } catch (x) { }
@@ -247,7 +251,7 @@ var TIPOS = {
   dia:           { nome: 'Aviso no dia',             auto: false, quando: '3 h antes do início' },
   agradecimento: { nome: 'Agradecimento',            auto: true,  quando: 'no dia seguinte ao evento' },
   mudanca:       { nome: 'Aviso de mudança',         auto: false, quando: 'quando data, horário, sala ou nome mudam (você confirma)' },
-  divulgacao:    { nome: 'Convite para a lista de novidades', auto: false, quando: 'quando você mandar' }
+  mailing:       { nome: 'Mailing de eventos',       auto: false, quando: 'programado na aba Mailing' }
 };
 var MODELOS = {
   confirmacao:   { assunto: 'Inscrição confirmada: {evento}', corpo: 'Oi, {nome}!\n\nSua inscrição no evento {evento} está confirmada. Anota aí:\n\n{detalhes}\n\nPerto do dia a gente manda um lembrete. Até lá!' },
@@ -255,18 +259,20 @@ var MODELOS = {
   dia:           { assunto: 'É hoje: {evento} às {hora}', corpo: 'Oi, {nome}!\n\nHoje tem {evento}, e a gente te espera.\n\n{detalhes}\n\nChegue uns minutinhos antes para o check-in.' },
   agradecimento: { assunto: 'Obrigado por participar: {evento}', corpo: 'Oi, {nome}!\n\nObrigado por ter se inscrito no evento {evento}. Sua opinião ajuda a gente a fazer eventos cada vez melhores:\n\n{link_avaliacao}\n\nAté o próximo!' },
   mudanca:       { assunto: 'Mudança no evento: {evento}', corpo: 'Oi, {nome}!\n\nO evento {evento} mudou: {mudanca}.\n\nComo fica agora:\n\n{detalhes}\n\nSua inscrição continua valendo. Se não puder mais ir, não precisa fazer nada.' },
-  divulgacao:    { assunto: 'Novo evento da Feashion: {evento}', corpo: 'Oi, {nome}!\n\nVocê pediu para receber os próximos eventos da Feashion, então aqui vai o convite:\n\n{detalhes}\n\nAs vagas são limitadas. Inscreva-se pelo link:\n\n{link_inscricao}' }
+  mailing:       { assunto: 'Novo evento da Feashion: {evento}', corpo: 'Oi, {nome}!\n\nVocê pediu para receber os próximos eventos da Feashion, então aqui vai o convite:\n\n{detalhes}\n\nAs vagas são limitadas e as inscrições fecham {fechamento}. Garanta a sua:\n\n{link_inscricao}' }
 };
 
 /** Monta assunto e HTML de um e-mail para uma pessoa. `txt` = texto em edição no app (opcional). */
-function render(tipo, ev, r, txt) {
-  var base = MODELOS[tipo], prop = (ev.emails && ev.emails[tipo]) || {};
+function render(tipo, ev, r, txt, extra) {
+  extra = extra || {};
+  var base = MODELOS[tipo], prop = extra.texto || (ev.emails && ev.emails[tipo]) || {};
   var t = { assunto: (txt && txt.assunto) || prop.assunto || base.assunto, corpo: (txt && txt.corpo) || prop.corpo || base.corpo };
   var insc = ev.inscricao || {}, linkAval = (txt && txt.linkAvaliacao != null) ? txt.linkAvaliacao : (ev.linkAvaliacao || '');
   var v = {
     nome: String((r && r.nome) || '').trim().split(/\s+/)[0] || 'pessoal', evento: ev.nome || '', data_curta: ev.data ? dataCurta(ev.data) : '',
     hora: ev.hora ? horaBR(ev.hora) : '', quando: quando(ev), sala: ev.sala || 'a confirmar', convidado: ev.convidado || '',
-    mudanca: (insc.mudanca && insc.mudanca.texto) || 'algumas informações mudaram', link_inscricao: insc.url || '', link_avaliacao: linkAval
+    mudanca: (insc.mudanca && insc.mudanca.texto) || 'algumas informações mudaram', link_inscricao: extra.link || insc.url || '', link_avaliacao: linkAval,
+    fechamento: ev.data ? dataHoraBR(fechamento(ev)) : ''
   };
   var troca = function (s, html) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return k in v ? (html ? esc(v[k]) : v[k]) : m; }); };
   var linha = function (k, x) { return x ? '<tr><td style="padding:4px 14px 4px 0;color:#6b6259;font-size:12px;text-transform:uppercase;letter-spacing:.08em;vertical-align:top">' + k + '</td><td style="padding:4px 0;font-size:15px;color:#1a1714"><b>' + esc(x) + '</b></td></tr>' : ''; };
@@ -280,7 +286,7 @@ function render(tipo, ev, r, txt) {
     var h = troca(esc(p).replace(/\{(\w+)\}/g, '{$1}'), true).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#7f0606">$1</a>');
     return '<p style="font-size:15px;color:#1a1714;line-height:1.55;margin:0 0 14px">' + h + '</p>';
   }).join('');
-  var rodape = tipo === 'divulgacao'
+  var rodape = tipo === 'mailing'
     ? 'Você recebeu porque pediu novidades da Feashion numa inscrição. <a href="' + esc(linkSair(r && r.email)) + '" style="color:#8a8178">Não quero mais receber convites</a>'
     : 'Você recebeu porque se inscreveu em ' + esc(ev.nome || 'um evento da Feashion') + '.';
   var html = '<div style="background:#f3efe8;padding:24px 12px;font-family:Arial,Helvetica,sans-serif">' +
@@ -297,21 +303,8 @@ function render(tipo, ev, r, txt) {
 function destinatarios(tipo, ev, ins) {
   var rs = (ins.respostas || []).filter(function (r) { return r.email; });
   if (tipo === 'confirmacao') { var desde = (ev.inscricao && ev.inscricao.emailsDesde) || ''; return rs.filter(function (r) { return !desde || r.em >= desde; }); }
-  if (tipo === 'divulgacao') return listaNovidades(ev, rs);
   return rs;
 }
-/** Quem marcou "quero receber novidades" em qualquer inscrição, menos quem já está inscrito neste evento e quem saiu da lista. */
-function listaNovidades(ev, inscritos) {
-  var fora = {};
-  (inscritos || (fsGet('inscricoes/' + ev._id) || {}).respostas || []).forEach(function (r) { if (r.email) fora[r.email] = 1; });
-  fsList('descadastros').forEach(function (d) { if (d.email) fora[String(d.email).toLowerCase()] = 1; });
-  var out = {};
-  fsList('inscricoes').forEach(function (i) {
-    (i.respostas || []).forEach(function (r) { if (r.email && r.novidades === true && !fora[r.email]) out[r.email] = r; });
-  });
-  return Object.keys(out).map(function (k) { return out[k]; });
-}
-
 /** Envia um tipo de e-mail para quem ainda não recebeu, respeitando a cota diária. */
 function enviarTipo(eid, tipo) {
   if (!MODELOS[tipo]) throw new Error('Tipo de e-mail desconhecido.');
@@ -328,7 +321,7 @@ function enviarTipo(eid, tipo) {
     var ja = {}; e.emails.forEach(function (m) { ja[m] = 1; });
     var falhas = {}; e.erros.forEach(function (x) { falhas[x.email] = (falhas[x.email] || 0) + 1; });
     var fila = destinatarios(tipo, ev, ins).filter(function (r) { return !ja[r.email] && (falhas[r.email] || 0) < 2; });
-    var cota = MailApp.getRemainingDailyQuota(), reserva = tipo === 'divulgacao' ? 10 : 0, n = 0;
+    var cota = MailApp.getRemainingDailyQuota(), reserva = 0, n = 0;
     for (var i = 0; i < fila.length && cota > reserva; i++) {
       var r = fila[i];
       try {
@@ -348,7 +341,6 @@ function enviarTipo(eid, tipo) {
     insc.emails = insc.emails || {};
     insc.emails[tipo] = { enviados: e.emails.length, pendentes: pend, erros: e.erros.length, em: e.em || null };
     if (tipo === 'mudanca' && insc.mudanca) { insc.mudanca.pendente = false; insc.mudanca.enviar = pend > 0; }
-    if (tipo === 'divulgacao') insc.divulgacaoAtiva = pend > 0;
     insc.cota = MailApp.getRemainingDailyQuota(); insc.cotaEm = agora;
     fsPatch('eventos/' + eid, { inscricao: insc });
     return { enviados: n, pendentes: pend, inscricao: insc };
@@ -357,17 +349,22 @@ function enviarTipo(eid, tipo) {
   }
 }
 
-/** Envio pedido pelo botão do app. Mudança e convite continuam sozinhos nos dias seguintes se a cota acabar. */
+/** Envio pedido pelo botão do app. O aviso de mudança continua sozinho nos dias seguintes se a cota acabar. */
 function enviarManual(eid, tipo) {
-  if (tipo === 'divulgacao') {
-    var ev = fsGet('eventos/' + eid);
-    if (!ev || !ev.inscricao || !ev.inscricao.formId) throw new Error('Crie o Forms de inscrição antes de convidar a lista.');
-    if (ev.inscricao.aberto === false || new Date() >= fechamento(ev)) throw new Error('As inscrições desse evento já fecharam.');
-  }
+  if (tipo === 'mudanca') { var ev = fsGet('eventos/' + eid); if (ev && ev.inscricao && ev.inscricao.mudanca) { ev.inscricao.mudanca.enviar = true; fsPatch('eventos/' + eid, { inscricao: ev.inscricao }); } }
   return enviarTipo(eid, tipo);
 }
 
 /** Prévia (ou teste para o próprio e-mail) com o texto que está sendo editado no app. */
+function mailingPrevia(eid, texto, para) {
+  var cfg = fsGet('mailingConfig/geral') || {}, ev = eid ? fsGet('eventos/' + eid) : null;
+  if (!ev) { var fut = fsList('eventos').filter(function (x) { return x.data && inicio(x) > new Date(); }).sort(function (a, b) { return a.data < b.data ? -1 : 1; }); ev = fut[0] || { nome: 'Evento de exemplo', data: Utilities.formatDate(new Date(Date.now() + 7 * 864e5), Session.getScriptTimeZone(), 'yyyy-MM-dd'), hora: '19:00', sala: 'Sala G2', inscricao: { url: 'https://forms.gle/exemplo' } }; }
+  var t = texto || { assunto: cfg.assunto, corpo: cfg.corpo };
+  var m = render('mailing', ev, { nome: 'Fulana de Tal', email: para || 'exemplo@usp.br' }, null, { texto: { assunto: t.assunto || MODELOS.mailing.assunto, corpo: t.corpo || MODELOS.mailing.corpo } });
+  if (para) { MailApp.sendEmail({ to: para, subject: '[TESTE] ' + m.assunto, htmlBody: m.html, name: CFG.REMETENTE }); return { enviadoPara: para }; }
+  return { assunto: m.assunto, html: m.html, evento: ev.nome };
+}
+
 function previa(eid, tipo, texto, para) {
   var ev = fsGet('eventos/' + eid);
   if (!ev) throw new Error('Evento não encontrado.');
@@ -400,9 +397,159 @@ function descreverMudanca(a, b) {
 function quando(ev) { return ev.data ? dataLonga(ev.data) + (ev.hora ? ', às ' + horaBR(ev.hora) : '') : ''; }
 function autoLigado(ev, tipo) { var c = (ev.emails || {})[tipo]; return c && c.auto != null ? !!c.auto : TIPOS[tipo].auto; }
 
+/* ---------- MAILING DE EVENTOS ----------
+ * mailing/{hash}          pessoas que marcaram "quero receber novidades" (uma por e-mail)
+ * descadastros/{hash}     quem saiu (pelo link) ou foi tirado pela equipe
+ * mailingConfig/geral     texto base, hora padrão, intervalo mínimo entre envios, último envio
+ * eventos/{id}.mailing    { excluido, padraoCriado, envios:[{id, quando, status, assunto?, corpo?, enviados, pendentes, cliques}] }
+ * mailingEnvios/{id}_{n}  quem recebeu cada envio e os cliques (com hora)
+ */
+function atualizarMailing() {
+  var fora = {};
+  fsList('descadastros').forEach(function (d) { if (d.email) fora[String(d.email).toLowerCase()] = d.em || ''; });
+  var lista = {}; fsList('mailing').forEach(function (m) { lista[m._id] = m; });
+  fsList('inscricoes').forEach(function (i) {
+    (i.respostas || []).forEach(function (r) {
+      if (!r.email || r.novidades !== true) return;
+      var h = hashEmail(r.email);
+      if (fora[r.email] != null) { if (!(r.em > fora[r.email])) return; fsDel('descadastros/' + h); delete fora[r.email]; } // marcou de novo depois de sair: volta
+      var m = lista[h], ev = i._id;
+      if (!m) { m = { email: r.email, nome: r.nome || '', desde: r.em, eventos: [ev], atualizadoEm: new Date().toISOString() }; lista[h] = m; fsPatch('mailing/' + h, m); }
+      else if ((m.eventos || []).indexOf(ev) < 0) { m.eventos = (m.eventos || []).concat([ev]); if (r.nome) m.nome = r.nome; fsPatch('mailing/' + h, { eventos: m.eventos, nome: m.nome || '', atualizadoEm: new Date().toISOString() }); }
+    });
+  });
+}
+
+function mailingCfg() {
+  var c = fsGet('mailingConfig/geral') || {};
+  if (!c.desde) { c.desde = new Date().toISOString(); fsPatch('mailingConfig/geral', { desde: c.desde }); }
+  c.hora = /^\d{1,2}:\d{2}$/.test(c.hora || '') ? c.hora : '08:00';
+  c.intervaloDias = c.intervaloDias != null && c.intervaloDias !== '' ? +c.intervaloDias : 2;
+  return c;
+}
+function diaSeguinte(iso, hora) {
+  var d = new Date(iso), tz = Session.getScriptTimeZone(), dia = Utilities.formatDate(new Date(d.getTime() + 864e5), tz, 'yyyy-MM-dd'), p = partes(dia), h = hora.split(':');
+  return new Date(p.a, p.m - 1, p.d, +h[0], +h[1]);
+}
+
+/** Cria o envio padrão (dia seguinte à criação do evento, na hora configurada) e manda o que estiver na hora. */
+function rotinaMailing() {
+  var cfg = mailingCfg(), agora = new Date();
+  fsList('eventos').forEach(function (ev) {
+    if (!ev.data || inicio(ev) <= agora) return;
+    var ml = ev.mailing || {};
+    if (ml.excluido) return;
+    if (!ml.padraoCriado && ev.criadoEm && ev.criadoEm >= cfg.desde) {
+      ml.envios = (ml.envios || []).concat([{ id: 'p' + Date.now(), padrao: true, quando: diaSeguinte(ev.criadoEm, cfg.hora).toISOString(), status: 'agendado' }]);
+      ml.padraoCriado = true; fsPatch('eventos/' + ev._id, { mailing: ml }); ev.mailing = ml;
+    }
+    (ml.envios || []).forEach(function (en) {
+      if ((en.status === 'agendado' || en.status === 'enviando' || en.status === 'aguardando') && new Date(en.quando) <= agora) {
+        try { enviarMailing(ev._id, en.id, false); } catch (e) { console.error('Mailing ' + ev._id + ' ' + en.id + ': ' + e); }
+      }
+    });
+  });
+}
+
+function mailingEnviarAgora(eid, envioId) { return enviarMailing(eid, envioId, true); }
+
+/** Manda um envio do mailing para quem está na lista e ainda não recebeu (fora quem já se inscreveu no evento). */
+function enviarMailing(eid, envioId, agoraMesmo) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var ev = fsGet('eventos/' + eid), cfg = mailingCfg(), agora = new Date();
+    if (!ev || !ev.mailing) throw new Error('Envio não encontrado.');
+    var ml = ev.mailing, en = (ml.envios || []).filter(function (x) { return x.id === envioId; })[0];
+    if (!en) throw new Error('Envio não encontrado.');
+    if (en.status === 'enviado' || en.status === 'pulado') return { envio: en };
+    var salvar = function () { fsPatch('eventos/' + eid, { mailing: ml }); };
+    var insc = ev.inscricao || {};
+    if (agora >= fechamento(ev) || insc.aberto === false && insc.formId) { en.status = 'cancelado'; en.motivo = 'inscrições fechadas'; salvar(); return { envio: en }; }
+    if (!insc.formId || !insc.url) { en.status = 'aguardando'; en.motivo = 'esperando o Forms de inscrição'; salvar(); if (agoraMesmo) throw new Error('Crie o Forms de inscrição antes de mandar o mailing.'); return { envio: en }; }
+    // intervalo mínimo entre envios (só antes de começar este envio)
+    if (!agoraMesmo && en.status !== 'enviando' && cfg.ultimoEnvio && cfg.intervaloDias > 0) {
+      var prox = new Date(new Date(cfg.ultimoEnvio).getTime() + cfg.intervaloDias * 864e5);
+      if (prox > agora && prox < new Date(fechamento(ev).getTime() - 12 * 3600e3)) { en.quando = prox.toISOString(); en.status = 'agendado'; en.motivo = 'adiado pelo intervalo mínimo de ' + cfg.intervaloDias + ' dia(s)'; salvar(); return { envio: en }; }
+    }
+    if (!insc.urlMailing) { try { insc.urlMailing = linkPreenchido(insc.formId); fsPatch('eventos/' + eid, { inscricao: insc }); } catch (e) { insc.urlMailing = insc.url; } }
+    var chave = 'mailingEnvios/' + eid + '_' + en.id, reg = fsGet(chave) || { evento: eid, envio: en.id, emails: [], cliques: [] };
+    var ja = {}; (reg.emails || []).forEach(function (m) { ja[m] = 1; });
+    var inscritos = {}; ((fsGet('inscricoes/' + eid) || {}).respostas || []).forEach(function (r) { if (r.email) inscritos[r.email] = 1; });
+    var fora = {}; fsList('descadastros').forEach(function (d) { if (d.email) fora[String(d.email).toLowerCase()] = 1; });
+    var lista = fsList('mailing').filter(function (m) { return m.email && !fora[m.email] && !inscritos[m.email]; });
+    var fila = lista.filter(function (m) { return !ja[m.email]; });
+    if (en.status !== 'enviando') { cfg.ultimoEnvio = agora.toISOString(); fsPatch('mailingConfig/geral', { ultimoEnvio: cfg.ultimoEnvio }); reg.inicio = agora.toISOString(); }
+    var texto = { assunto: en.assunto || cfg.assunto || MODELOS.mailing.assunto, corpo: en.corpo || cfg.corpo || MODELOS.mailing.corpo };
+    var cota = MailApp.getRemainingDailyQuota(), n = 0;
+    for (var i = 0; i < fila.length && cota > 10; i++) { // 10 de reserva para confirmações e lembretes
+      var m = fila[i];
+      try {
+        var r = render('mailing', ev, { nome: m.nome, email: m.email }, null, { texto: texto, link: linkClique(eid, en.id, m.email) });
+        MailApp.sendEmail({ to: m.email, subject: r.assunto, htmlBody: r.html, name: CFG.REMETENTE });
+        reg.emails.push(m.email); n++;
+      } catch (e) { console.error('Mailing para ' + m.email + ': ' + e); }
+      cota--;
+    }
+    var pend = fila.length - n;
+    reg.fim = agora.toISOString(); fsPatch(chave, reg);
+    en.enviados = reg.emails.length; en.pendentes = pend; en.cliques = (reg.cliques || []).length; en.ultimoEm = agora.toISOString();
+    en.status = pend > 0 ? 'enviando' : 'enviado'; if (pend > 0) en.motivo = 'cota do dia acabou; continua amanhã'; else delete en.motivo;
+    if (agoraMesmo) en.quando = en.quando && new Date(en.quando) < agora ? en.quando : agora.toISOString();
+    salvar();
+    return { envio: en, enviados: n, pendentes: pend };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Link do Forms com "Mailing Feashion" já marcado em "como ficou sabendo". */
+function linkPreenchido(formId) {
+  var f = FormApp.openById(formId), alvo = null, opc = null;
+  f.getItems().forEach(function (it) {
+    if (alvo || !/sabendo|soube/.test(semAcento(it.getTitle()))) return;
+    var t = it.getType(), ch = t === FormApp.ItemType.MULTIPLE_CHOICE ? it.asMultipleChoiceItem() : t === FormApp.ItemType.CHECKBOX ? it.asCheckboxItem() : t === FormApp.ItemType.LIST ? it.asListItem() : null;
+    if (!ch) return;
+    ch.getChoices().forEach(function (c) { if (!opc && /mailing/i.test(c.getValue())) opc = c.getValue(); });
+    if (opc) alvo = { it: ch, t: t };
+  });
+  if (!alvo) return f.getPublishedUrl();
+  var resp = alvo.t === FormApp.ItemType.CHECKBOX ? alvo.it.createResponse([opc]) : alvo.it.createResponse(opc);
+  return f.createResponse().withItemResponse(resp).toPrefilledUrl();
+}
+
+/** Link rastreado: passa pelo robô, guarda a hora do clique e abre o Forms. */
+function linkClique(eid, envioId, email) {
+  var u = ''; try { u = ScriptApp.getService().getUrl(); } catch (e) { }
+  var h = hashEmail(email);
+  return u + '?c=1&e=' + encodeURIComponent(eid) + '&v=' + encodeURIComponent(envioId) + '&p=' + h + '&t=' + assinar(eid + '|' + envioId + '|' + h);
+}
+function clique(p) {
+  var ev = null;
+  try { ev = fsGet('eventos/' + p.e); } catch (e) { }
+  var destino = ev && ev.inscricao ? (ev.inscricao.urlMailing || ev.inscricao.url) : '';
+  if (ev && p.t === assinar(p.e + '|' + p.v + '|' + p.p)) {
+    var lock = LockService.getScriptLock();
+    try {
+      lock.waitLock(10000);
+      var chave = 'mailingEnvios/' + p.e + '_' + p.v, reg = fsGet(chave) || { evento: p.e, envio: p.v, emails: [], cliques: [] };
+      reg.cliques = (reg.cliques || []).concat([{ p: p.p, em: new Date().toISOString() }]);
+      fsPatch(chave, { cliques: reg.cliques });
+      var ml = ev.mailing || {}; (ml.envios || []).forEach(function (x) { if (x.id === p.v) x.cliques = reg.cliques.length; });
+      fsPatch('eventos/' + p.e, { mailing: ml });
+    } catch (e) { console.error('Clique: ' + e); } finally { try { lock.releaseLock(); } catch (e) { } }
+  }
+  if (!destino) return pagina('Link expirado', 'Não encontramos esse evento. Fique de olho no Instagram da Feashion!');
+  var out = HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><base target="_top"><div style="font-family:Arial,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;text-align:center"><p>Abrindo o formulário de inscrição…</p><p><a href="' + esc(destino) + '" style="display:inline-block;background:#7f0606;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:999px">Ir para a inscrição</a></p></div><script>try{window.top.location.replace(' + JSON.stringify(destino) + ');}catch(e){}</script>').setTitle('Feashion');
+  try { out.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL); } catch (e) { }
+  return out;
+}
+
 /* ---------- rotina automática (gatilho a cada 10 min) ---------- */
 function rotina() {
   try { sincronizarEquipe(); } catch (err) { console.error('Equipe: ' + err); }
+  try { atualizarMailing(); } catch (err) { console.error('Lista do mailing: ' + err); }
+  try { rotinaMailing(); } catch (err) { console.error('Envios do mailing: ' + err); }
   var agora = new Date(), H = 3600e3;
   fsList('eventos').forEach(function (ev) {
     if (!ev.inscricao || !ev.inscricao.formId || !ev.data) return;
@@ -417,7 +564,6 @@ function rotina() {
       if (agora < ini && agora >= new Date(ini.getTime() - 3 * H) && autoLigado(ev, 'dia') && pend('dia')) faz('dia');
       if (agora >= new Date(fim.getTime() + 14 * H) && autoLigado(ev, 'agradecimento') && pend('agradecimento')) faz('agradecimento');
       if (agora < ini && ev.inscricao.mudanca && ev.inscricao.mudanca.enviar) faz('mudanca');
-      if (agora < fechamento(ev) && ev.inscricao.divulgacaoAtiva) faz('divulgacao');
     } catch (err) {
       console.error('Evento ' + ev._id + ': ' + err);
     }
@@ -498,6 +644,10 @@ function fsPatch(path, obj) {
     payload: JSON.stringify({ fields: encFields(obj) })
   });
   if (r.getResponseCode() !== 200) throw new Error('Firestore ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 300));
+}
+function fsDel(path) {
+  var r = UrlFetchApp.fetch(FS + path, { method: 'delete', headers: cab(), muteHttpExceptions: true });
+  if (r.getResponseCode() >= 300 && r.getResponseCode() !== 404) throw new Error('Firestore ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 300));
 }
 function enc(v) {
   if (v === null || v === undefined) return { nullValue: null };

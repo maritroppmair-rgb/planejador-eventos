@@ -7,6 +7,7 @@ var I={
   plan:'<path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="3"/>',
   base:'<path d="M3 6h18M3 12h18M3 18h18"/>',
   ana:'<path d="M5 20V11M12 20V5M19 20v-6"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   conv:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/>',
   salas:'<path d="M5 21V4h10v17M15 8h4v13M3 21h18"/><circle cx="12" cy="13" r=".6"/>',
   cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
@@ -16,7 +17,7 @@ var I={
   perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>'
 };
 var GRUPOS=[
-  ['Eventos',[['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view']]],
+  ['Eventos',[['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
   ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['cal','Calendário','tab'],['docs','Documentos','tab']]],
   ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go']]]
 ];
@@ -62,7 +63,7 @@ back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
 /* navegação */
-function esconderAna(){var a=$('view-ana');if(a&&!a.hidden){a.hidden=true;}}
+function esconderAna(){['view-ana','view-mail'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
 function ir(alvo,modo){
   fechar();
   if(modo==='tab'){esconderAna();var t=$('tab-'+alvo);if(t)t.click();}

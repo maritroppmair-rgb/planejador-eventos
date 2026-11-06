@@ -282,9 +282,6 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       h+='<div class="temr"><div class="temr-t"><b>'+T[1]+'</b>'+(c.corpo?' <span class="ttag">texto próprio</span>':'')+'<span class="tsub">'+(auto?'automático: '+T[2]:'desligado')+'</span><span class="tsub">'+estado(i,t)+'</span></div>'+
         (ed?'<div class="temr-a"><label class="tsw"><input type="checkbox" data-em-auto="'+t+'"'+(auto?' checked':'')+'> automático</label><button type="button" class="btn small ghost" data-em-txt="'+t+'">Texto</button><button type="button" class="btn small ghost" data-em-env="'+t+'"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';});
     if(i.mudanca&&!i.mudanca.pendente)h+='<div class="temr"><div class="temr-t"><b>Aviso de mudança</b><span class="tsub">'+esc(i.mudanca.texto||'')+'</span><span class="tsub">'+estado(i,'mudanca')+'</span></div>'+(ed?'<div class="temr-a"><button type="button" class="btn small ghost" data-em-txt="mudanca">Texto</button><button type="button" class="btn small ghost" data-em-env="mudanca"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';
-    var aberto=i.aberto!==false,al=alcance[e.id];
-    h+='<div class="temr"><div class="temr-t"><b>Convite para a lista de novidades</b><span class="tsub">'+(aberto?'manda o link de inscrição para quem pediu novidades em outras inscrições'+(al!=null?' · <b>'+al+' pessoas</b> na lista (fora quem já se inscreveu)':''):'só com inscrições abertas')+'</span><span class="tsub">'+estado(i,'divulgacao')+(i.divulgacaoAtiva?' · continua sozinho quando a cota renovar':'')+'</span></div>'+
-      (ed?'<div class="temr-a"><button type="button" class="btn small ghost" data-em-txt="divulgacao">Texto</button>'+(aberto?'<button type="button" class="btn small ghost" data-em-env="divulgacao"'+(oc?' disabled':'')+'>Convidar'+(al!=null?' '+al:'')+'</button>':'')+'</div>':'')+'</div>';
     h+='<div class="btns temr-f"><span class="note">'+(i.cota!=null?'Cota de e-mails hoje: <b>'+i.cota+'</b> restantes (Gmail comum: 100 por dia).':'Gmail comum: até 100 e-mails por dia; o que passar fica na fila.')+'</span><button type="button" class="btn small ghost" data-em-hist="1">'+(hist[e.id]?'Atualizar lista':'Ver quem recebeu')+'</button></div>';
     if(hist[e.id])h+=histTab(hist[e.id]);
     if(emMsg[e.id])h+='<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>';
@@ -301,7 +298,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       '<div class="field"><label for="ed-assunto">Assunto</label><input id="ed-assunto" data-ed="assunto" value="'+esc(r.assunto)+'"></div>'+
       '<div class="field" style="margin-top:10px"><label for="ed-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ed-corpo" data-ed="corpo" rows="10">'+esc(r.corpo)+'</textarea></div>'+
       (t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
-      '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='divulgacao');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" title="'+c[1]+'">'+c[0]+'</button>';}).join('')+'</div>')+
+      '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='mailing');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" title="'+c[1]+'">'+c[0]+'</button>';}).join('')+'</div>')+
       blk('Prévia',ph?'<iframe class="tprev" sandbox="" srcdoc="'+esc(ph)+'" title="Prévia do e-mail"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia” para ver o e-mail como chega, com o nome de exemplo.</p>')+
       (emMsg[e.id]?'<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>':'');
     var oc=emOcup[e.id];
@@ -321,8 +318,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     if(window.ROBO_URL&&e.inscricao&&e.inscricao.formId)corpo+=emailsBlk(e);
     var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Registrar resultado</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
-  function abrir(id){var ev0=events.filter(function(x){return x.id===id;})[0];
-    if(window.ROBO_URL&&ev0&&ev0.inscricao&&ev0.inscricao.formId&&ev0.inscricao.aberto!==false&&alcance[id]==null&&pode('editar'))robo('alcance',id).then(function(j){alcance[id]=j.alcance;painelAtualizar('view-base');},function(){});
+  function abrir(id){
     painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
   function clique(e){var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
   $('etable').addEventListener('click',clique);$('etable').addEventListener('keydown',clique);
@@ -332,7 +328,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   sec.addEventListener('change',function(e){var a=e.target.closest('[data-em-auto]');if(!a||!TP||!db)return;var id=TP.o.chave,up={};up['emails.'+a.dataset.emAuto+'.auto']=a.checked;
     db.doc('eventos/'+id).update(up).catch(function(){alertMsg('Não foi possível salvar.');});});
   sec.addEventListener('click',function(e){if(!TP||TP.o.sec!=='view-base')return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;var b;
-    if((b=e.target.closest('[data-em-env]'))){var t=b.dataset.emEnv,n=t==='divulgacao'?alcance[id]:(+ev.inscricao.total||0);
+    if((b=e.target.closest('[data-em-env]'))){var t=b.dataset.emEnv,n=+ev.inscricao.total||0;
       confirma(b,'Confirmar: enviar'+(n!=null?' para '+n:''),function(){emAcao(id,'enviar',{tipo:t},function(j){return j.enviados?'Enviado para '+j.enviados+(j.pendentes?'; '+j.pendentes+' ficaram na fila (limite diário).':'.'):(j.pendentes?'A cota de hoje acabou: '+j.pendentes+' na fila.':'Ninguém novo para receber esse e-mail.');});});return;}
     if((b=e.target.closest('[data-em-ign]'))){db.doc('eventos/'+id).update({'inscricao.mudanca.pendente':false}).catch(function(){});return;}
     if((b=e.target.closest('[data-em-hist]'))){db.doc('inscricoes/'+id).get().then(function(d){hist[id]=d.exists?d.data():{};painelAtualizar('view-base');},function(){emMsg[id]={t:'Não foi possível carregar a lista.',erro:1};painelAtualizar('view-base');});return;}
@@ -362,4 +358,154 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   });
   renderBase();
 })();
+
+/* ============================== MAILING DE EVENTOS ============================== */
+(function(){
+  var sec=$('view-mail');if(!sec)return;
+  var LISTA=[],CFG={},ENVIOS=[],INSC=[],ligado=false,aba='prog',fEv='';
+  var PAD={assunto:'Novo evento da Feashion: {evento}',corpo:'Oi, {nome}!\n\nVocê pediu para receber os próximos eventos da Feashion, então aqui vai o convite:\n\n{detalhes}\n\nAs vagas são limitadas e as inscrições fecham {fechamento}. Garanta a sua:\n\n{link_inscricao}'};
+  var rasc=null,prev=null,msg=null,ocup=false;
+  function ligar(){if(ligado||!db)return;ligado=true;
+    db.collection('mailing').onSnapshot(function(s){LISTA=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});desenhar();});
+    db.collection('mailingEnvios').onSnapshot(function(s){ENVIOS=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});desenhar();});
+    db.doc('mailingConfig/geral').onSnapshot(function(d){CFG=d.exists?d.data():{};desenhar();});
+    db.collection('inscricoes').onSnapshot(function(s){INSC=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});desenhar();},function(){});}
+  document.addEventListener('tela',function(e){if(e.detail==='mail'){ligar();desenhar();}if(e.detail==='ana')ligar();});
+  function hora(){return /^\d{1,2}:\d{2}$/.test(CFG.hora||'')?CFG.hora:'08:00';}
+  function intervalo(){return CFG.intervaloDias!=null&&CFG.intervaloDias!==''?+CFG.intervaloDias:2;}
+  function futuros(){var hoje=iso(new Date());return events.filter(function(e){return e.data&&e.data>=hoje&&e.status!=='realizado';}).sort(function(a,b){return a.data<b.data?-1:1;});}
+  function nomeEv(e){return (e.nome||'Evento')+' · '+e.data.slice(8,10)+'/'+e.data.slice(5,7);}
+  function viaMailing(r){return /mailing/i.test(r.comoSoube||'');}
+  var ST={agendado:['agendado','neutral'],aguardando:['esperando o Forms','warn'],enviando:['enviando','warn'],enviado:['enviado','ok'],pulado:['pulado','neutral'],cancelado:['cancelado','bad']};
+  function envios(){var out=[];futuros().concat(events.filter(function(e){return e.mailing&&(e.mailing.envios||[]).length&&futuros().indexOf(e)<0;})).forEach(function(e){(e.mailing&&e.mailing.envios||[]).forEach(function(en){out.push({e:e,en:en});});});
+    return out.sort(function(a,b){return (a.en.quando||'')<(b.en.quando||'')?-1:1;});}
+  function previsto(e){if(!e.criadoEm||e.mailing&&e.mailing.padraoCriado||e.mailing&&e.mailing.excluido)return null;if(CFG.desde&&e.criadoEm<CFG.desde)return null;
+    var d=new Date(e.criadoEm);d.setDate(d.getDate()+1);var h=hora().split(':');d.setHours(+h[0],+h[1],0,0);return d.toISOString();}
+  function kpis(){var cliques=0,env=0;ENVIOS.forEach(function(x){cliques+=(x.cliques||[]).length;env+=(x.emails||[]).length;});
+    var via=0;INSC.forEach(function(i){(i.respostas||[]).forEach(function(r){if(viaMailing(r))via++;});});
+    var prog=envios().filter(function(x){return x.en.status==='agendado'||x.en.status==='aguardando'||x.en.status==='enviando';}).length;
+    $('ml-kpis').innerHTML=[['Pessoas na lista',LISTA.length],['Envios programados',prog],['E-mails enviados',env],['Cliques',cliques],['Inscrições via mailing',via]].map(function(k){return '<div class="kpi"><div class="v num">'+k[1]+'</div><div class="l">'+k[0]+'</div></div>';}).join('');}
+  function dh(isoS){var d=new Date(isoS);return isNaN(d)?'—':d.toLocaleString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+  function progHtml(){var fs=futuros(),h='<div class="sbar"><select id="ml-fev" aria-label="Evento"><option value="">Todos os eventos</option>'+fs.map(function(e){return '<option value="'+esc(e.id)+'"'+(e.id===fEv?' selected':'')+'>'+esc(nomeEv(e))+(e.mailing&&e.mailing.excluido?' (fora do mailing)':'')+'</option>';}).join('')+'</select>';
+    var sel=fEv&&events.filter(function(e){return e.id===fEv;})[0];
+    if(sel)h+='<label class="sbar-ck"><input type="checkbox" id="ml-inc"'+(sel.mailing&&sel.mailing.excluido?'':' checked')+(pode('editar')?'':' disabled')+'> Este evento entra no mailing</label>';
+    h+='<span class="note">Envio padrão: dia seguinte à criação do evento, às '+esc(hora())+'. Intervalo mínimo entre envios: '+intervalo()+' dia(s).</span></div>';
+    var rows=envios().filter(function(x){return !fEv||x.e.id===fEv;});
+    fs.forEach(function(e){if(fEv&&e.id!==fEv)return;var p=previsto(e);if(p)rows.push({e:e,en:{id:'',quando:p,status:'previsto',padrao:true}});});
+    rows.sort(function(a,b){return (a.en.quando||'')<(b.en.quando||'')?-1:1;});
+    h+='<div class="tablewrap"><table class="tlist" id="ml-tab"><thead><tr><th>Quando</th><th>Evento</th><th>Situação</th><th class="r">Enviados</th><th class="r">Cliques</th></tr></thead><tbody>';
+    if(!rows.length)h+='<tr><td colspan="5" class="empty">Nenhum envio programado'+(fEv?' para este evento':'')+'. Use “+ Programar e-mail”.</td></tr>';
+    rows.forEach(function(x){var en=x.en,e=x.e,st=en.status==='previsto'?['será criado automaticamente','neutral']:(ST[en.status]||[en.status,'neutral']),exc=e.mailing&&e.mailing.excluido;
+      h+='<tr'+(en.id?' data-mlopen="'+esc(e.id)+'|'+esc(en.id)+'" tabindex="0"':'')+(exc||en.status==='pulado'||en.status==='cancelado'?' class="off"':'')+'><td><b>'+esc(dh(en.quando))+'</b>'+(en.padrao?'<span class="tsub">envio padrão</span>':'<span class="tsub">programado</span>')+'</td><td><span class="tn">'+esc(e.nome||'Evento')+'</span><span class="tsub">'+esc(e.data?e.data.slice(8,10)+'/'+e.data.slice(5,7):'')+(exc?' · fora do mailing':'')+(en.assunto?' · texto próprio':'')+'</span></td><td><span class="chip '+st[1]+'">'+esc(st[0])+'</span>'+(en.motivo?'<span class="tsub">'+esc(en.motivo)+'</span>':'')+'</td><td class="r">'+(en.enviados!=null?'<b>'+en.enviados+'</b>'+(en.pendentes?'<span class="tsub">'+en.pendentes+' na fila</span>':''):'—')+'</td><td class="r">'+(en.cliques!=null?en.cliques:'—')+'</td></tr>';});
+    return h+'</tbody></table></div>';}
+  function listaHtml(){var q=nrm(($('ml-q')||{}).value||'').trim(),l=LISTA.filter(function(m){return !q||nrm([m.nome,m.email].join(' ')).indexOf(q)>=0;}).sort(function(a,b){return String(a.nome||a.email).localeCompare(String(b.nome||b.email));});
+    var h='<div class="sbar"><input type="search" id="ml-q" placeholder="Buscar nome ou e-mail" aria-label="Buscar na lista" value="'+esc(($('ml-q')||{}).value||'')+'"><span class="note">'+l.length+' de '+LISTA.length+' pessoas · entra quem marca “quero receber novidades” no Forms; e-mail repetido conta uma vez só</span></div>';
+    h+='<div class="tablewrap"><table class="tlist" id="ml-ltab"><thead><tr><th>Pessoa</th><th>Na lista desde</th><th>Inscrições</th><th class="r"></th></tr></thead><tbody>';
+    if(!l.length)h+='<tr><td colspan="4" class="empty">'+(LISTA.length?'Ninguém com essa busca.':'A lista ainda está vazia. Ela enche sozinha conforme as pessoas marcam a opção no Forms.')+'</td></tr>';
+    l.forEach(function(m){h+='<tr><td><span class="tn">'+esc(m.nome||'—')+'</span><span class="tsub">'+esc(m.email)+'</span></td><td>'+esc(m.desde?new Date(m.desde).toLocaleDateString('pt-BR'):'—')+'</td><td>'+((m.eventos||[]).length||1)+'</td><td class="r">'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-mldel="'+esc(m.id)+'">Tirar da lista</button>':'')+'</td></tr>';});
+    return h+'</tbody></table></div>';}
+  function textoHtml(){if(!rasc)rasc={assunto:CFG.assunto||PAD.assunto,corpo:CFG.corpo||PAD.corpo,hora:hora(),intervalo:String(intervalo())};
+    var ed=pode('editar');
+    return '<div class="tml-grid"><div class="tp-blk"><h4>Texto base do convite</h4>'+
+      '<div class="field"><label for="ml-assunto">Assunto</label><input id="ml-assunto" data-ml="assunto" value="'+esc(rasc.assunto)+'"'+(ed?'':' disabled')+'></div>'+
+      '<div class="field" style="margin-top:10px"><label for="ml-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ml-corpo" data-ml="corpo" rows="11"'+(ed?'':' disabled')+'>'+esc(rasc.corpo)+'</textarea></div>'+
+      '<p class="note" style="margin:10px 0 6px">Campos:</p><div class="tchips">'+['{nome}','{evento}','{quando}','{sala}','{convidado}','{fechamento}','{detalhes}','{link_inscricao}'].map(function(c){return '<button type="button" data-mlins="'+c+'">'+c+'</button>';}).join('')+'</div>'+
+      '<h4 style="margin-top:16px">Horário</h4><div class="treg"><div class="field"><label for="ml-hora">Hora do envio padrão</label><input id="ml-hora" data-ml="hora" type="time" value="'+esc(rasc.hora)+'"'+(ed?'':' disabled')+'></div><div class="field"><label for="ml-int">Intervalo mínimo entre envios (dias)</label><input id="ml-int" data-ml="intervalo" type="number" min="0" max="14" value="'+esc(rasc.intervalo)+'"'+(ed?'':' disabled')+'></div></div>'+
+      '<p class="note">O envio padrão sai no dia seguinte à criação do evento nesse horário. Se o último envio foi há menos dias que o intervalo, o próximo espera (sem passar do prazo de inscrição).</p>'+
+      (ed?'<div class="btns" style="margin-top:12px"><button type="button" class="btn" id="ml-salvar">Salvar</button><button type="button" class="btn ghost" id="ml-prev"'+(ocup?' disabled':'')+'>Ver prévia</button><button type="button" class="btn ghost" id="ml-teste"'+(ocup?' disabled':'')+'>Enviar teste para mim</button><button type="button" class="btn small ghost" id="ml-pad">Voltar ao padrão</button></div>':'')+
+      (msg?'<div class="imsg'+(msg.erro?' err':'')+'">'+esc(msg.t)+'</div>':'')+'</div>'+
+      '<div class="tp-blk"><h4>Prévia</h4>'+(prev?'<iframe class="tprev" sandbox="" srcdoc="'+esc(prev)+'" title="Prévia do convite"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia”. O exemplo usa o próximo evento e o nome “Fulana”.</p>')+'</div></div>';}
+  function desenhar(){if(sec.hidden)return;kpis();
+    [['prog',progHtml],['lista',listaHtml],['texto',textoHtml]].forEach(function(a){var el=$('ml-'+a[0]);el.hidden=a[0]!==aba;if(a[0]!==aba)return;
+      var at=document.activeElement;if(at&&el.contains(at)&&/^(INPUT|TEXTAREA|SELECT)$/.test(at.tagName)&&a[0]!=='prog'){if(a[0]==='lista'){var tb=$('ml-ltab');if(tb){var t=document.createElement('div');t.innerHTML=listaHtml();tb.parentNode.replaceWith(t.querySelector('.tablewrap'));}}return;}
+      el.innerHTML=a[1]();});
+    $('ml-novo').hidden=!pode('editar');
+    painelAtualizar('view-mail');}
+  $('ml-aba').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;aba=b.dataset.a;[].forEach.call(this.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});desenhar();});
+  sec.addEventListener('input',function(e){if(e.target.id==='ml-q'){desenhar();return;}var k=e.target.dataset&&e.target.dataset.ml;if(k&&rasc)rasc[k]=e.target.value;});
+  var ultimo=null;sec.addEventListener('focusin',function(e){if(e.target.id==='ml-assunto'||e.target.id==='ml-corpo')ultimo=e.target;});
+  sec.addEventListener('change',function(e){
+    if(e.target.id==='ml-fev'){fEv=e.target.value;desenhar();return;}
+    if(e.target.id==='ml-inc'&&db&&fEv){db.doc('eventos/'+fEv).update({'mailing.excluido':!e.target.checked}).catch(function(){alertMsg('Não foi possível salvar.');});}
+  });
+  function salvarEnvios(e,arr){var up={'mailing.envios':arr};return db.doc('eventos/'+e.id).update(up);}
+  function acao(a,extra,ok){ocup=true;msg=null;desenhar();robo(a,extra&&extra.evento||'',extra).then(function(j){msg=ok(j);},function(err){msg={t:err.message,erro:1};}).then(function(){ocup=false;desenhar();});}
+  sec.addEventListener('click',function(e){var b;
+    if((b=e.target.closest('[data-mldel]'))){confirma(b,'Confirmar: tirar',function(){var m=LISTA.filter(function(x){return x.id===b.dataset.mldel;})[0];if(!m)return;
+      db.doc('descadastros/'+m.id).set({email:m.email,em:new Date().toISOString(),por:'equipe'}).then(function(){return db.doc('mailing/'+m.id).delete();}).catch(function(){alertMsg('Não foi possível tirar da lista.');});});return;}
+    if((b=e.target.closest('[data-mlins]'))){var c=ultimo||$('ml-corpo');if(!c||c.disabled)return;var a0=c.selectionStart==null?c.value.length:c.selectionStart,a1=c.selectionEnd==null?a0:c.selectionEnd,t=b.dataset.mlins;
+      if(t==='{detalhes}'||t==='{link_inscricao}')t=(a0&&c.value.charAt(a0-1)!=='\n'?'\n\n':'')+t+'\n\n';c.value=c.value.slice(0,a0)+t+c.value.slice(a1);rasc[c.dataset.ml]=c.value;c.focus();c.selectionStart=c.selectionEnd=a0+t.length;return;}
+    if(e.target.id==='ml-salvar'&&db){var hh=rasc.hora,iv=+rasc.intervalo;if(!/^\d{1,2}:\d{2}$/.test(hh)){msg={t:'Hora inválida.',erro:1};desenhar();return;}if(!(iv>=0&&iv<=14)){msg={t:'Intervalo entre 0 e 14 dias.',erro:1};desenhar();return;}
+      var pad=rasc.assunto===PAD.assunto&&rasc.corpo===PAD.corpo;
+      db.doc('mailingConfig/geral').set({assunto:pad?null:rasc.assunto,corpo:pad?null:rasc.corpo,hora:hh,intervaloDias:iv},{merge:true}).then(function(){msg={t:'Salvo.'};desenhar();},function(){msg={t:'Não foi possível salvar.',erro:1};desenhar();});return;}
+    if(e.target.id==='ml-pad'){rasc.assunto=PAD.assunto;rasc.corpo=PAD.corpo;prev=null;msg={t:'Texto padrão de volta. Salve para valer.'};var x=document.activeElement;if(x)x.blur();desenhar();return;}
+    if(e.target.id==='ml-prev'){acao('mailingPrevia',{evento:fEv||'',texto:{assunto:rasc.assunto,corpo:rasc.corpo}},function(j){prev=j.html;return null;});return;}
+    if(e.target.id==='ml-teste'){acao('mailingTeste',{evento:fEv||'',texto:{assunto:rasc.assunto,corpo:rasc.corpo}},function(j){return {t:'Teste enviado para '+j.enviadoPara+'.'};});return;}
+    if(e.target.id==='ml-novo'){abrirEnvio(null,null);return;}
+    var tr=e.target.closest('[data-mlopen]');if(tr){var p=tr.dataset.mlopen.split('|');abrirEnvio(p[0],p[1]);}
+  });
+  sec.addEventListener('keydown',function(e){var tr=e.target.closest('[data-mlopen]');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();var p=tr.dataset.mlopen.split('|');abrirEnvio(p[0],p[1]);}});
+  /* painel de um envio (ou novo) */
+  var pmsg=null,pocup=false,pr=null;
+  function paraLocal(isoS){var d=new Date(isoS);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
+  function abrirEnvio(eid,envId){pmsg=null;pr=null;
+    painelAbrir({sec:'view-mail',chave:eid+'|'+envId,montar:function(){
+      var fs=futuros().filter(function(e){return !(e.mailing&&e.mailing.excluido);});
+      if(!eid){var amanha=new Date();amanha.setDate(amanha.getDate()+1);var h=hora().split(':');amanha.setHours(+h[0],+h[1],0,0);
+        if(!pr)pr={ev:fEv&&fs.some(function(e){return e.id===fEv;})?fEv:(fs[0]&&fs[0].id)||'',quando:paraLocal(amanha.toISOString()),assunto:'',corpo:''};
+        return {titulo:'Programar e-mail',sub:'Vai para a lista do mailing (menos quem já se inscreveu no evento).',
+          corpo:blk('','<div class="field"><label for="mp-ev">Evento</label><select id="mp-ev" data-mp="ev">'+fs.map(function(e){return '<option value="'+esc(e.id)+'"'+(e.id===pr.ev?' selected':'')+'>'+esc(nomeEv(e))+'</option>';}).join('')+'</select></div>'+
+            '<div class="field" style="margin-top:10px"><label for="mp-q">Data e hora</label><input id="mp-q" data-mp="quando" type="datetime-local" value="'+esc(pr.quando)+'"></div>'+
+            '<div class="field" style="margin-top:10px"><label for="mp-a">Assunto <span class="rq opt">vazio = o do texto base</span></label><input id="mp-a" data-mp="assunto" value="'+esc(pr.assunto)+'" placeholder="'+esc(CFG.assunto||PAD.assunto)+'"></div>'+
+            '<div class="field" style="margin-top:10px"><label for="mp-c">Texto <span class="rq opt">vazio = o texto base</span></label><textarea id="mp-c" data-mp="corpo" rows="7" placeholder="Por exemplo: últimas vagas!">'+esc(pr.corpo)+'</textarea></div>'+(fs.length?'':'<p class="note">Nenhum evento futuro no mailing.</p>')+(pmsg?'<div class="imsg'+(pmsg.erro?' err':'')+'">'+esc(pmsg.t)+'</div>':'')),
+          rodape:'<div class="btns"><button type="button" class="btn" data-mp-add="1"'+(fs.length?'':' disabled')+'>Programar</button><button type="button" class="btn ghost" data-tclose>Cancelar</button></div>'};}
+      var e=events.filter(function(x){return x.id===eid;})[0];if(!e)return null;var en=(e.mailing&&e.mailing.envios||[]).filter(function(x){return x.id===envId;})[0];if(!en)return null;
+      if(!pr)pr={quando:paraLocal(en.quando),assunto:en.assunto||'',corpo:en.corpo||''};
+      var st=ST[en.status]||[en.status,'neutral'],ed=pode('editar'),mexe=ed&&(en.status==='agendado'||en.status==='aguardando'),reg=ENVIOS.filter(function(x){return x.id===eid+'_'+envId;})[0];
+      var c=blk('','<p style="margin:0 0 10px"><span class="chip '+st[1]+'">'+esc(st[0])+'</span>'+(en.motivo?' <span class="note">'+esc(en.motivo)+'</span>':'')+'</p>'+
+        '<dl class="kv"><dt>Evento</dt><dd>'+esc(nomeEv(e))+'</dd><dt>Enviados</dt><dd>'+(en.enviados||0)+(en.pendentes?' · '+en.pendentes+' na fila':'')+'</dd><dt>Cliques</dt><dd>'+(reg?(reg.cliques||[]).length:(en.cliques||0))+'</dd><dt>Inscrições via mailing</dt><dd>'+(INSC.filter(function(i){return i.id===eid;}).map(function(i){return (i.respostas||[]).filter(viaMailing).length;})[0]||0)+' no evento</dd></dl>')+
+        blk('Quando e texto','<div class="field"><label for="mp-q">Data e hora</label><input id="mp-q" data-mp="quando" type="datetime-local" value="'+esc(pr.quando)+'"'+(mexe?'':' disabled')+'></div>'+
+          '<div class="field" style="margin-top:10px"><label for="mp-a">Assunto <span class="rq opt">vazio = o do texto base</span></label><input id="mp-a" data-mp="assunto" value="'+esc(pr.assunto)+'" placeholder="'+esc(CFG.assunto||PAD.assunto)+'"'+(mexe?'':' disabled')+'></div>'+
+          '<div class="field" style="margin-top:10px"><label for="mp-c">Texto <span class="rq opt">vazio = o texto base</span></label><textarea id="mp-c" data-mp="corpo" rows="7"'+(mexe?'':' disabled')+'>'+esc(pr.corpo)+'</textarea></div>'+(pmsg?'<div class="imsg'+(pmsg.erro?' err':'')+'">'+esc(pmsg.t)+'</div>':''));
+      var r='<div class="btns">'+(mexe?'<button type="button" class="btn" data-mp-salvar="1">Salvar</button>':'')+(ed&&(en.status==='agendado'||en.status==='aguardando'||en.status==='enviando')?'<button type="button" class="btn ghost" data-mp-agora="1"'+(pocup?' disabled':'')+'>Enviar agora</button>':'')+(ed&&en.status==='pulado'?'<button type="button" class="btn ghost" data-mp-reat="1">Reativar</button>':'')+'</div>'+(ed&&(en.status==='agendado'||en.status==='aguardando')?'<div class="btns"><button type="button" class="btn small ghost" data-mp-pular="1">Pular este envio</button>'+(en.padrao?'':'<button type="button" class="btn small ghost tdanger" data-mp-del="1">Excluir</button>')+'</div>':'');
+      return {titulo:en.padrao?'Envio padrão':'E-mail programado',sub:esc(dh(en.quando)),corpo:c,rodape:r};},aoFechar:function(){pr=null;pmsg=null;}});}
+  sec.addEventListener('input',function(e){var k=e.target.dataset&&e.target.dataset.mp;if(k&&pr)pr[k]=e.target.value;});
+  sec.addEventListener('change',function(e){var k=e.target.dataset&&e.target.dataset.mp;if(k&&pr)pr[k]=e.target.value;});
+  sec.addEventListener('click',function(e){if(!TP||TP.o.sec!=='view-mail')return;var ch=TP.o.chave.split('|'),eid=ch[0],envId=ch[1];
+    function ok(t){pmsg={t:t};painelAtualizar('view-mail');}function erro(t){pmsg={t:t,erro:1};painelAtualizar('view-mail');}
+    if(e.target.closest('[data-mp-add]')){var ev=events.filter(function(x){return x.id===pr.ev;})[0];if(!ev){erro('Escolha um evento.');return;}var q=new Date(pr.quando);if(isNaN(q)){erro('Data e hora inválidas.');return;}
+      var arr=((ev.mailing&&ev.mailing.envios)||[]).concat([{id:'m'+Date.now(),quando:q.toISOString(),status:'agendado',assunto:pr.assunto.trim()||null,corpo:pr.corpo.trim()||null}]);
+      salvarEnvios(ev,arr).then(function(){painelFechar();},function(){erro('Não foi possível programar.');});return;}
+    var ev2=events.filter(function(x){return x.id===eid;})[0];if(!ev2)return;var arr2=((ev2.mailing&&ev2.mailing.envios)||[]).map(function(x){return Object.assign({},x);}),en=arr2.filter(function(x){return x.id===envId;})[0];if(!en)return;
+    if(e.target.closest('[data-mp-salvar]')){var q2=new Date(pr.quando);if(isNaN(q2)){erro('Data e hora inválidas.');return;}en.quando=q2.toISOString();en.assunto=pr.assunto.trim()||null;en.corpo=pr.corpo.trim()||null;if(en.status==='aguardando')en.status='agendado';delete en.motivo;
+      salvarEnvios(ev2,arr2).then(function(){pr=null;ok('Salvo.');},function(){erro('Não foi possível salvar.');});return;}
+    if(e.target.closest('[data-mp-pular]')){en.status='pulado';salvarEnvios(ev2,arr2).then(function(){ok('Envio pulado.');});return;}
+    if(e.target.closest('[data-mp-reat]')){en.status='agendado';delete en.motivo;salvarEnvios(ev2,arr2).then(function(){ok('Reativado.');});return;}
+    var d=e.target.closest('[data-mp-del]');if(d){confirma(d,'Confirmar exclusão',function(){salvarEnvios(ev2,arr2.filter(function(x){return x.id!==envId;})).then(function(){painelFechar();});});return;}
+    var ag=e.target.closest('[data-mp-agora]');if(ag){confirma(ag,'Confirmar: enviar agora',function(){pocup=true;painelAtualizar('view-mail');
+      robo('mailingAgora',eid,{envio:envId}).then(function(j){pocup=false;ok(j.enviados!=null?'Enviado para '+j.enviados+(j.pendentes?'; '+j.pendentes+' na fila (cota do dia).':'.'):'Situação: '+((j.envio&&j.envio.motivo)||(j.envio&&j.envio.status)||'ok'));},function(err){pocup=false;erro(err.message);});});}
+  });
+  var rb=renderBase;renderBase=function(){rb();desenhar();};
+  window.__mailingDados=function(){return {lista:LISTA,envios:ENVIOS,insc:INSC};};
+})();
+
+/* ============================== ANALYTICS: MAILING ============================== */
+(function(){
+  var box=document.querySelector('#view-ana .acharts');if(!box)return;
+  var art=el('<article class="acard full" id="a-mail"><h3>Mailing</h3><p class="sub">Inscrições que vieram do mailing (marcadas “Mailing Feashion” em como ficou sabendo) e cliques nos convites, por hora do dia. Ajuda a descobrir o melhor horário para enviar.</p><div id="a-mail-c"></div></article>');
+  box.appendChild(art);
+  function desenhar(){var d=window.__mailingDados?window.__mailingDados():null;if(!d||$('view-ana').hidden)return;
+    var hI=new Array(24).fill(0),hC=new Array(24).fill(0),dI=new Array(7).fill(0),via=0,cl=0,env=0;
+    d.insc.forEach(function(i){(i.respostas||[]).forEach(function(r){if(!/mailing/i.test(r.comoSoube||''))return;var t=new Date(r.em);if(isNaN(t))return;via++;hI[t.getHours()]++;dI[t.getDay()]++;});});
+    d.envios.forEach(function(x){env+=(x.emails||[]).length;(x.cliques||[]).forEach(function(c){var t=new Date(c.em);if(isNaN(t))return;cl++;hC[t.getHours()]++;});});
+    var mx=Math.max(1,Math.max.apply(null,hI.concat(hC)));
+    var barras='<div class="mh">'+hI.map(function(v,h){return '<div class="mhc" title="'+h+'h: '+v+' inscrições, '+hC[h]+' cliques"><div class="mhb"><i class="c" style="height:'+(hC[h]/mx*100)+'%"></i><i class="i" style="height:'+(v/mx*100)+'%"></i></div><span>'+(h%3===0?h+'h':'')+'</span></div>';}).join('')+'</div>';
+    var dias=['dom','seg','ter','qua','qui','sex','sáb'],mxd=Math.max(1,Math.max.apply(null,dI));
+    $('a-mail-c').innerHTML='<div class="akpis"><div class="kpi"><div class="v num">'+(d.lista.length)+'</div><div class="l">Pessoas na lista</div></div><div class="kpi"><div class="v num">'+env+'</div><div class="l">Convites enviados</div></div><div class="kpi"><div class="v num">'+cl+'</div><div class="l">Cliques'+(env?' ('+Math.round(cl/env*100)+'%)':'')+'</div></div><div class="kpi"><div class="v num">'+via+'</div><div class="l">Inscrições via mailing</div></div></div>'+
+      (via||cl?'<div class="mleg"><span><i class="i"></i>inscrições</span><span><i class="c"></i>cliques</span></div>'+barras+'<p class="sub" style="margin-top:14px">Inscrições via mailing por dia da semana</p><div class="md">'+dI.map(function(v,i){return '<div><span>'+dias[i]+'</span><b style="width:'+(v/mxd*100)+'%"></b><em>'+v+'</em></div>';}).join('')+'</div>'
+        :'<p class="note">Ainda sem inscrições pelo mailing. Os gráficos aparecem quando as primeiras chegarem.</p>');}
+  document.addEventListener('tela',function(e){if(e.detail==='ana')setTimeout(desenhar,50);});
+  var t=setInterval(function(){if(!$('view-ana').hidden)desenhar();},4000);
+})();
+
 })();
