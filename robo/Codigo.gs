@@ -20,7 +20,8 @@ var CFG = {
   MODELO_FORM_ID: 'COLE_AQUI_O_ID_DO_FORMS_MODELO',
   PASTA: 'Feashion · Inscrições',
   REMETENTE: 'Feashion · Diretoria de Eventos',
-  HORAS_AVISO: 48,
+  HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes
+  FECHAR_HORAS_ANTES: 36,   // inscrições fecham X horas antes do início
   CARGOS_QUE_EDITAM: ['DEV', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee']
 };
 // ==========================================================
@@ -78,6 +79,7 @@ function criarForm(eid, u) {
     if (!ev) throw new Error('Evento não encontrado.');
     if (ev.inscricao && ev.inscricao.formId) return { inscricao: ev.inscricao, jaExistia: true };
     if (!ev.data) throw new Error('O evento precisa ter data antes de abrir inscrições.');
+    if (new Date() >= fechamento(ev)) throw new Error('As inscrições fecham ' + CFG.FECHAR_HORAS_ANTES + ' h antes do evento, e esse prazo já passou.');
     var pasta = pastaInscricoes();
     var nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
     var copia = DriveApp.getFileById(CFG.MODELO_FORM_ID).makeCopy('Inscrição · ' + nomeArq, pasta), planilha = null;
@@ -101,7 +103,7 @@ function criarForm(eid, u) {
     var insc = {
       formId: form.getId(), url: curta, editUrl: form.getEditUrl(), planilhaUrl: planilha.getUrl(),
       assinatura: assinatura(ev), criadoEm: agora, criadoPor: u.email, total: 0, novidades: 0, sincronizadoEm: agora,
-      aberto: true, avisoEnviados: 0, avisoPendentes: 0, avisoEm: null
+      aberto: true, fechaEm: fechamento(ev).toISOString(), avisoEnviados: 0, avisoPendentes: 0, avisoEm: null
     };
     fsPatch('eventos/' + eid, { inscricao: insc });
     return { inscricao: insc };
@@ -121,8 +123,9 @@ function aplicarTextos(form, ev) {
   var linhas = ['Quando: ' + quando];
   if (ev.sala) linhas.push('Onde: ' + ev.sala);
   if (ev.convidado) linhas.push('Com: ' + ev.convidado);
-  linhas.push('', 'Inscrições abertas até o início do evento. Vamos mandar um lembrete por e-mail antes.');
+  linhas.push('', 'Inscrições abertas até ' + dataHoraBR(fechamento(ev)) + '. Vamos mandar um lembrete por e-mail antes do evento.');
   form.setDescription(linhas.join('\n'));
+  try { form.setCustomClosedFormMessage('As inscrições para ' + ev.nome + ' estão encerradas. Fique de olho no Instagram da Feashion para os próximos eventos!'); } catch (e) { }
   form.setConfirmationMessage('Inscrição confirmada! Te esperamos ' + quando + (ev.sala ? ', na ' + ev.sala : '') +
     '. Você vai receber um lembrete por e-mail antes do evento.');
 }
@@ -150,7 +153,7 @@ function consertarForms() {
     if (!ev.inscricao || !ev.inscricao.formId) return;
     var form = FormApp.openById(ev.inscricao.formId);
     var antes = 'publicado=' + (typeof form.isPublished === 'function' ? form.isPublished() : '(n/a)') + ' aceitando=' + form.isAcceptingResponses();
-    if (inicio(ev) > agora) { publicar(form); form.setAcceptingResponses(true); }
+    if (agora < fechamento(ev)) { publicar(form); form.setAcceptingResponses(true); }
     console.log(ev.nome + ' | antes: ' + antes + ' | agora: publicado=' + (typeof form.isPublished === 'function' ? form.isPublished() : '(n/a)') +
       ' aceitando=' + form.isAcceptingResponses() + ' | ' + form.getPublishedUrl());
   });
@@ -174,7 +177,7 @@ function sincronizarEvento(eid, ev, forcarTextos) {
     try { if (insc.planilhaUrl) SpreadsheetApp.openByUrl(insc.planilhaUrl).rename('Respostas · ' + nomeArq); } catch (e) { }
     insc.assinatura = assinatura(ev);
     insc.textoEm = agora.toISOString();
-    if (inicio(ev) > agora && !form.isAcceptingResponses()) { publicar(form); form.setAcceptingResponses(true); } // data mudou para frente: reabre
+    if (agora < fechamento(ev) && !form.isAcceptingResponses()) { publicar(form); form.setAcceptingResponses(true); } // data mudou para frente: reabre
   }
   var porEmail = {}, semEmail = [];
   form.getResponses().forEach(function (r) {
@@ -186,9 +189,10 @@ function sincronizarEvento(eid, ev, forcarTextos) {
   insc.total = lista.length;
   insc.novidades = lista.filter(function (x) { return x.novidades === true; }).length;
   insc.sincronizadoEm = agora.toISOString();
-  if (inicio(ev) > agora) publicar(form);
-  else if (form.isAcceptingResponses()) form.setAcceptingResponses(false);
+  // fecha sozinho FECHAR_HORAS_ANTES antes do início (não reabre um Forms fechado à mão)
+  if (agora >= fechamento(ev) && form.isAcceptingResponses()) form.setAcceptingResponses(false);
   insc.aberto = form.isAcceptingResponses();
+  insc.fechaEm = fechamento(ev).toISOString();
   fsPatch('eventos/' + eid, { inscricao: insc });
   return { inscricao: insc };
 }
@@ -391,6 +395,12 @@ function dataCurta(iso) { var p = partes(iso); return ('0' + p.d).slice(-2) + '/
 function dataLonga(iso) { var p = partes(iso), dt = new Date(p.a, p.m - 1, p.d); return DIAS[dt.getDay()] + ', ' + p.d + ' de ' + MESES[p.m - 1]; }
 function horaBR(h) { var p = String(h).split(':'); return +p[0] + 'h' + (p[1] && p[1] !== '00' ? p[1] : ''); }
 /** Início do evento no fuso do script (America/Sao_Paulo). */
+/** Quando as inscrições fecham. */
+function fechamento(ev) { return new Date(inicio(ev).getTime() - CFG.FECHAR_HORAS_ANTES * 3600e3); }
+function dataHoraBR(d) {
+  var tz = Session.getScriptTimeZone();
+  return dataLonga(Utilities.formatDate(d, tz, 'yyyy-MM-dd')) + ', às ' + horaBR(Utilities.formatDate(d, tz, 'HH:mm'));
+}
 function inicio(ev) { var p = partes(ev.data), h = String(ev.hora || '00:00').split(':'); return new Date(p.a, p.m - 1, p.d, +h[0] || 0, +h[1] || 0); }
 function semAcento(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
