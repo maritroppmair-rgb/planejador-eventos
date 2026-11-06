@@ -1,0 +1,88 @@
+/* ---------- telas no padrão de Salas ---------- */
+table.tlist{min-width:640px}
+.tlist td{padding:10px 12px;vertical-align:top}
+.tlist tbody tr[tabindex]{cursor:pointer}
+@media (hover:hover){.tlist tbody tr[tabindex]:hover td{background:var(--surface-2)}}
+.tlist tbody tr[tabindex]:active td{background:var(--surface-2)}
+.tlist tbody tr:focus-visible{outline:2px solid var(--wine);outline-offset:-2px}
+.tlist tr.off td{opacity:.55}
+.tlist tr.grp td{background:var(--surface-2);font-family:var(--label);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--muted);padding:8px 12px}
+.tn{font-weight:700;color:var(--fg)}
+.tsub{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttag{display:inline-block;font-family:var(--label);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--muted);margin:2px 4px 0 0;white-space:nowrap}
+.ttag.seg2{border-style:dashed}
+.tbig{font-family:var(--display);font-size:20px;font-weight:600;line-height:1}
+.tbig.ok{color:var(--green)}.tbig.warn{color:var(--amber)}
+.tbar{display:inline-block;width:80px;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;vertical-align:middle;margin-right:8px}
+.tbar i{display:block;height:100%;background:var(--wine)}
+.chip.wine{color:var(--wine);background:var(--wine-soft)}
+.topen{white-space:nowrap}.topen a.open{font-weight:700;color:var(--wine)}.topen a.alt{font-size:12.5px;color:var(--muted)}
+.tdanger{border-color:var(--red)!important;color:var(--red)!important}
+.twho{display:flex;align-items:center;gap:10px}
+/* opções em botões */
+.tseg-src{display:none!important}
+.tseg{display:flex;flex-wrap:wrap;gap:6px}
+.tseg button{border:1px solid var(--line);border-radius:999px;background:var(--surface);font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);padding:6px 12px;cursor:pointer;white-space:nowrap}
+.tseg button:hover{border-color:var(--fg)}
+.tseg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.gav-form .field:has(.tseg){grid-column:1/-1}
+.tseg button:focus-visible{outline:2px solid var(--wine);outline-offset:-2px}
+fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;opacity:.7}
+/* painel genérico */
+.tp-tt{min-width:0}.tp-sub{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tp-body{display:grid;gap:12px;align-content:start}
+.tp-blk{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.tp-blk h4{margin:0 0 10px!important}
+.tpanel .detkv{grid-template-columns:130px 1fr;max-width:none}
+.tpanel .kv dd{text-align:left}
+.treg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.treg .field input,.treg .field select{background:var(--bg);color:var(--fg)}
+.tmem{display:flex;gap:14px;align-items:flex-start}.tmem .kv{flex:1;grid-template-columns:150px 1fr}
+.tcovbox{margin:0 0 12px}.tcovbox summary{cursor:pointer}
+.tcovbox .kpis{margin-top:8px}
+/* parâmetros em cartões */
+.tparnote{margin:0 0 10px}
+.tpar{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.tpc{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:block}
+.tpc:hover{border-color:var(--wine)}.tpc:focus-visible{outline:2px solid var(--wine)}
+.tpc-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px;font-size:15.5px}
+.tpc .kv{font-size:13.5px}.tpc .kv dd.mud{color:var(--wine)}
+#parform fieldset{border:0;padding:0;margin:0}
+#parform fieldset legend{display:none}
+#view-par>.btns{margin-top:14px}
+@media (max-width:700px){
+  table.tlist{min-width:0}
+  .tlist thead{display:none}
+  .tlist tbody,.tlist tr,.tlist td{display:block}
+  .tlist tbody tr{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tlist tbody tr.grp{display:block;padding:0}
+  .tlist td{padding:0;border:0}
+  .tlist td:first-child{grid-column:1}
+  .tsub{white-space:normal;max-width:none}
+  .treg{grid-template-columns:1fr}
+  .tmem{flex-direction:column}.tmem .kv{grid-template-columns:1fr}
+}
+/* no celular, cada tela decide o que esconder */
+@media (max-width:700px){
+  #ctable tbody tr td:nth-child(2),#ctable tbody tr td:nth-child(5){grid-column:1/-1}
+  #ctable tbody tr td:nth-child(3){grid-column:2;grid-row:1}
+  #ctable tbody tr td:nth-child(4){display:none}
+  #etable tbody tr[data-eopen] td:nth-child(1){display:none}
+  #etable tbody tr[data-eopen] td:nth-child(2){grid-column:1}
+  #etable tbody tr[data-eopen] td:nth-child(4){grid-column:2;grid-row:1}
+  #etable tbody tr[data-eopen] td:nth-child(3){grid-column:1/-1;font-size:13px}
+  #etable tbody tr[data-eopen] td:nth-child(5){display:none}
+  #ktab tbody tr td:nth-child(1){grid-column:1/-1;order:2;font-size:13px}
+  #ktab tbody tr td:nth-child(3){grid-column:2;grid-row:1}
+  #ktab tbody tr td:nth-child(4){display:none}
+  #dtab tbody tr td:nth-child(2),#dtab tbody tr td:nth-child(4){display:none}
+  #dtab tbody tr td:nth-child(3){grid-column:2;grid-row:1}
+  #dtab tbody tr td:nth-child(5){grid-column:1/-1;text-align:left}
+  #mlist tbody tr td:nth-child(2){grid-column:2;grid-row:1}
+  #mlist tbody tr td:nth-child(3),#mlist tbody tr td:nth-child(4){display:none}
+}
+.seg.tseg,.tseg{border:0!important;border-radius:0!important;background:none!important;overflow:visible!important}
+#parform fieldset{background:none!important;box-shadow:none!important}
+.tpanel a{color:var(--wine);font-weight:700}
+.tmob{display:none}
+@media (max-width:700px){.tmob{display:inline}}

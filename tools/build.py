@@ -11,6 +11,9 @@ pecas = sys.argv[1] if len(sys.argv) > 1 else os.path.join(raiz, 'tools', 'pecas
 base = sys.argv[2] if len(sys.argv) > 2 else os.path.join(pecas, 'base.html')
 s = open(base, encoding='utf-8').read()
 P = lambda n: open(os.path.join(pecas, n), encoding='utf-8').read()
+# telas no padrão de Salas: rodam dentro do script principal (mesmo escopo)
+_f = s.index('\n})();\n</script>')
+s = s[:_f] + '\n' + P('telas.js') + s[_f:]
 
 def troca(a, b, n=1):
     global s
@@ -19,7 +22,7 @@ def troca(a, b, n=1):
 
 # peças de conta, menu e visualizador (as mesmas da Sandbox)
 k = s.index('@media (prefers-reduced-motion:reduce)'); k = s.index('</style>', k)
-s = s[:k] + P('conta.css') + P('nav.css') + P('analytics.css') + s[k:]
+s = s[:k] + P('conta.css') + P('nav.css') + P('analytics.css') + P('telas.css') + s[k:]
 troca('<header class="app">', '<script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>\n<header class="app">')
 a = s.index('<div class="brand">'); b = s.index('\n    <nav class="tabs"')
 s = s[:a] + P('menu.html').replace('{{BRAND}}', s[a:b]) + s[b:]
