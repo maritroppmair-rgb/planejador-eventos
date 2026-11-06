@@ -9,4 +9,4 @@ window.FIREBASE_CONFIG = {
 };
 
 /* Robô de inscrições (Apps Script). Cole aqui a URL do app da Web (termina em /exec). Vazio = desligado. */
-window.ROBO_URL = '';
+window.ROBO_URL = 'https://script.google.com/macros/s/AKfycbxx69SaVZ08ab0D4KbJA6ieKOfnDs0Rvjxz6Qu8YdtfTjlahF3YIAIy5NqzVeTcl4Cx/exec';
