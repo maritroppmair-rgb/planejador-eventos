@@ -245,6 +245,7 @@ function corpoEmail(ev, r) {
 
 /* ---------- rotina automática (gatilho a cada 10 min) ---------- */
 function rotina() {
+  try { sincronizarEquipe(); } catch (err) { console.error('Equipe: ' + err); }
   var agora = new Date(), limite = new Date(agora.getTime() + CFG.HORAS_AVISO * 3600e3);
   var ontem = new Date(agora.getTime() - 36 * 3600e3);
   fsList('eventos').forEach(function (ev) {
@@ -265,11 +266,43 @@ function rotina() {
   });
 }
 
+/* ---------- equipe: quem tem cargo no app edita a pasta (Forms e planilhas herdam) ---------- */
+function sincronizarEquipe() {
+  var pasta = pastaInscricoes(), id = pasta.getId(), dono = Session.getEffectiveUser().getEmail().toLowerCase();
+  var querem = {};
+  fsList('membros').forEach(function (m) {
+    var e = String(m.email || '').toLowerCase().trim();
+    if (e && CFG.CARGOS_QUE_EDITAM.indexOf(m.cargo || '') >= 0) querem[e] = 1;
+  });
+  delete querem[dono];
+  var j = drive('get', id + '/permissions?fields=permissions(id,emailAddress,role,type)');
+  var tem = {};
+  (j.permissions || []).forEach(function (p) {
+    if (p.type !== 'user' || p.role === 'owner') return;
+    var e = String(p.emailAddress || '').toLowerCase();
+    if (querem[e]) tem[e] = 1;
+    else drive('delete', id + '/permissions/' + p.id); // perdeu o cargo ou saiu da equipe
+  });
+  Object.keys(querem).forEach(function (e) {
+    if (!tem[e]) drive('post', id + '/permissions?sendNotificationEmail=false', { type: 'user', role: 'writer', emailAddress: e });
+  });
+  return Object.keys(querem);
+}
+function drive(metodo, caminho, corpo) {
+  var o = { method: metodo, muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } };
+  if (corpo) { o.contentType = 'application/json'; o.payload = JSON.stringify(corpo); }
+  var r = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + caminho, o);
+  if (r.getResponseCode() >= 300) throw new Error('Drive ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 300));
+  var t = r.getContentText();
+  return t ? JSON.parse(t) : {};
+}
+
 /* ---------- instalação: rode uma vez pelo editor ---------- */
 function instalar() {
   var f = FormApp.openById(CFG.MODELO_FORM_ID);
   console.log('Modelo encontrado: ' + f.getTitle());
   console.log('Pasta: ' + pastaInscricoes().getUrl());
+  console.log('Equipe com acesso de edição: ' + sincronizarEquipe().join(', '));
   console.log('Firestore ok, DEV: ' + ((fsGet('config/dev') || {}).email || '(ninguém ainda)'));
   console.log('Cota de e-mails hoje: ' + MailApp.getRemainingDailyQuota());
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'rotina') ScriptApp.deleteTrigger(t); });
