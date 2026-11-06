@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261106150305"></script>
-<script src="plataforma.js?v=20261106150305"></script>
+<script src="config.js?v=20261106153113"></script>
+<script src="plataforma.js?v=20261106153113"></script>
 </head>
 <body>
 
@@ -2332,6 +2332,19 @@ function renderMe(){
 
 /* Meu perfil (só a equipe de Eventos: nome, apelido, e-mail USP, celular, cargo, semestre de ingresso e foto) */
 var FIELDS={nome:'pf-nome',apelido:'pf-apelido',email:'pf-email',telefone:'pf-tel'};
+/* celular no padrão (11) 91234-5678: a pessoa digita só os números e a máscara se ajusta */
+function telDig(t){var d=String(t||'').replace(/\D/g,'');if(d.length>11&&d.indexOf('55')===0)d=d.slice(2);return d.slice(0,11);}
+function fmtTel(t){var d=telDig(t);if(!d)return '';if(d.length<=2)return '('+d;var r=d.slice(2),o='('+d.slice(0,2)+') ';
+  if(r.length<=4)return o+r;if(d.length<11)return o+r.slice(0,4)+'-'+r.slice(4);return o+r.slice(0,5)+'-'+r.slice(5);}
+function telMostrar(t){var d=telDig(t);return d.length===10||d.length===11?fmtTel(d):String(t||'');}
+window.fmtTel=fmtTel;
+(function(){var i=$('pf-tel');if(!i)return;var ant='';
+  i.setAttribute('inputmode','numeric');i.setAttribute('autocomplete','tel-national');i.maxLength=15;
+  i.addEventListener('focus',function(){ant=telDig(i.value);});
+  i.addEventListener('input',function(e){var d=telDig(i.value);
+    if(e.inputType&&e.inputType.indexOf('delete')===0&&d===ant&&d)d=d.slice(0,-1); /* apagou só o ")" ou o "-": apaga o número antes */
+    ant=d;i.value=fmtTel(d);i.removeAttribute('aria-invalid');});
+})();
 /* cargo do membro; aceita perfis salvos no formato anterior (lista de diretorias) */
 function cargoOf(m){
   if(!m)return '';
@@ -2356,7 +2369,7 @@ function renderPerfil(){
   $('pf-title').textContent=myDoc?'Meu perfil':'Criar meu perfil';
   $('pfsave').textContent=myDoc?'Salvar perfil':'Criar perfil';
   if(!pfDirty){
-    Object.keys(FIELDS).forEach(function(k){var i=$(FIELDS[k]);i.value=(myDoc&&myDoc[k])||'';i.removeAttribute('aria-invalid');});
+    Object.keys(FIELDS).forEach(function(k){var i=$(FIELDS[k]);i.value=(myDoc&&myDoc[k])||'';if(k==='telefone')i.value=telMostrar(i.value);i.removeAttribute('aria-invalid');});
     $('pf-cargo-ro').textContent=cargoOf(myDoc)||'Ainda sem cargo';
     fillSelect($('pf-entrada'),'Escolha o semestre',semestres(),myDoc&&myDoc.entrada);
     $('pf-entrada').removeAttribute('aria-invalid');
@@ -2394,10 +2407,12 @@ $('pfform').addEventListener('submit',function(e){
   if(!v('pf-nome'))bad.push($('pf-nome'));
   if(!/^[^\s@]+@usp\.br$/i.test(v('pf-email'))){bad.push($('pf-email'));if(v('pf-email'))msg='Use o e-mail USP (termina em @usp.br).';}
   if(!v('pf-entrada'))bad.push($('pf-entrada'));
+  var tl=telDig(v('pf-tel'));if(v('pf-tel')&&tl.length!==10&&tl.length!==11){bad.push($('pf-tel'));msg=(msg?msg+' ':'')+'Celular com DDD, no formato (11) 91234-5678.';}
   if(bad.length){bad.forEach(function(x){x.setAttribute('aria-invalid','true');});bad[0].focus();
     pmsg(bad.length===1&&msg?msg:'Preencha os campos obrigatórios.'+(msg?' '+msg:''),1);return;}
   var now=new Date().toISOString(),data={};
   Object.keys(FIELDS).forEach(function(k){data[k]=v(FIELDS[k]);});
+  data.telefone=fmtTel(data.telefone);
   data.email=data.email.toLowerCase();data.cargo=(myDoc&&myDoc.cargo)||(souDev()?'DEV':'');data.entrada=v('pf-entrada');
   var dup=members.filter(function(m){return m.id!==meId&&String(m.email||'').toLowerCase()===data.email;})[0];
   if(dup){$('pf-email').setAttribute('aria-invalid','true');pmsg('Esse e-mail já está no perfil de '+(dup.nome||'outro membro')+'.',1);return;}
@@ -2459,7 +2474,7 @@ function mPainel(id){var m=members.filter(function(x){return x.id===id;})[0];if(
   var em=m.email&&/^[^\s@"<>]+@[^\s@"<>]+$/.test(m.email)?m.email:'',z=zap(m);
   var info='<div class="tmem"><span class="av md tp-av"></span><dl class="kv">'+
     '<dt>Como prefere ser chamado(a)</dt><dd>'+esc(m.apelido||'—')+'</dd><dt>Na Feashion desde</dt><dd>'+esc(m.entrada||'—')+'</dd>'+
-    '<dt>E-mail</dt><dd>'+(em?'<a href="mailto:'+esc(em)+'">'+esc(em)+'</a>':'—')+'</dd><dt>Celular</dt><dd>'+(m.telefone?esc(m.telefone)+(z?' · <a href="'+esc(z)+'" target="_blank" rel="noopener">WhatsApp</a>':''):'—')+'</dd></dl></div>';
+    '<dt>E-mail</dt><dd>'+(em?'<a href="mailto:'+esc(em)+'">'+esc(em)+'</a>':'—')+'</dd><dt>Celular</dt><dd>'+(m.telefone?esc(telMostrar(m.telefone))+(z?' · <a href="'+esc(z)+'" target="_blank" rel="noopener">WhatsApp</a>':''):'—')+'</dd></dl></div>';
   var cargo;
   if(cg==='DEV')cargo='<p class="note" style="margin:0">Cargo técnico, só do Pedro. Ninguém altera.</p>';
   else if(pode){var v=mCargoSel==null?cg:mCargoSel;cargo='<div class="seg tseg" role="group" id="m-seg">'+[''].concat(CARGOS).map(function(c){return '<button type="button" data-cg="'+esc(c)+'" aria-pressed="'+(c===v)+'"'+(c===v?' class="on"':'')+'>'+(c||'Sem cargo')+'</button>';}).join('')+'</div><p class="note" style="margin:8px 0 0">Sem cargo = só visualiza. Diretor(a) mexe em tudo; Coordenador(a) e Membro(a) não mexem em Parâmetros e Membros; Trainee não exclui.</p>';}
@@ -2503,7 +2518,7 @@ function renderMembros(){
     var sb=[];if(m.apelido&&m.apelido!==m.nome)sb.push('“'+m.apelido+'”');if(m.email)sb.push(m.email);tx.appendChild(el('span','tsub',sb.join(' · ')));
     if(m.id===meId)tx.firstChild.appendChild(el('span','chip neutral you',' você'));w.appendChild(tx);c1.appendChild(w);tr.appendChild(c1);
     var cg=cargoOf(m),c2=el('td');c2.appendChild(el('span','chip '+(CCH[cg]||'neutral'),cg||'Sem cargo'));tr.appendChild(c2);
-    tr.appendChild(el('td',null,m.entrada||'—'));tr.appendChild(el('td',null,m.telefone||'—'));tb.appendChild(tr);});
+    tr.appendChild(el('td',null,m.entrada||'—'));tr.appendChild(el('td',null,m.telefone?telMostrar(m.telefone):'—'));tb.appendChild(tr);});
   t.appendChild(tb);tw.appendChild(t);list.appendChild(tw);
   if(window.painelAtualizar)window.painelAtualizar('view-membros');
 }
