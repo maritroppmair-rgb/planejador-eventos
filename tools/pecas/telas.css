@@ -174,3 +174,9 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
 h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 .ia-aviso{background:var(--amber-bg);color:var(--amber);border-radius:10px;padding:10px 14px;font-size:13.5px;margin:0 0 14px}
 .ia-card .ft .btn:disabled{opacity:.55}
+
+.ia-meta{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px}
+.ia-meta .ia-steps{margin-top:8px}
+.ia-meta .ia-steps span.ok{background:var(--green-bg);color:var(--green);font-weight:700}
+.ia-head h3{text-transform:none;letter-spacing:0;color:var(--fg)}
+.ia-card h4{text-transform:none;letter-spacing:0}

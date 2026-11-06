@@ -2,12 +2,13 @@
   <!-- IDEIA DE EVENTO (BETA, aberta pelo menu lateral) -->
   <section id="view-ia" aria-labelledby="ia-title" hidden>
     <div class="section-head"><div><h2 id="ia-title">Ideia de evento <span class="beta">BETA</span></h2><p class="note">Descreva com suas palavras o que você imagina. A IA propõe o evento (ou uma série de eventos) usando os convidados, o calendário e o histórico da Base. Público, sala e compras continuam saindo do cálculo do Planejar.</p></div></div>
-    <p class="ia-aviso"><b>Em teste:</b> a IA ainda não está ligada. Por enquanto a tela mostra propostas de exemplo, com convidados e números fictícios, para mostrar como vai funcionar.</p>
+    <p class="ia-aviso" id="ia-aviso"><b>BETA:</b> as propostas vêm de uma IA (Gemini, do Google) e podem errar. Revise antes de salvar. Público, sala e custo são calculados pelo Planejar. Para a IA vão só nome, empresa, temas e nota dos convidados, nunca contatos.</p>
+    <div id="ia-meta"></div>
     <div class="ia-in">
       <label for="ia-ideia">Sua ideia</label>
       <textarea id="ia-ideia" placeholder="Ex.: quero algo prático sobre moda circular para os calouros, talvez com alguém que tenha brechó…"></textarea>
       <div class="ia-ex"><span>Exemplos:</span><button type="button" data-iaex="1">Um workshop rápido</button><button type="button" data-iaex="2">Uma série no semestre</button></div>
-      <div class="ia-row"><button class="btn" type="button" id="ia-gerar">✦ Gerar proposta</button><span class="note">Nada é salvo até você aprovar.</span></div>
+      <div class="ia-row"><button class="btn" type="button" id="ia-gerar">✦ Gerar proposta</button><span class="note">Nada é salvo até você aprovar. Limite de 30 propostas por pessoa por dia.</span></div>
     </div>
     <div id="ia-out"></div>
   </section>

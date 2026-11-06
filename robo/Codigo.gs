@@ -23,7 +23,9 @@ var CFG = {
   REMETENTE: 'Feashion · Diretoria de Eventos',
   HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes
   FECHAR_HORAS_ANTES: 36,   // inscrições fecham X horas antes do início
-  CARGOS_QUE_EDITAM: ['DEV', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee']
+  CARGOS_QUE_EDITAM: ['DEV', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'],
+  IA_MODELO: 'gemini-2.5-flash', // troque aqui se o AI Studio mostrar outro modelo gratuito
+  IA_LIMITE_DIA: 30              // pedidos de proposta por pessoa por dia
 };
 // ==========================================================
 
@@ -38,6 +40,7 @@ function doPost(e) {
     if (CFG.CARGOS_QUE_EDITAM.indexOf(u.cargo) < 0) throw new Error('Seu cargo não permite usar as inscrições.');
     if (b.acao === 'modelos') out = { modelos: MODELOS, tipos: TIPOS };
     else if (b.acao === 'mailingAtualizar') { atualizarMailing(); out = {}; }
+    else if (b.acao === 'ideia') out = ideia(b, u);
     else {
       if (b.acao === 'mailingPrevia') out = mailingPrevia(b.evento, b.texto, null);
       else if (b.acao === 'mailingTeste') out = mailingPrevia(b.evento, b.texto, u.email);
@@ -707,3 +710,93 @@ function dataHoraBR(d) {
 function inicio(ev) { var p = partes(ev.data), h = String(ev.hora || '00:00').split(':'); return new Date(p.a, p.m - 1, p.d, +h[0] || 0, +h[1] || 0); }
 function semAcento(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+
+/* ---------- IA: ideia de evento (Gemini, plano gratuito) ---------- */
+var IA_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    tipoProposta: { type: 'STRING', enum: ['evento', 'serie'] },
+    titulo: { type: 'STRING' },
+    resumo: { type: 'STRING' },
+    eventos: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+      nome: { type: 'STRING' }, tipo: { type: 'STRING' }, tema: { type: 'STRING' }, formato: { type: 'STRING' },
+      papelNaSerie: { type: 'STRING' }, porque: { type: 'STRING' },
+      duracaoMin: { type: 'INTEGER' }, horario: { type: 'STRING' }, inscricoesEsperadas: { type: 'INTEGER' },
+      datas: { type: 'ARRAY', items: { type: 'OBJECT', properties: { data: { type: 'STRING' }, motivo: { type: 'STRING' } }, required: ['data', 'motivo'] } },
+      convidados: { type: 'ARRAY', items: { type: 'OBJECT', properties: { id: { type: 'STRING' }, motivo: { type: 'STRING' } }, required: ['id', 'motivo'] } },
+      perfilProcurar: { type: 'STRING' },
+      riscos: { type: 'ARRAY', items: { type: 'STRING' } },
+      divulgacao: { type: 'STRING' }
+    }, required: ['nome', 'tipo', 'tema', 'formato', 'porque', 'duracaoMin', 'horario', 'inscricoesEsperadas', 'datas', 'convidados', 'riscos'] } }
+  },
+  required: ['tipoProposta', 'titulo', 'resumo', 'eventos']
+};
+
+var IA_REGRAS = [
+  'Você ajuda a Diretoria de Eventos da Feashion, liga de fashion business da FEA-USP, a transformar uma ideia escrita em texto corrido em uma proposta de evento.',
+  'Responda sempre em português do Brasil, em JSON no formato pedido, com textos curtos e diretos.',
+  'Se a ideia tiver vários momentos (por exemplo atrair, praticar e visitar) ou for grande, proponha uma série de 2 a 5 eventos ligados (tipoProposta "serie"); se for algo simples, um evento só (tipoProposta "evento").',
+  'O campo tipo de cada evento precisa ser exatamente um dos tipos da lista "tipos" do contexto. Respeite as regras de fim de semana de cada tipo.',
+  'Convidados: use somente ids que existem na lista "convidados" do contexto, no máximo 3 por evento, preferindo nota alta e tema compatível. Nunca invente nomes de pessoas ou empresas. Se ninguém da lista servir, deixe convidados vazio e descreva em perfilProcurar o perfil a buscar.',
+  'Datas: proponha de 2 a 3 datas no formato AAAA-MM-DD, todas depois de "hoje", até 4 meses à frente. Evite os períodos do calendário (feriados, férias, provas, bloqueios), sextas-feiras e o mesmo dia de outros eventos já marcados. Numa série, espace os eventos e ponha em ordem.',
+  'horario no formato HH:MM. Eventos na FEA costumam caber na janela do contexto; visitas e desfiles podem ser em outro horário.',
+  'inscricoesEsperadas: estime com base nas médias de inscrições por tipo do contexto; não invente público presente, sala nem custos, porque o app calcula isso.',
+  'Riscos: 1 ou 2 frases práticas por evento (data, convidado, material, prazo).',
+  'Não cite nomes de outras entidades estudantis.'
+].join('\n');
+
+function ideia(b, u) {
+  var key = PropertiesService.getScriptProperties().getProperty('GEMINI_KEY');
+  if (!key) throw new Error('A IA ainda não foi ligada: falta a chave GEMINI_KEY nas propriedades do robô.');
+  var texto = String(b.texto || '').trim().slice(0, 3000);
+  if (texto.length < 15) throw new Error('Escreva a ideia com um pouco mais de detalhe.');
+  // limite por pessoa por dia
+  var pr = PropertiesService.getScriptProperties(), dia = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd');
+  var ck = 'ia_' + u.uid + '_' + dia, usados = +(pr.getProperty(ck) || 0);
+  if (usados >= CFG.IA_LIMITE_DIA) throw new Error('Você chegou ao limite de ' + CFG.IA_LIMITE_DIA + ' propostas por dia. Tente amanhã.');
+  pr.setProperty(ck, String(usados + 1));
+  var ctx = JSON.stringify(b.contexto || {});
+  if (ctx.length > 120000) ctx = ctx.slice(0, 120000);
+  var partes = [{ text: 'CONTEXTO (dados do app, em JSON):\n' + ctx }, { text: 'IDEIA:\n' + texto }];
+  if (b.anterior && b.ajuste) {
+    partes.push({ text: 'PROPOSTA ANTERIOR:\n' + JSON.stringify(b.anterior).slice(0, 20000) });
+    partes.push({ text: 'AJUSTE PEDIDO (refaça a proposta aplicando isto e mantendo o resto quando fizer sentido):\n' + String(b.ajuste).slice(0, 1000) });
+  }
+  var corpo = {
+    systemInstruction: { parts: [{ text: IA_REGRAS }] },
+    contents: [{ role: 'user', parts: partes }],
+    generationConfig: { responseMimeType: 'application/json', responseSchema: IA_SCHEMA, temperature: 0.7 }
+  };
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + CFG.IA_MODELO + ':generateContent';
+  var r, tentativa = 0;
+  while (true) {
+    r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, payload: JSON.stringify(corpo), muteHttpExceptions: true });
+    var c = r.getResponseCode();
+    if ((c === 503 || c === 500) && tentativa < 1) { tentativa++; Utilities.sleep(2000); continue; }
+    break;
+  }
+  var code = r.getResponseCode();
+  if (code === 429) throw new Error('A IA gratuita está no limite agora. Espere um minuto e tente de novo.');
+  if (code === 404) throw new Error('O modelo ' + CFG.IA_MODELO + ' não está disponível. Troque IA_MODELO no robô.');
+  if (code === 400 || code === 403) throw new Error('A chave da IA foi recusada (' + code + '). Confira a GEMINI_KEY.');
+  if (code !== 200) throw new Error('A IA não respondeu (erro ' + code + '). Tente de novo.');
+  var j = JSON.parse(r.getContentText()), cand = (j.candidates || [])[0];
+  var txt = cand && cand.content && cand.content.parts && cand.content.parts.map(function (p) { return p.text || ''; }).join('');
+  if (!txt) throw new Error('A IA não devolveu proposta' + (cand && cand.finishReason ? ' (' + cand.finishReason + ')' : '') + '. Tente reescrever a ideia.');
+  var prop;
+  try { prop = JSON.parse(txt); } catch (e) { throw new Error('A resposta da IA veio incompleta. Tente de novo.'); }
+  if (!prop.eventos || !prop.eventos.length) throw new Error('A IA não montou nenhum evento. Tente detalhar mais a ideia.');
+  return { proposta: prop, restantes: CFG.IA_LIMITE_DIA - usados - 1 };
+}
+
+/** Rode pelo editor para conferir se a chave funciona. */
+function testarIA() {
+  var key = PropertiesService.getScriptProperties().getProperty('GEMINI_KEY');
+  var r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + CFG.IA_MODELO + ':generateContent', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-goog-api-key': key },
+    payload: JSON.stringify({ contents: [{ parts: [{ text: 'Sugira em uma frase um tema de evento sobre moda circular para universitários.' }] }] })
+  });
+  Logger.log(r.getResponseCode() + ' ' + r.getContentText().slice(0, 800));
+}

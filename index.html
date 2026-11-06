@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261106153433"></script>
-<script src="plataforma.js?v=20261106153433"></script>
+<script src="config.js?v=20261106154057"></script>
+<script src="plataforma.js?v=20261106154057"></script>
 </head>
 <body>
 
@@ -627,6 +627,12 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
 h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 .ia-aviso{background:var(--amber-bg);color:var(--amber);border-radius:10px;padding:10px 14px;font-size:13.5px;margin:0 0 14px}
 .ia-card .ft .btn:disabled{opacity:.55}
+
+.ia-meta{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px}
+.ia-meta .ia-steps{margin-top:8px}
+.ia-meta .ia-steps span.ok{background:var(--green-bg);color:var(--green);font-weight:700}
+.ia-head h3{text-transform:none;letter-spacing:0;color:var(--fg)}
+.ia-card h4{text-transform:none;letter-spacing:0}
 </style>
 
 <script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
@@ -952,12 +958,13 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
   <!-- IDEIA DE EVENTO (BETA, aberta pelo menu lateral) -->
   <section id="view-ia" aria-labelledby="ia-title" hidden>
     <div class="section-head"><div><h2 id="ia-title">Ideia de evento <span class="beta">BETA</span></h2><p class="note">Descreva com suas palavras o que você imagina. A IA propõe o evento (ou uma série de eventos) usando os convidados, o calendário e o histórico da Base. Público, sala e compras continuam saindo do cálculo do Planejar.</p></div></div>
-    <p class="ia-aviso"><b>Em teste:</b> a IA ainda não está ligada. Por enquanto a tela mostra propostas de exemplo, com convidados e números fictícios, para mostrar como vai funcionar.</p>
+    <p class="ia-aviso" id="ia-aviso"><b>BETA:</b> as propostas vêm de uma IA (Gemini, do Google) e podem errar. Revise antes de salvar. Público, sala e custo são calculados pelo Planejar. Para a IA vão só nome, empresa, temas e nota dos convidados, nunca contatos.</p>
+    <div id="ia-meta"></div>
     <div class="ia-in">
       <label for="ia-ideia">Sua ideia</label>
       <textarea id="ia-ideia" placeholder="Ex.: quero algo prático sobre moda circular para os calouros, talvez com alguém que tenha brechó…"></textarea>
       <div class="ia-ex"><span>Exemplos:</span><button type="button" data-iaex="1">Um workshop rápido</button><button type="button" data-iaex="2">Uma série no semestre</button></div>
-      <div class="ia-row"><button class="btn" type="button" id="ia-gerar">✦ Gerar proposta</button><span class="note">Nada é salvo até você aprovar.</span></div>
+      <div class="ia-row"><button class="btn" type="button" id="ia-gerar">✦ Gerar proposta</button><span class="note">Nada é salvo até você aprovar. Limite de 30 propostas por pessoa por dia.</span></div>
     </div>
     <div id="ia-out"></div>
   </section>
@@ -2199,38 +2206,119 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
 })();
 
 
-/* ============================== IDEIA DE EVENTO (BETA, demonstração) ============================== */
+/* ============================== IDEIA DE EVENTO (BETA, IA Gemini via robô) ============================== */
 (function(){
-if(!$("view-ia"))return;
+if(!$('view-ia'))return;
 var EX={
 1:'Queria um workshop prático de precificação para quem está começando a vender roupa, coisa de 2 horas, de preferência numa quinta à noite. Algo mais mão na massa do que palestra.',
 2:'Quero fazer algo grande sobre moda circular e sustentabilidade no fim do semestre: começar com uma palestra para atrair gente, depois algo prático e, se der, fechar com uma visita a um lugar que trabalhe com reuso. Público principal são os calouros, mas aberto para a FEA toda.'
 };
-var P={
-1:{tipo:'evento',k:'Proposta · 1 evento',t:'Workshop: quanto cobrar pela sua peça',p:'Pela descrição (prático, curto, para iniciantes) cabe um evento só. Workshops dessa duração tiveram o melhor comparecimento da Base (média de 71% dos inscritos).',ev:[
- {n:'Workshop',nome:'Quanto cobrar pela sua peça',tags:['Workshop','Precificação','2 h','Presencial'],dts:[['qui, 26/11','19h · melhor nota da data',1],['qua, 25/11','19h · nota um pouco menor',0],['qui, 03/12','19h · semana de entregas',0]],pp:[['A','Convidada A','Consultora de varejo · já veio em 2 eventos','nota 4,7',0],['?','Ou: alguém que venda em brechó online','Não temos ninguém assim na lista',null,1]],calc:['45–62','Sala G2','2 kits'],ins:'80 inscrições esperadas',risk:'Pede notebook ou celular com calculadora: avisar na divulgação.',why:'Formato com exercício em dupla: cada pessoa leva uma peça e calcula o preço com custo, margem e preço de referência.'}]},
-2:{tipo:'serie',k:'Proposta · série de 3 eventos',t:'Ciclo Moda Circular',p:'A ideia tem três momentos diferentes (atrair, praticar, ver na realidade), então virou uma série. As datas ficam espaçadas uma semana e fogem da semana de P2 (16 a 20/11).',ev:[
- {n:'1 de 3 · abre o ciclo',nome:'Moda circular dá dinheiro?',tags:['Palestra','Sustentabilidade','1h30'],dts:[['ter, 24/11','19h · melhor nota',1],['qua, 25/11','19h',0]],pp:[['B','Convidada B','Fundadora de brechó · tema sustentabilidade','nota 4,9',0],['C','Convidado C','Pesquisador de economia circular','nota 4,2',0]],calc:['90–125','Auditório','4 kits'],ins:'150 inscrições esperadas',risk:'Palestras para calouros na última semana de novembro tiveram 18% menos presença: divulgar com 2 semanas.',why:'Abre o ciclo com o lado de negócio da sustentabilidade, para atrair quem não é do tema.'},
- {n:'2 de 3 · prático',nome:'Oficina de upcycling e preço',tags:['Workshop','Upcycling','2h'],dts:[['qui, 03/12','19h · melhor nota',1],['ter, 01/12','19h',0]],pp:[['B','Convidada B','A mesma da palestra, para dar continuidade','nota 4,9',0],['?','Ou: costureira ou ateliê parceiro','Perfil a procurar',null,1]],calc:['28–36','Sala C-10','1 kit'],ins:'40 inscrições (vagas limitadas)',risk:'Precisa de material (tecido, linha): R$ 150 a mais no custo.',why:'Vagas limitadas para quem foi à palestra: dá para avisar pelo mailing e pela lista do 1º evento.'},
- {n:'3 de 3 · fecha o ciclo',nome:'Visita técnica: por dentro do reuso',tags:['Visita técnica','Operação','3h'],dts:[['sáb, 05/12','10h · fora do horário de aula',1],['sex, 04/12','14h',0]],pp:[['?','Local que trabalhe com reuso ou triagem','Não está na lista de convidados: perfil a procurar',null,1]],calc:['18–24','Transporte','—'],ins:'25 inscrições (limite do local)',risk:'Visitas dependem de confirmação do local: começar o contato já.',why:'Fecha mostrando a operação por trás da moda circular, ligando com o que foi visto nos dois primeiros.'}]}
-};
-document.querySelectorAll('[data-iaex]').forEach(function(b){b.onclick=function(){$('ia-ideia').value=EX[b.dataset.iaex];$('ia-ideia').dataset.ex=b.dataset.iaex;};});
-$('ia-gerar').onclick=function(){var ex=(($('ia-ideia').dataset.ex==='2'||$('ia-ideia').value.length>220||/série|grande|ciclo|semana/i.test($('ia-ideia').value))?'2':'1');if(!$('ia-ideia').value.trim())$('ia-ideia').value=EX[ex];
- $('ia-out').innerHTML='<div class="ia-load"><i></i> Lendo a ideia, os convidados, o calendário e a Base…</div>';setTimeout(function(){mostrar(P[ex]);},1200);};
-function card(e,i,serie){return '<article class="ia-card"><div class="hd"><div class="n">'+e.n+'</div><h4>'+e.nome+'</h4><div class="tags">'+e.tags.map(function(t){return '<span>'+t+'</span>'}).join('')+'</div></div><div class="bd">'+
- '<p class="why">'+e.why+'</p>'+
- '<div class="ia-sec"><h5>Data</h5><div class="dts">'+e.dts.map(function(d,j){return '<button class="'+(d[2]?'on':'')+'" data-c="'+i+'">'+d[0]+'<small>'+d[1]+'</small></button>'}).join('')+'</div></div>'+
- '<div class="ia-sec"><h5>Convidados</h5><div class="pp">'+e.pp.map(function(p){return '<div><span class="av2'+(p[4]?' q':'')+'">'+p[0]+'</span><span>'+p[1]+'<small>'+p[2]+'</small></span>'+(p[3]?'<span class="nt">'+p[3]+'</span>':'')+'</div>'}).join('')+'</div></div>'+
- '<div class="calc"><div class="t"><span>Calculado pelo Planejar</span><span>'+e.ins+'</span></div><div class="g"><div><b>'+e.calc[0]+'</b><small>público provável</small></div><div><b>'+e.calc[1]+'</b><small>sala sugerida</small></div><div><b>'+e.calc[2]+'</b><small>coffee</small></div></div></div>'+
- '<div class="risk">⚠ '+e.risk+'</div></div><div class="ft"><button class="btn small" type="button" disabled title="Disponível quando a IA for ligada">Levar para o Planejar</button><button class="btn small ghost" type="button" disabled title="Disponível quando a IA for ligada">Trocar este</button>'+(serie?'<button class="btn small ghost" type="button" disabled title="Disponível quando a IA for ligada">Tirar da série</button>':'')+'</div></article>';}
-function mostrar(p){var s=p.tipo==='serie';
- $('ia-out').innerHTML='<div class="ia-res"><div class="ia-head"><div class="ia-k">'+p.k+'</div><h3>'+p.t+'</h3><p>'+p.p+'</p>'+(s?'<div class="ia-steps">'+p.ev.map(function(e,i){return '<span><b>'+(i+1)+'</b> '+e.tags[0]+' · '+e.dts[0][0]+'</span>'}).join('')+'</div>':'')+'</div>'+
- '<div class="ia-grid">'+p.ev.map(function(e,i){return card(e,i,s)}).join('')+'</div>'+
- '<div class="ia-adj"><input aria-label="Pedir ajuste" placeholder="Pedir ajuste: “troca a visita por uma mesa redonda”, “tudo depois do dia 30”…"><button class="btn ghost" type="button" disabled title="Disponível quando a IA for ligada">Refazer</button></div>'+
- '<div class="ia-save"><span class="note">Ao salvar, '+(s?'os 3 eventos entram na Base como planejados, ligados pela série “'+p.t+'”':'o evento entra na Base como planejado')+'. Dá para editar tudo depois.</span><button class="btn" type="button" disabled title="Disponível quando a IA for ligada">'+(s?'Salvar série (3 eventos)':'Salvar evento')+'</button></div></div>';
- document.querySelectorAll('.dts button').forEach(function(b){b.onclick=function(){b.parentNode.querySelectorAll('button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');};});
- }
-
+var PROP=null,IDEIA='',EST=[],ocup=false,erro=null,okMsg=null,restantes=null,SIMC={};
+var DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+function teste(e){return /^\s*\[teste\]/i.test(e.nome||'');}
+function semestre(dt){var p=String(dt||'').split('-');return p.length<2?'':p[0]+'.'+(+p[1]<=7?1:2);}
+function tiposApp(){return [].map.call($('f-tipo').options,function(o){return o.value;});}
+function tipoValido(t){var l=tiposApp();if(l.indexOf(t)>=0)return t;var n=nrm(t||'');for(var i=0;i<l.length;i++)if(nrm(l[i])===n||nrm(l[i]).indexOf(n)>=0&&n.length>3)return l[i];return 'Palestra';}
+function hojeIso(){return iso(new Date());}
+function mediaInsc(tipo){var r=events.filter(function(e){return +e.inscritos>0&&!teste(e);}),t=r.filter(function(e){return typeOf(e.tipo)===typeOf(tipo);}),u=t.length?t:r;if(!u.length)return 60;return Math.round(u.reduce(function(s,e){return s+(+e.inscritos);},0)/u.length);}
+/* contexto que vai para a IA: só o necessário, sem e-mail nem telefone */
+function contexto(){var hoje=hojeIso();
+  var tipos=tiposApp().map(function(t){var c=tcfg(t);return {tipo:t,fimDeSemana:c.fds==='obrigatorio'?'obrigatório':c.fds==='livre'?'pode':'não pode',foraDaFEA:!!c.externo,mediaInscricoes:mediaInsc(t)};});
+  var conv=guests.slice(0,200).map(function(g){return {id:g.id,nome:g.nome||'',empresa:g.empresa||'',cargo:g.cargo||'',temas:gT(g),segmentos:gS(g),status:g.status||'',nota:gscore(g)};});
+  var cal=calList().filter(function(x){return (x.fim||x.inicio)>=hoje;}).slice(0,80).map(function(x){return {nome:x.nome,inicio:x.inicio,fim:x.fim||x.inicio,tipo:(CALTIPO[x.tipo]||CALTIPO.outro)[0]};});
+  var real=events.filter(function(e){return e.status==='realizado'&&!teste(e);}).slice(-60).map(function(e){return {nome:e.nome,tipo:e.tipo,data:e.data,dia:e.data?DIAS[D(e.data).getDay()]:'',hora:e.hora,inscritos:+e.inscritos||null,presentes:+e.presentes||null,convidado:e.convidado||''};});
+  var fut=events.filter(function(e){return e.status!=='realizado'&&e.data>=hoje&&!teste(e);}).map(function(e){return {nome:e.nome,tipo:e.tipo,data:e.data,hora:e.hora};});
+  return {hoje:hoje,diaDaSemanaHoje:DIAS[new Date().getDay()],janelaHorarioFEA:JANELA[0]+' às '+JANELA[1],tipos:tipos,convidados:conv,calendario:cal,eventosRealizados:real,eventosMarcados:fut};}
+/* roda o cálculo do Planejar sem mexer no que a pessoa está planejando */
+var CAMPOS=['f-nome','f-tipo','f-data','f-hora','f-dur','f-insc','f-conv','f-cpp'];
+function cppPadrao(){var l=events.filter(function(e){return e.form&&+e.form['f-cpp']>0;}).sort(function(a,b){return String(b.criadoEm||'').localeCompare(String(a.criadoEm||''));});return l.length?String(l[0].form['f-cpp']):'';}
+function preencher(o){$('f-nome').value=o.nome;$('f-tipo').value=o.tipo;$('f-data').value=o.data;$('f-hora').value=o.hora;
+  var dur=Math.max(30,Math.min(300,Math.round((+o.dur||90)/30)*30));$('f-dur').value=String(dur);$('f-insc').value=String(o.insc);$('f-conv').value=o.conv||'';if(!(+$('f-cpp').value>0))$('f-cpp').value=cppPadrao();}
+function simular(o){var k=[o.tipo,o.data,o.hora,o.dur,o.insc].join('|');if(SIMC[k])return SIMC[k];
+  var snap={};CAMPOS.forEach(function(id){snap[id]=$(id).value;});var sm=salaManual,cur=current,al=alertas,sid=savedId,r=null;
+  try{salaManual=null;savedId=null;preencher(o);plan();var c=current;var h=history(o.tipo),p=totalPmf(Math.max(5,Math.min(600,+o.insc||0)),h,h.lam);
+    r={p10:quant(p,.1),p90:quant(p,.9),m:c.presentesPrev,sala:c.sala,cap:c.capacidade,nota:c.notaData,cpp:(+$('f-cpp').value>0||!$('f-coffee').checked)?c.custoPorPresentePrev:null,externo:!!tcfg(o.tipo).externo,cur:Object.assign({},c)};}
+  catch(e){r=null;}
+  CAMPOS.forEach(function(id){$(id).value=snap[id];});salaManual=sm;savedId=sid;
+  if(calcDone&&$('f-data').value){try{plan();}catch(e){}}else{current=cur;}alertas=al;
+  SIMC[k]=r;return r;}
+function datasDe(e,tipo){var hoje=hojeIso(),vis={},l=[];(e.datas||[]).forEach(function(x){var d=String(x.data||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||d<=hoje||vis[d])return;vis[d]=1;l.push({d:d,motivo:x.motivo||'',s:scoreDate(D(d),tipo,null).s});});
+  if(!l.length){var b=null;for(var i=14;i<75;i++){var dd=add(new Date(),i),s=scoreDate(dd,tipo,null).s;if(!b||s>b.s)b={d:iso(dd),s:s};}if(b)l.push({d:b.d,motivo:'sugerida pelo app (melhor nota da data nas próximas semanas)',s:b.s});}
+  return l;}
+function preparar(){EST=PROP.eventos.map(function(e){var tipo=tipoValido(e.tipo),ds=datasDe(e,tipo),best=0;ds.forEach(function(x,i){if(x.s>ds[best].s)best=i;});
+  var cv=(e.convidados||[]).map(function(c){var g=guests.filter(function(x){return x.id===c.id;})[0];return g?{g:g,motivo:c.motivo||''}:null;}).filter(Boolean).slice(0,3);
+  var hora=/^\d{1,2}:\d{2}$/.test(e.horario||'')?('0'+e.horario).slice(-5):JANELA[0];
+  return {tipo:tipo,datas:ds,sel:best,conv:cv,hora:hora,dur:+e.duracaoMin||90,insc:Math.max(5,Math.min(600,+e.inscricoesEsperadas||mediaInsc(tipo))),fora:false};});}
+function obj(i){var e=PROP.eventos[i],s=EST[i],d=s.datas[s.sel];return {nome:e.nome||'Evento',tipo:s.tipo,data:d?d.d:'',hora:s.hora,dur:s.dur,insc:s.insc,conv:s.conv.map(function(c){return c.g.nome;}).join(', ')};}
+function brl(v){return 'R$ '+(+v||0).toFixed(2).replace('.',',');}
+function card(i){var e=PROP.eventos[i],s=EST[i],serie=PROP.tipoProposta==='serie'&&PROP.eventos.length>1,o=obj(i),r=o.data?simular(o):null,ativos=EST.filter(function(x){return !x.fora;}).length;
+  var h='<article class="ia-card"><div class="hd"><div class="n">'+esc(serie?(i+1)+' de '+PROP.eventos.length+(e.papelNaSerie?' · '+e.papelNaSerie:''):'Evento')+'</div><h4>'+esc(e.nome||'Evento')+'</h4><div class="tags">'+[s.tipo,e.tema,e.formato,(s.dur>=60?Math.floor(s.dur/60)+'h'+(s.dur%60?('0'+s.dur%60).slice(-2):''):s.dur+' min')].filter(Boolean).map(function(t){return '<span>'+esc(t)+'</span>';}).join('')+'</div></div><div class="bd">';
+  if(e.porque)h+='<p class="why">'+esc(e.porque)+'</p>';
+  h+='<div class="ia-sec"><h5>Data · '+esc(s.hora)+'</h5><div class="dts">'+s.datas.map(function(x,j){var l=label(x.s);return '<button type="button" class="'+(j===s.sel?'on':'')+'" data-iad="'+i+'|'+j+'" title="'+esc(x.motivo)+'">'+esc(fmtLong(D(x.d)))+'<small>nota '+x.s+' · '+l[0].toLowerCase()+'</small></button>';}).join('')+'</div>'+(s.datas[s.sel]&&s.datas[s.sel].motivo?'<p class="note" style="margin:6px 0 0">'+esc(s.datas[s.sel].motivo)+'</p>':'')+'</div>';
+  h+='<div class="ia-sec"><h5>Convidados</h5><div class="pp">'+s.conv.map(function(c){var g=c.g,ini=String(g.nome||'?').split(/\s+/).map(function(w){return w.charAt(0);}).join('').slice(0,2).toUpperCase();return '<div><span class="av2">'+esc(ini)+'</span><span>'+esc(g.nome)+'<small>'+esc([g.empresa,gT(g).join(', ')].filter(Boolean).join(' · '))+(c.motivo?'<br>'+esc(c.motivo):'')+'</small></span><span class="nt">nota '+gscore(g)+'</span></div>';}).join('')+
+    (e.perfilProcurar?'<div><span class="av2 q">?</span><span>'+(s.conv.length?'Ou: ':'')+esc(e.perfilProcurar)+'<small>Perfil a procurar (não está na lista)</small></span></div>':'')+(!s.conv.length&&!e.perfilProcurar?'<p class="note" style="margin:0">Nenhum convidado da lista combina.</p>':'')+'</div></div>';
+  if(r)h+='<div class="calc"><div class="t"><span>Calculado pelo Planejar</span><span>'+s.insc+' inscrições esperadas</span></div><div class="g"><div><b>'+r.p10+'–'+r.p90+'</b><small>público provável</small></div><div><b>'+esc(r.externo?'Fora da FEA':(r.sala||'sem sala'))+'</b><small>'+(r.externo?'sem sala':'sala sugerida')+'</small></div><div><b>'+(r.cpp==null?'—':brl(r.cpp))+'</b><small>'+(r.cpp==null?'custo: falta o preço do coffee':'por presente')+'</small></div></div></div>';
+  (e.riscos||[]).slice(0,3).forEach(function(x){h+='<div class="risk">⚠ '+esc(x)+'</div>';});
+  if(e.divulgacao)h+='<p class="note" style="margin:0"><b>Divulgação:</b> '+esc(e.divulgacao)+'</p>';
+  h+='</div><div class="ft"><button class="btn small" type="button" data-iaplan="'+i+'">Levar para o Planejar</button><button class="btn small ghost" type="button" data-iatroca="'+i+'"'+(ocup?' disabled':'')+'>Trocar este</button>'+(serie&&ativos>1?'<button class="btn small ghost" type="button" data-iatira="'+i+'">Tirar da série</button>':'')+'</div></article>';
+  return h;}
+function beta(){var real=events.filter(function(e){return e.status==='realizado'&&!teste(e)&&+e.inscritos>0&&e.presentes!=null&&e.presentes!=='';});
+  var cont={},todos={};events.filter(function(e){return !teste(e);}).forEach(function(e){var t=typeOf(e.tipo||'');if(t)todos[t]=(todos[t]||0)+1;});real.forEach(function(e){var t=typeOf(e.tipo);cont[t]=(cont[t]||0)+1;});
+  var princ=Object.keys(todos).sort(function(a,b){return todos[b]-todos[a];}).filter(function(t,i){return todos[t]>=2||i<2;}).slice(0,4);
+  var sem={};real.forEach(function(e){sem[semestre(e.data)]=1;});var ns=Object.keys(sem).filter(Boolean).length;
+  var errs=real.filter(function(e){return +e.presentesPrev>0&&+e.presentes>0;}).map(function(e){return Math.abs(+e.presentesPrev-+e.presentes)/(+e.presentes);});
+  var erro=errs.length?errs.reduce(function(a,b){return a+b;},0)/errs.length:null;
+  var okT=princ.length&&princ.every(function(t){return (cont[t]||0)>=8;}),ok=okT&&ns>=2&&erro!=null&&erro<0.15;
+  return {princ:princ,cont:cont,ns:ns,erro:erro,nErr:errs.length,ok:ok};}
+function betaHtml(b){function pill(txt,ok){return '<span class="'+(ok?'ok':'')+'">'+(ok?'✓ ':'')+txt+'</span>';}
+  return '<div class="ia-meta"><b>Para sair do BETA</b><div class="ia-steps">'+(b.princ.length?b.princ.map(function(t){var n=b.cont[t]||0;return pill(esc(t)+' '+Math.min(n,8)+' de 8',n>=8);}).join(''):pill('nenhum evento realizado ainda',false))+
+    pill(Math.min(b.ns,2)+' de 2 semestres',b.ns>=2)+pill('erro da previsão '+(b.erro==null?'sem dados':Math.round(b.erro*100)+'%')+' (meta: abaixo de 15%)',b.erro!=null&&b.erro<0.15)+'</div><p class="note" style="margin:6px 0 0">Conta só eventos realizados com inscritos e presentes registrados, fora os [teste]. Tipos principais: os mais usados na Base.</p></div>';}
+function selo(){var b=beta();document.querySelectorAll('.sitem[data-alvo=ia] .beta, #ia-title .beta').forEach(function(x){x.hidden=b.ok;});var a=$('ia-aviso');if(a)a.hidden=b.ok;return b;}
+function desenhar(){if($('view-ia').hidden){selo();return;}
+  var b=selo();$('ia-meta').innerHTML=b.ok?'':betaHtml(b);
+  $('ia-gerar').disabled=ocup;
+  var h='';
+  if(ocup)h='<div class="ia-load"><i></i> Lendo a ideia, os convidados, o calendário e a Base… (uns 10 a 20 segundos)</div>';
+  if(erro)h+='<div class="imsg err" style="margin-top:14px">'+esc(erro)+'</div>';
+  if(okMsg)h+='<div class="imsg" style="margin-top:14px">'+okMsg+'</div>';
+  if(PROP&&!ocup){var serie=PROP.tipoProposta==='serie'&&PROP.eventos.length>1,idx=[];EST.forEach(function(s,i){if(!s.fora)idx.push(i);});
+    h+='<div class="ia-res"><div class="ia-head"><div class="ia-k">'+(serie?'Proposta · série de '+idx.length+' eventos':'Proposta · 1 evento')+'</div><h3>'+esc(PROP.titulo||'')+'</h3><p>'+esc(PROP.resumo||'')+'</p>'+(serie?'<div class="ia-steps">'+idx.map(function(i,k){var o=obj(i);return '<span><b>'+(k+1)+'</b> '+esc(o.tipo)+' · '+esc(o.data?fmtLong(D(o.data)):'sem data')+'</span>';}).join('')+'</div>':'')+'</div>'+
+      '<div class="ia-grid">'+idx.map(card).join('')+'</div>'+
+      '<div class="ia-adj"><input id="ia-ajuste" aria-label="Pedir ajuste" placeholder="Pedir ajuste: “troca a visita por uma mesa redonda”, “tudo depois do dia 30”…"><button class="btn ghost" type="button" id="ia-refazer">Refazer</button></div>'+
+      '<div class="ia-save"><span class="note">Ao salvar, '+(serie?'os '+idx.length+' eventos entram na Base como planejados, ligados pela série “'+esc(PROP.titulo||'')+'”':'o evento entra na Base como planejado')+', com você como responsável. Dá para editar tudo depois no Planejar.'+(restantes!=null?' Você ainda pode pedir '+restantes+' propostas hoje.':'')+'</span>'+(pode('editar')?'<button class="btn" type="button" id="ia-salvar">'+(serie?'Salvar série ('+idx.length+' eventos)':'Salvar evento')+'</button>':'')+'</div></div>';}
+  $('ia-out').innerHTML=h;}
+function pedir(ajuste){var texto=$('ia-ideia').value.trim();if(!ajuste){if(texto.length<15){erro='Escreva a ideia com um pouco mais de detalhe.';desenhar();return;}IDEIA=texto;}
+  ocup=true;erro=null;okMsg=null;desenhar();
+  var extra={texto:IDEIA,contexto:contexto()};if(ajuste&&PROP){extra.anterior=PROP;extra.ajuste=ajuste;}
+  robo('ideia','',extra).then(function(j){PROP=j.proposta;restantes=j.restantes;SIMC={};preparar();},function(err){erro=err.message;}).then(function(){ocup=false;desenhar();});}
+$('ia-gerar').addEventListener('click',function(){PROP=null;pedir(null);});
+document.querySelectorAll('[data-iaex]').forEach(function(b){b.addEventListener('click',function(){$('ia-ideia').value=EX[b.dataset.iaex];$('ia-ideia').focus();});});
+$('view-ia').addEventListener('click',function(e){var b;
+  if((b=e.target.closest('[data-iad]'))){var p=b.dataset.iad.split('|');EST[+p[0]].sel=+p[1];desenhar();return;}
+  if((b=e.target.closest('[data-iatira]'))){EST[+b.dataset.iatira].fora=true;desenhar();return;}
+  if((b=e.target.closest('[data-iatroca]'))){var ev=PROP.eventos[+b.dataset.iatroca];pedir('Troque o evento "'+(ev.nome||'')+'" por outra opção diferente (outro formato ou tema), mantendo os demais.');return;}
+  if(e.target.id==='ia-refazer'){var a=$('ia-ajuste').value.trim();if(!a){$('ia-ajuste').focus();return;}pedir(a);return;}
+  if((b=e.target.closest('[data-iaplan]'))){var o=obj(+b.dataset.iaplan);if(!o.data)return;
+    editingId=null;savedId=null;salaManual=null;showEditBar();
+    var sp=document.querySelector('.sitem[data-alvo=plan]');if(sp)sp.click();else{var t=$('tab-plan');if(t)t.click();}
+    preencher(o);setNeeds(o.tipo);doCalc();window.scrollTo(0,0);return;}
+  if(e.target.id==='ia-salvar'){salvar(e.target);}
+});
+$('view-ia').addEventListener('keydown',function(e){if(e.target.id==='ia-ajuste'&&e.key==='Enter'){e.preventDefault();var r=$('ia-refazer');if(r)r.click();}});
+function salvar(btn){if(!db||!PROP)return;var idx=[];EST.forEach(function(s,i){if(!s.fora&&obj(i).data)idx.push(i);});if(!idx.length)return;
+  var serie=PROP.tipoProposta==='serie'&&idx.length>1,sid=serie?'s'+Date.now():null,agora=new Date().toISOString();
+  var docs=idx.map(function(i,k){var o=obj(i),r=simular(o);var d=Object.assign({status:'planejado',criadoEm:agora},r?r.cur:{nome:o.nome,tipo:o.tipo,data:o.data,hora:o.hora,duracao:o.dur,inscritosMeta:o.insc});
+    d.responsavel=window.__meuNome||'';d.responsavelId=window.__euId||'';d.criadoPor=window.__euId||'';d.origem='ia';d.ideia=IDEIA.slice(0,2000);
+    if(serie){d.serieId=sid;d.serieNome=PROP.titulo||'Série';d.serieOrdem=k+1;}return d;});
+  btn.disabled=true;var feitos=0;
+  docs.reduce(function(pr,d){return pr.then(function(){return db.collection('eventos').add(d).then(function(){feitos++;});});},Promise.resolve())
+    .then(function(){okMsg=(serie?'Série salva: '+feitos+' eventos':'Evento salvo')+' na Base de eventos como planejado. <button type="button" class="btn small ghost" data-iabase>Ver na Base</button>';PROP=null;EST=[];$('ia-ideia').value='';},
+          function(){erro='Não foi possível salvar'+(feitos?' todos (salvos '+feitos+' de '+docs.length+')':'')+'. Tente de novo.';})
+    .then(function(){desenhar();});}
+document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-iabase]')){var s=document.querySelector('.sitem[data-alvo=base]');if(s)s.click();}});
+document.addEventListener('tela',function(e){if(e.detail==='ia')desenhar();});
+var rb=renderBase;renderBase=function(){rb();if(!ocup)desenhar();};
+selo();
 })();
 })();
 
