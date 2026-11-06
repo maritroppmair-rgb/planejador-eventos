@@ -42,7 +42,7 @@ Cada tipo tem o botão **Texto** (editar, ver a prévia e mandar um teste para s
 ## Mailing de eventos
 
 - **Lista:** a cada 10 minutos o robô junta quem marcou "quero receber novidades" em qualquer Forms em `mailing/{hash do e-mail}` (um registro por e-mail). Quem clicou em "sair da lista" ou foi tirado pela equipe fica em `descadastros` e não volta.
-- **Envio padrão:** no dia seguinte à criação de cada evento, na hora definida na tela Mailing (padrão 08:00). Só vale para eventos criados depois que o mailing foi ligado. Eventos marcados como fora do mailing não recebem nada.
+- **Envio padrão:** no dia seguinte à criação de cada evento, na hora definida na tela Mailing (padrão 08:00). Os convites só saem de segunda a sexta: evento criado na sexta ou no fim de semana manda na segunda; envio programado ou adiado que caia no fim de semana também vai para a segunda (o botão "Enviar agora" não tem essa trava). Só vale para eventos criados depois que o mailing foi ligado. Eventos marcados como fora do mailing não recebem nada.
 - **Envios extras:** programados pela tela Mailing ("+ Programar e-mail"), com data, hora e texto próprio opcional. Cada envio pode ser pulado, reativado ou mandado na hora.
 - **Regras:** não manda para quem já se inscreveu no evento; respeita o intervalo mínimo entre envios (padrão 2 dias); se o Forms ainda não existe, o envio espera; nada sai depois que as inscrições fecham. Se a cota diária do Gmail (cerca de 100) acabar, o resto fica na fila para o dia seguinte.
 - **Link e cliques:** o botão do convite passa pelo robô, que registra o clique e abre o Forms já com "Mailing Feashion" marcado em "Como você ficou sabendo". Dados em `mailingEnvios/{evento}_{envio}`; o Analytics mostra inscrições via mailing e cliques por hora.

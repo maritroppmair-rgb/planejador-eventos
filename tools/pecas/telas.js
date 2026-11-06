@@ -380,7 +380,10 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function envios(){var out=[];futuros().concat(events.filter(function(e){return e.mailing&&(e.mailing.envios||[]).length&&futuros().indexOf(e)<0;})).forEach(function(e){(e.mailing&&e.mailing.envios||[]).forEach(function(en){out.push({e:e,en:en});});});
     return out.sort(function(a,b){return (a.en.quando||'')<(b.en.quando||'')?-1:1;});}
   function previsto(e){if(!e.criadoEm||e.mailing&&e.mailing.padraoCriado||e.mailing&&e.mailing.excluido)return null;if(!CFG.desde||e.criadoEm<CFG.desde)return null;
-    var d=new Date(e.criadoEm);d.setDate(d.getDate()+1);var h=hora().split(':');d.setHours(+h[0],+h[1],0,0);return d.toISOString();}
+    var d=new Date(e.criadoEm);d.setDate(d.getDate()+1);return diaUtil(d).toISOString();}
+  function diaUtil(d){d=new Date(d.getTime());while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);var h=hora().split(':');d.setHours(+h[0],+h[1],0,0);return d;}
+  function fds(v){var d=new Date(v);return !isNaN(d)&&(d.getDay()===0||d.getDay()===6);}
+  function avisoFds(v){return fds(v)?'<p class="note" style="margin:6px 0 0">Cai no fim de semana; o robô manda na segunda às '+esc(hora())+'.</p>':'';}
   function kpis(){var cliques=0,env=0;ENVIOS.forEach(function(x){cliques+=(x.cliques||[]).length;env+=(x.emails||[]).length;});
     var via=0;INSC.forEach(function(i){(i.respostas||[]).forEach(function(r){if(viaMailing(r))via++;});});
     var prog=envios().filter(function(x){return x.en.status==='agendado'||x.en.status==='aguardando'||x.en.status==='enviando';}).length;
@@ -389,7 +392,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function progHtml(){var fs=futuros(),h='<div class="sbar"><select id="ml-fev" aria-label="Evento"><option value="">Todos os eventos</option>'+fs.map(function(e){return '<option value="'+esc(e.id)+'"'+(e.id===fEv?' selected':'')+'>'+esc(nomeEv(e))+(e.mailing&&e.mailing.excluido?' (fora do mailing)':'')+'</option>';}).join('')+'</select>';
     var sel=fEv&&events.filter(function(e){return e.id===fEv;})[0];
     if(sel)h+='<label class="sbar-ck"><input type="checkbox" id="ml-inc"'+(sel.mailing&&sel.mailing.excluido?'':' checked')+(pode('editar')?'':' disabled')+'> Este evento entra no mailing</label>';
-    h+='<span class="note">Envio padrão: dia seguinte à criação do evento, às '+esc(hora())+'. Intervalo mínimo entre envios: '+intervalo()+' dia(s).</span></div>';
+    h+='<span class="note">Envio padrão: dia útil seguinte à criação do evento, às '+esc(hora())+' (só de segunda a sexta). Intervalo mínimo entre envios: '+intervalo()+' dia(s).</span></div>';
     var rows=envios().filter(function(x){return !fEv||x.e.id===fEv;});
     fs.forEach(function(e){if(fEv&&e.id!==fEv)return;var p=previsto(e);if(p)rows.push({e:e,en:{id:'',quando:p,status:'previsto',padrao:true}});});
     rows.sort(function(a,b){return (a.en.quando||'')<(b.en.quando||'')?-1:1;});
@@ -411,7 +414,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       '<div class="field" style="margin-top:10px"><label for="ml-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ml-corpo" data-ml="corpo" rows="11"'+(ed?'':' disabled')+'>'+esc(rasc.corpo)+'</textarea></div>'+
       '<p class="note" style="margin:10px 0 6px">Campos:</p><div class="tchips">'+['{nome}','{evento}','{quando}','{sala}','{convidado}','{fechamento}','{detalhes}','{link_inscricao}'].map(function(c){return '<button type="button" data-mlins="'+c+'">'+c+'</button>';}).join('')+'</div>'+
       '<h4 style="margin-top:16px">Horário</h4><div class="treg"><div class="field"><label for="ml-hora">Hora do envio padrão</label><input id="ml-hora" data-ml="hora" type="time" value="'+esc(rasc.hora)+'"'+(ed?'':' disabled')+'></div><div class="field"><label for="ml-int">Intervalo mínimo entre envios (dias)</label><input id="ml-int" data-ml="intervalo" type="number" min="0" max="14" value="'+esc(rasc.intervalo)+'"'+(ed?'':' disabled')+'></div></div>'+
-      '<p class="note">O envio padrão sai no dia seguinte à criação do evento nesse horário. Se o último envio foi há menos dias que o intervalo, o próximo espera (sem passar do prazo de inscrição).</p>'+
+      '<p class="note">O envio padrão sai no dia seguinte à criação do evento nesse horário. Os convites só saem de segunda a sexta: evento criado na sexta ou no fim de semana manda na segunda. Se o último envio foi há menos dias que o intervalo, o próximo espera (sem passar do prazo de inscrição).</p>'+
       (ed?'<div class="btns" style="margin-top:12px"><button type="button" class="btn" id="ml-salvar">Salvar</button><button type="button" class="btn ghost" id="ml-prev"'+(ocup?' disabled':'')+'>Ver prévia</button><button type="button" class="btn ghost" id="ml-teste"'+(ocup?' disabled':'')+'>Enviar teste para mim</button><button type="button" class="btn small ghost" id="ml-pad">Voltar ao padrão</button></div>':'')+
       (msg?'<div class="imsg'+(msg.erro?' err':'')+'">'+esc(msg.t)+'</div>':'')+'</div>'+
       '<div class="tp-blk"><h4>Prévia</h4>'+(prev?'<iframe class="tprev" sandbox="" srcdoc="'+esc(prev)+'" title="Prévia do convite"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia”. O exemplo usa o próximo evento e o nome “Fulana”.</p>')+'</div></div>';}
@@ -451,11 +454,11 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function abrirEnvio(eid,envId){pmsg=null;pr=null;
     painelAbrir({sec:'view-mail',chave:eid+'|'+envId,montar:function(){
       var fs=futuros().filter(function(e){return !(e.mailing&&e.mailing.excluido);});
-      if(!eid){var amanha=new Date();amanha.setDate(amanha.getDate()+1);var h=hora().split(':');amanha.setHours(+h[0],+h[1],0,0);
+      if(!eid){var amanha=new Date();amanha.setDate(amanha.getDate()+1);amanha=diaUtil(amanha);
         if(!pr)pr={ev:fEv&&fs.some(function(e){return e.id===fEv;})?fEv:(fs[0]&&fs[0].id)||'',quando:paraLocal(amanha.toISOString()),assunto:'',corpo:''};
         return {titulo:'Programar e-mail',sub:'Vai para a lista do mailing (menos quem já se inscreveu no evento).',
           corpo:blk('','<div class="field"><label for="mp-ev">Evento</label><select id="mp-ev" data-mp="ev">'+fs.map(function(e){return '<option value="'+esc(e.id)+'"'+(e.id===pr.ev?' selected':'')+'>'+esc(nomeEv(e))+'</option>';}).join('')+'</select></div>'+
-            '<div class="field" style="margin-top:10px"><label for="mp-q">Data e hora</label><input id="mp-q" data-mp="quando" type="datetime-local" value="'+esc(pr.quando)+'"></div>'+
+            '<div class="field" style="margin-top:10px"><label for="mp-q">Data e hora</label><input id="mp-q" data-mp="quando" type="datetime-local" value="'+esc(pr.quando)+'">'+avisoFds(pr.quando)+'</div>'+
             '<div class="field" style="margin-top:10px"><label for="mp-a">Assunto <span class="rq opt">vazio = o do texto base</span></label><input id="mp-a" data-mp="assunto" value="'+esc(pr.assunto)+'" placeholder="'+esc(CFG.assunto||PAD.assunto)+'"></div>'+
             '<div class="field" style="margin-top:10px"><label for="mp-c">Texto <span class="rq opt">vazio = o texto base</span></label><textarea id="mp-c" data-mp="corpo" rows="7" placeholder="Por exemplo: últimas vagas!">'+esc(pr.corpo)+'</textarea></div>'+(fs.length?'':'<p class="note">Nenhum evento futuro no mailing.</p>')+(pmsg?'<div class="imsg'+(pmsg.erro?' err':'')+'">'+esc(pmsg.t)+'</div>':'')),
           rodape:'<div class="btns"><button type="button" class="btn" data-mp-add="1"'+(fs.length?'':' disabled')+'>Programar</button><button type="button" class="btn ghost" data-tclose>Cancelar</button></div>'};}
@@ -464,13 +467,13 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       var st=ST[en.status]||[en.status,'neutral'],ed=pode('editar'),mexe=ed&&(en.status==='agendado'||en.status==='aguardando'),reg=ENVIOS.filter(function(x){return x.id===eid+'_'+envId;})[0];
       var c=blk('','<p style="margin:0 0 10px"><span class="chip '+st[1]+'">'+esc(st[0])+'</span>'+(en.motivo?' <span class="note">'+esc(en.motivo)+'</span>':'')+'</p>'+
         '<dl class="kv"><dt>Evento</dt><dd>'+esc(nomeEv(e))+'</dd><dt>Enviados</dt><dd>'+(en.enviados||0)+(en.pendentes?' · '+en.pendentes+' na fila':'')+'</dd><dt>Cliques</dt><dd>'+(reg?(reg.cliques||[]).length:(en.cliques||0))+'</dd><dt>Inscrições via mailing</dt><dd>'+(INSC.filter(function(i){return i.id===eid;}).map(function(i){return (i.respostas||[]).filter(viaMailing).length;})[0]||0)+' no evento</dd></dl>')+
-        blk('Quando e texto','<div class="field"><label for="mp-q">Data e hora</label><input id="mp-q" data-mp="quando" type="datetime-local" value="'+esc(pr.quando)+'"'+(mexe?'':' disabled')+'></div>'+
+        blk('Quando e texto','<div class="field"><label for="mp-q">Data e hora</label><input id="mp-q" data-mp="quando" type="datetime-local" value="'+esc(pr.quando)+'"'+(mexe?'':' disabled')+'>'+avisoFds(pr.quando)+'</div>'+
           '<div class="field" style="margin-top:10px"><label for="mp-a">Assunto <span class="rq opt">vazio = o do texto base</span></label><input id="mp-a" data-mp="assunto" value="'+esc(pr.assunto)+'" placeholder="'+esc(CFG.assunto||PAD.assunto)+'"'+(mexe?'':' disabled')+'></div>'+
           '<div class="field" style="margin-top:10px"><label for="mp-c">Texto <span class="rq opt">vazio = o texto base</span></label><textarea id="mp-c" data-mp="corpo" rows="7"'+(mexe?'':' disabled')+'>'+esc(pr.corpo)+'</textarea></div>'+(pmsg?'<div class="imsg'+(pmsg.erro?' err':'')+'">'+esc(pmsg.t)+'</div>':''));
       var r='<div class="btns">'+(mexe?'<button type="button" class="btn" data-mp-salvar="1">Salvar</button>':'')+(ed&&(en.status==='agendado'||en.status==='aguardando'||en.status==='enviando')?'<button type="button" class="btn ghost" data-mp-agora="1"'+(pocup?' disabled':'')+'>Enviar agora</button>':'')+(ed&&en.status==='pulado'?'<button type="button" class="btn ghost" data-mp-reat="1">Reativar</button>':'')+'</div>'+(ed&&(en.status==='agendado'||en.status==='aguardando')?'<div class="btns"><button type="button" class="btn small ghost" data-mp-pular="1">Pular este envio</button>'+(en.padrao?'':'<button type="button" class="btn small ghost tdanger" data-mp-del="1">Excluir</button>')+'</div>':'');
       return {titulo:en.padrao?'Envio padrão':'E-mail programado',sub:esc(dh(en.quando)),corpo:c,rodape:r};},aoFechar:function(){pr=null;pmsg=null;}});}
   sec.addEventListener('input',function(e){var k=e.target.dataset&&e.target.dataset.mp;if(k&&pr)pr[k]=e.target.value;});
-  sec.addEventListener('change',function(e){var k=e.target.dataset&&e.target.dataset.mp;if(k&&pr)pr[k]=e.target.value;});
+  sec.addEventListener('change',function(e){var k=e.target.dataset&&e.target.dataset.mp;if(k&&pr){pr[k]=e.target.value;if(k==='quando'){var f=e.target.parentNode,n=f.querySelector('.note');if(n)n.remove();f.insertAdjacentHTML('beforeend',avisoFds(pr.quando));}}});
   sec.addEventListener('click',function(e){if(!TP||TP.o.sec!=='view-mail')return;var ch=TP.o.chave.split('|'),eid=ch[0],envId=ch[1];
     function ok(t){pmsg={t:t};painelAtualizar('view-mail');}function erro(t){pmsg={t:t,erro:1};painelAtualizar('view-mail');}
     if(e.target.closest('[data-mp-add]')){var ev=events.filter(function(x){return x.id===pr.ev;})[0];if(!ev){erro('Escolha um evento.');return;}var q=new Date(pr.quando);if(isNaN(q)){erro('Data e hora inválidas.');return;}

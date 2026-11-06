@@ -427,10 +427,17 @@ function mailingCfg() {
   c.intervaloDias = c.intervaloDias != null && c.intervaloDias !== '' ? +c.intervaloDias : 2;
   return c;
 }
-function diaSeguinte(iso, hora) {
-  var d = new Date(iso), tz = Session.getScriptTimeZone(), dia = Utilities.formatDate(new Date(d.getTime() + 864e5), tz, 'yyyy-MM-dd'), p = partes(dia), h = hora.split(':');
+/** O mailing só sai de segunda a sexta. */
+function fimDeSemana(d) { return +Utilities.formatDate(d, Session.getScriptTimeZone(), 'u') >= 6; }
+/** Primeiro dia útil a partir de `d` (inclusive), na hora indicada. */
+function diaUtil(d, hora) {
+  var tz = Session.getScriptTimeZone(), x = new Date(d.getTime());
+  while (fimDeSemana(x)) x = new Date(x.getTime() + 864e5);
+  var p = partes(Utilities.formatDate(x, tz, 'yyyy-MM-dd')), h = hora.split(':');
   return new Date(p.a, p.m - 1, p.d, +h[0], +h[1]);
 }
+/** Dia seguinte à criação; se cair no sábado ou domingo, vai para a segunda. */
+function diaSeguinte(iso, hora) { return diaUtil(new Date(new Date(iso).getTime() + 864e5), hora); }
 
 /** Cria o envio padrão (dia seguinte à criação do evento, na hora configurada) e manda o que estiver na hora. */
 function rotinaMailing() {
@@ -467,9 +474,16 @@ function enviarMailing(eid, envioId, agoraMesmo) {
     var insc = ev.inscricao || {};
     if (agora >= fechamento(ev) || insc.aberto === false && insc.formId) { en.status = 'cancelado'; en.motivo = 'inscrições fechadas'; salvar(); return { envio: en }; }
     if (!insc.formId || !insc.url) { en.status = 'aguardando'; en.motivo = 'esperando o Forms de inscrição'; salvar(); if (agoraMesmo) throw new Error('Crie o Forms de inscrição antes de mandar o mailing.'); return { envio: en }; }
+    // só de segunda a sexta (o botão "Enviar agora" ignora)
+    if (!agoraMesmo && fimDeSemana(agora)) {
+      var seg = diaUtil(agora, cfg.hora);
+      if (seg < fechamento(ev)) { en.quando = seg.toISOString(); if (en.status !== 'enviando') en.status = 'agendado'; en.motivo = 'fim de semana: sai na segunda'; salvar(); return { envio: en }; }
+      en.status = 'cancelado'; en.motivo = 'as inscrições fecham antes da segunda'; salvar(); return { envio: en };
+    }
     // intervalo mínimo entre envios (só antes de começar este envio)
     if (!agoraMesmo && en.status !== 'enviando' && cfg.ultimoEnvio && cfg.intervaloDias > 0) {
       var prox = new Date(new Date(cfg.ultimoEnvio).getTime() + cfg.intervaloDias * 864e5);
+      if (fimDeSemana(prox)) prox = diaUtil(prox, cfg.hora);
       if (prox > agora && prox < new Date(fechamento(ev).getTime() - 12 * 3600e3)) { en.quando = prox.toISOString(); en.status = 'agendado'; en.motivo = 'adiado pelo intervalo mínimo de ' + cfg.intervaloDias + ' dia(s)'; salvar(); return { envio: en }; }
     }
     if (!insc.urlMailing) { try { insc.urlMailing = linkPreenchido(insc.formId); fsPatch('eventos/' + eid, { inscricao: insc }); } catch (e) { insc.urlMailing = insc.url; } }
