@@ -511,4 +511,38 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var t=setInterval(function(){if(!$('view-ana').hidden)desenhar();},4000);
 })();
 
+
+/* ============================== IDEIA DE EVENTO (BETA, demonstração) ============================== */
+(function(){
+if(!$("view-ia"))return;
+var EX={
+1:'Queria um workshop prático de precificação para quem está começando a vender roupa, coisa de 2 horas, de preferência numa quinta à noite. Algo mais mão na massa do que palestra.',
+2:'Quero fazer algo grande sobre moda circular e sustentabilidade no fim do semestre: começar com uma palestra para atrair gente, depois algo prático e, se der, fechar com uma visita a um lugar que trabalhe com reuso. Público principal são os calouros, mas aberto para a FEA toda.'
+};
+var P={
+1:{tipo:'evento',k:'Proposta · 1 evento',t:'Workshop: quanto cobrar pela sua peça',p:'Pela descrição (prático, curto, para iniciantes) cabe um evento só. Workshops dessa duração tiveram o melhor comparecimento da Base (média de 71% dos inscritos).',ev:[
+ {n:'Workshop',nome:'Quanto cobrar pela sua peça',tags:['Workshop','Precificação','2 h','Presencial'],dts:[['qui, 26/11','19h · melhor nota da data',1],['qua, 25/11','19h · nota um pouco menor',0],['qui, 03/12','19h · semana de entregas',0]],pp:[['A','Convidada A','Consultora de varejo · já veio em 2 eventos','nota 4,7',0],['?','Ou: alguém que venda em brechó online','Não temos ninguém assim na lista',null,1]],calc:['45–62','Sala G2','2 kits'],ins:'80 inscrições esperadas',risk:'Pede notebook ou celular com calculadora: avisar na divulgação.',why:'Formato com exercício em dupla: cada pessoa leva uma peça e calcula o preço com custo, margem e preço de referência.'}]},
+2:{tipo:'serie',k:'Proposta · série de 3 eventos',t:'Ciclo Moda Circular',p:'A ideia tem três momentos diferentes (atrair, praticar, ver na realidade), então virou uma série. As datas ficam espaçadas uma semana e fogem da semana de P2 (16 a 20/11).',ev:[
+ {n:'1 de 3 · abre o ciclo',nome:'Moda circular dá dinheiro?',tags:['Palestra','Sustentabilidade','1h30'],dts:[['ter, 24/11','19h · melhor nota',1],['qua, 25/11','19h',0]],pp:[['B','Convidada B','Fundadora de brechó · tema sustentabilidade','nota 4,9',0],['C','Convidado C','Pesquisador de economia circular','nota 4,2',0]],calc:['90–125','Auditório','4 kits'],ins:'150 inscrições esperadas',risk:'Palestras para calouros na última semana de novembro tiveram 18% menos presença: divulgar com 2 semanas.',why:'Abre o ciclo com o lado de negócio da sustentabilidade, para atrair quem não é do tema.'},
+ {n:'2 de 3 · prático',nome:'Oficina de upcycling e preço',tags:['Workshop','Upcycling','2h'],dts:[['qui, 03/12','19h · melhor nota',1],['ter, 01/12','19h',0]],pp:[['B','Convidada B','A mesma da palestra, para dar continuidade','nota 4,9',0],['?','Ou: costureira ou ateliê parceiro','Perfil a procurar',null,1]],calc:['28–36','Sala C-10','1 kit'],ins:'40 inscrições (vagas limitadas)',risk:'Precisa de material (tecido, linha): R$ 150 a mais no custo.',why:'Vagas limitadas para quem foi à palestra: dá para avisar pelo mailing e pela lista do 1º evento.'},
+ {n:'3 de 3 · fecha o ciclo',nome:'Visita técnica: por dentro do reuso',tags:['Visita técnica','Operação','3h'],dts:[['sáb, 05/12','10h · fora do horário de aula',1],['sex, 04/12','14h',0]],pp:[['?','Local que trabalhe com reuso ou triagem','Não está na lista de convidados: perfil a procurar',null,1]],calc:['18–24','Transporte','—'],ins:'25 inscrições (limite do local)',risk:'Visitas dependem de confirmação do local: começar o contato já.',why:'Fecha mostrando a operação por trás da moda circular, ligando com o que foi visto nos dois primeiros.'}]}
+};
+document.querySelectorAll('[data-iaex]').forEach(function(b){b.onclick=function(){$('ia-ideia').value=EX[b.dataset.iaex];$('ia-ideia').dataset.ex=b.dataset.iaex;};});
+$('ia-gerar').onclick=function(){var ex=(($('ia-ideia').dataset.ex==='2'||$('ia-ideia').value.length>220||/série|grande|ciclo|semana/i.test($('ia-ideia').value))?'2':'1');if(!$('ia-ideia').value.trim())$('ia-ideia').value=EX[ex];
+ $('ia-out').innerHTML='<div class="ia-load"><i></i> Lendo a ideia, os convidados, o calendário e a Base…</div>';setTimeout(function(){mostrar(P[ex]);},1200);};
+function card(e,i,serie){return '<article class="ia-card"><div class="hd"><div class="n">'+e.n+'</div><h4>'+e.nome+'</h4><div class="tags">'+e.tags.map(function(t){return '<span>'+t+'</span>'}).join('')+'</div></div><div class="bd">'+
+ '<p class="why">'+e.why+'</p>'+
+ '<div class="ia-sec"><h5>Data</h5><div class="dts">'+e.dts.map(function(d,j){return '<button class="'+(d[2]?'on':'')+'" data-c="'+i+'">'+d[0]+'<small>'+d[1]+'</small></button>'}).join('')+'</div></div>'+
+ '<div class="ia-sec"><h5>Convidados</h5><div class="pp">'+e.pp.map(function(p){return '<div><span class="av2'+(p[4]?' q':'')+'">'+p[0]+'</span><span>'+p[1]+'<small>'+p[2]+'</small></span>'+(p[3]?'<span class="nt">'+p[3]+'</span>':'')+'</div>'}).join('')+'</div></div>'+
+ '<div class="calc"><div class="t"><span>Calculado pelo Planejar</span><span>'+e.ins+'</span></div><div class="g"><div><b>'+e.calc[0]+'</b><small>público provável</small></div><div><b>'+e.calc[1]+'</b><small>sala sugerida</small></div><div><b>'+e.calc[2]+'</b><small>coffee</small></div></div></div>'+
+ '<div class="risk">⚠ '+e.risk+'</div></div><div class="ft"><button class="btn small" type="button" disabled title="Disponível quando a IA for ligada">Levar para o Planejar</button><button class="btn small ghost" type="button" disabled title="Disponível quando a IA for ligada">Trocar este</button>'+(serie?'<button class="btn small ghost" type="button" disabled title="Disponível quando a IA for ligada">Tirar da série</button>':'')+'</div></article>';}
+function mostrar(p){var s=p.tipo==='serie';
+ $('ia-out').innerHTML='<div class="ia-res"><div class="ia-head"><div class="ia-k">'+p.k+'</div><h3>'+p.t+'</h3><p>'+p.p+'</p>'+(s?'<div class="ia-steps">'+p.ev.map(function(e,i){return '<span><b>'+(i+1)+'</b> '+e.tags[0]+' · '+e.dts[0][0]+'</span>'}).join('')+'</div>':'')+'</div>'+
+ '<div class="ia-grid">'+p.ev.map(function(e,i){return card(e,i,s)}).join('')+'</div>'+
+ '<div class="ia-adj"><input aria-label="Pedir ajuste" placeholder="Pedir ajuste: “troca a visita por uma mesa redonda”, “tudo depois do dia 30”…"><button class="btn ghost" type="button" disabled title="Disponível quando a IA for ligada">Refazer</button></div>'+
+ '<div class="ia-save"><span class="note">Ao salvar, '+(s?'os 3 eventos entram na Base como planejados, ligados pela série “'+p.t+'”':'o evento entra na Base como planejado')+'. Dá para editar tudo depois.</span><button class="btn" type="button" disabled title="Disponível quando a IA for ligada">'+(s?'Salvar série (3 eventos)':'Salvar evento')+'</button></div></div>';
+ document.querySelectorAll('.dts button').forEach(function(b){b.onclick=function(){b.parentNode.querySelectorAll('button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');};});
+ }
+
+})();
 })();

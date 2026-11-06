@@ -4,6 +4,7 @@
 "use strict";
 function $(i){return document.getElementById(i);}
 var I={
+  ia:'<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2.2 2.2.8-2.2.8L18 21l-.8-2.2-2.2-.8 2.2-.8z"/>',
   plan:'<path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="3"/>',
   base:'<path d="M3 6h18M3 12h18M3 18h18"/>',
   ana:'<path d="M5 20V11M12 20V5M19 20v-6"/>',
@@ -17,7 +18,7 @@ var I={
   perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>'
 };
 var GRUPOS=[
-  ['Eventos',[['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
+  ['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
   ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['cal','Calendário','tab'],['docs','Documentos','tab']]],
   ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go']]]
 ];
@@ -33,7 +34,7 @@ GRUPOS.forEach(function(g){
   var h=document.createElement('h4');h.textContent=g[0];box.appendChild(h);
   g[1].forEach(function(it){
     var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];
-    b.innerHTML=icone(it[0]);var sp=document.createElement('span');sp.textContent=it[1];b.appendChild(sp);
+    b.innerHTML=icone(it[0]);var sp=document.createElement('span');sp.textContent=it[1];b.appendChild(sp);if(it[3]){var bt=document.createElement('span');bt.className='beta';bt.textContent=it[3];b.appendChild(bt);}
     b.addEventListener('click',function(){ir(it[0],it[2]);});
     box.appendChild(b);
   });
@@ -63,7 +64,7 @@ back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
 /* navegação */
-function esconderAna(){['view-ana','view-mail'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
+function esconderAna(){['view-ana','view-mail','view-ia'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
 function ir(alvo,modo){
   fechar();
   if(modo==='tab'){esconderAna();var t=$('tab-'+alvo);if(t)t.click();}
