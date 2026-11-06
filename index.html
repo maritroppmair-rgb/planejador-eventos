@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261105191647"></script>
-<script src="plataforma.js?v=20261105191647"></script>
+<script src="config.js?v=20261105223432"></script>
+<script src="plataforma.js?v=20261105223432"></script>
 </head>
 <body>
 
@@ -277,6 +277,8 @@ table.slist{min-width:720px}
 .sd-foot{border-top:1px solid var(--line);padding:14px 22px calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface)}
 .sd-foot .note{max-width:300px}
 body.sd-aberto{overflow:hidden}
+.dcard .acts .alt{font-size:13px;color:var(--muted);text-decoration:underline;margin-right:4px}
+.dcur{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;margin-top:6px}
 /* gavetas laterais genéricas (convidados, calendário, documentos) */
 .gav .sd-panel{width:min(560px,100vw)}
 .gav-form{flex:1;overflow:auto;padding:16px 22px 0;margin:0!important;border:0;border-radius:0;background:transparent;display:flex;flex-direction:column}
@@ -689,12 +691,13 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
       <div class="inlineform" style="background:transparent;padding:0;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
         <div class="field"><label for="d-nome">Nome <span class="rq">obrigatório</span></label><input id="d-nome"></div>
         <div class="field"><label for="d-url">Link <span class="rq opt">ou envie um arquivo</span></label><input id="d-url" type="url" placeholder="https://drive.google.com/..."></div>
-        <div class="field" id="d-filebox"><label for="d-file">Arquivo <span class="rq opt">até 10 MB</span></label><input id="d-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.md"></div>
-        <div class="field"><label for="d-tipo">Tipo</label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option></select></div>
+        <div class="field" id="d-filebox"><label for="d-file">Arquivo <span class="rq opt">até 10 MB</span></label><input id="d-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.md"><label class="dcur" id="d-filecur" hidden><input type="checkbox" id="d-filerm"> Remover o arquivo já enviado</label></div>
+        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option></select></div>
         <div class="field"><label for="d-versao">Versão / ano <span class="rq opt">opcional</span></label><input id="d-versao" placeholder="ex.: 2026"></div>
         <div class="field"><label for="d-resp">Responsável <span class="rq opt">opcional</span></label><input id="d-resp"></div>
         <div class="field" style="grid-column:1/-1"><label for="d-resumo">Para que serve <span class="rq opt">opcional</span></label><input id="d-resumo"></div>
       </div>
+      <p class="note" style="margin:10px 0 0">Pode colocar link e arquivo juntos. Tipo PDF ou Imagem abre o arquivo; os outros tipos (Drive, Doc, Planilha…) abrem o link. O card mostra o outro como alternativa.</p>
       <fieldset class="multi1"><legend>Eventos ligados <span class="rq opt">pode marcar vários; nenhum = documento geral</span></legend><div class="chks" id="d-evs"></div></fieldset>
       <div class="btns" style="margin-top:10px"><button class="btn" type="submit" id="dsave">Adicionar documento</button><button class="btn ghost" type="button" id="dcancel">Cancelar</button><span class="msg" id="dmsg"></span></div>
     </form>
@@ -828,6 +831,9 @@ function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,
 function resTxt(r,dl){return (r.k==='oficio'?'ofício':r.k==='email'?'reserva por e-mail':r.k==='parceiro'?'espaço parceiro'+(r.custo?' (R$ '+r.custo.toFixed(2).replace('.',',')+')':''):'sala de aula')+' até '+fmt(dl)+' ('+r.ant+' dias úteis antes)';}
 var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['divulgacao','Divulgação'],['inscricoes','Inscrições e avaliação'],['dia','Dia do evento'],['pos','Pós-evento'],['referencia','Referência']];
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
+/* documento pode ter um link externo (Drive etc.) e um arquivo enviado; o Tipo decide qual abre primeiro */
+function dFontes(x){var u=String(x.url||''),bl=/^\/_blob\//.test(u);var link=x.link!=null?x.link:(bl?'':u),arq=x.arquivo!=null?x.arquivo:(bl?u:'');return {link:safeUrl(link),arquivo:safeUrl(arq)};}
+function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem';return arqPrimeiro?(arq||link):(link||arq);}
 function docLinks(et){var l=docs.filter(function(x){return x.etapa===et&&safeUrl(x.url);});if(!l.length)return '';return '<div class="dlinks">'+l.map(function(x){return '<a href="'+esc(safeUrl(x.url))+'" target="_blank" rel="noopener">'+esc(x.nome)+'</a>';}).join('')+'</div>';}
 var $=function(id){return document.getElementById(id);};
 
@@ -1198,14 +1204,15 @@ function renderDocs(){
   var l=docs.filter(function(x){var t=[x.nome,x.resp,x.resumo,x.versao].join(' ').toLowerCase();if(q&&t.indexOf(q)<0)return false;if(fe==='__geral')return !dEvs(x).length;if(fe)return dEvs(x).indexOf(fe)>=0;return true;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
   if(!docs.length){$('dlist').innerHTML='<div class="panel empty">Nenhum documento ainda. Adicione o primeiro pelo formulário acima.</div>';return;}
   if(!l.length){$('dlist').innerHTML='<div class="panel empty">Nenhum documento com esse filtro.</div>';return;}
-  $('dlist').innerHTML='<div class="dcards">'+l.map(function(x){var u=safeUrl(x.url);var ev=dEvs(x);
+  $('dlist').innerHTML='<div class="dcards">'+l.map(function(x){var f=dFontes(x),u=dPrincipal(x.tipo,f.link,f.arquivo);var ev=dEvs(x);
+    var alt=f.link&&f.arquivo?(u===f.arquivo?'<a class="alt" href="'+esc(f.link)+'" target="_blank" rel="noopener">ou abrir o link</a>':'<a class="alt" href="'+esc(f.arquivo)+'" target="_blank" rel="noopener">ou ver o arquivo</a>'):'';
     return '<div class="dcard"><div class="t"><b>'+esc(x.nome)+'</b><span class="kind">'+esc(x.tipo||'')+'</span></div>'+
       ((x.versao||x.resp)?'<div class="meta">'+(x.versao?'versão '+esc(x.versao):'')+(x.versao&&x.resp?' · ':'')+(x.resp?'responsável: '+esc(x.resp):'')+'</div>':'')+
       (x.resumo?'<p>'+esc(x.resumo)+'</p>':'')+
       '<div class="evs">'+(ev.length?ev.map(function(id){return '<span class="chip neutral">'+esc(evName(id))+'</span>';}).join(''):'<span class="chip neutral">geral</span>')+'</div>'+
-      '<div class="acts">'+(u?'<a class="open" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir →</a>':'<span class="note">Link inválido</span>')+'<button type="button" class="btn small ghost" data-dedit="'+esc(x.id)+'">Editar</button><button type="button" class="btn small ghost" data-ddel="'+esc(x.id)+'">Excluir</button></div></div>';}).join('')+'</div>';
+      '<div class="acts">'+(u?'<a class="open" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir →</a>'+alt:'<span class="note">Link inválido</span>')+'<button type="button" class="btn small ghost" data-dedit="'+esc(x.id)+'">Editar</button><button type="button" class="btn small ghost" data-ddel="'+esc(x.id)+'">Excluir</button></div></div>';}).join('')+'</div>';
 }
-function resetDocForm(){docEdit=null;['d-nome','d-url','d-versao','d-resp','d-resumo'].forEach(function(i){$(i).value='';});$('d-file').value='';$('d-evs').querySelectorAll('input').forEach(function(i){i.checked=false;});$('dformtitle').textContent='Novo documento';$('dsave').textContent='Adicionar documento';}
+function resetDocForm(){docEdit=null;['d-nome','d-url','d-versao','d-resp','d-resumo'].forEach(function(i){$(i).value='';});$('d-file').value='';$('d-filerm').checked=false;$('d-filecur').hidden=true;$('d-evs').querySelectorAll('input').forEach(function(i){i.checked=false;});$('dformtitle').textContent='Novo documento';$('dsave').textContent='Adicionar documento';}
 $('dsearch').addEventListener('input',renderDocs);$('dfilter').addEventListener('change',renderDocs);
 $('dcancel').addEventListener('click',function(){fecharGav('dform');});
 gavAoFechar.dform=function(){resetDocForm();$('dmsg').textContent='';};
@@ -1214,23 +1221,25 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
   var nome=$('d-nome').value.trim(),u=$('d-url').value.trim(),file=$('d-file').files[0];
   if(!nome){$('dmsg').textContent='Dê um nome ao documento.';$('d-nome').focus();return;}
   var prev=docEdit?docs.filter(function(x){return x.id===docEdit;})[0]:null;
-  if(!file&&!u&&!(prev&&prev.url)){$('dmsg').textContent='Coloque um link ou envie um arquivo.';return;}
+  var pf=prev?dFontes(prev):{link:'',arquivo:''},arqAtual=$('d-filerm').checked?'':pf.arquivo;
+  if(!file&&!u&&!arqAtual){$('dmsg').textContent='Coloque um link ou envie um arquivo.';return;}
   if(u&&!safeUrl(u)){$('dmsg').textContent='Use um link que comece com https://';return;}
   var data={nome:nome,tipo:$('d-tipo').value,versao:$('d-versao').value.trim(),resp:$('d-resp').value.trim(),resumo:$('d-resumo').value.trim(),eventos:Array.prototype.map.call($('d-evs').querySelectorAll('input:checked'),function(i){return i.value;})};
+  function fixar(arq){data.link=u;data.arquivo=arq;data.url=dPrincipal(data.tipo,u,arq);}
   function save(){var pr=docEdit?db.doc('documentos/'+docEdit).update(data):db.collection('documentos').add(Object.assign({criadoEm:new Date().toISOString()},data));
     pr.then(function(){var m=docEdit?'Alterações salvas.':'Documento adicionado.';resetDocForm();fecharGav('dform',m);}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
   if(file){if(file.size>10*1024*1024){$('dmsg').textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
     var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',csv:'text/csv',txt:'text/plain',md:'text/markdown'};
-    if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';
+    if(!u){if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';}
     var go=function(api){if(!api){$('dmsg').textContent='Seu acesso não permite enviar arquivos: use um link.';return;}$('dmsg').textContent='Enviando…';
-      api.upload(file,{type:TY[ext]||file.type}).then(function(r){data.url='/_blob/'+r.id;data.assetId=r.id;save();}).catch(function(err){$('dmsg').textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito.':'Não foi possível enviar o arquivo.';});};
+      api.upload(file,{type:TY[ext]||file.type}).then(function(r){fixar('/_blob/'+r.id);data.assetId=r.id;save();}).catch(function(err){$('dmsg').textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito.':'Não foi possível enviar o arquivo.';});};
     if(assetsApi!==null&&assetsApi!==undefined)go(assetsApi);else window.claude.use('assets').then(function(a){assetsApi=a;go(a);}).catch(function(){go(null);});return;}
-  if(u)data.url=u;save();
+  fixar(arqAtual);if($('d-filerm').checked)data.assetId=null;save();
 });
 $('dlist').addEventListener('click',function(e){var ed=e.target.dataset.dedit;if(ed){var x=docs.filter(function(d){return d.id===ed;})[0];if(!x)return;docEdit=ed;
-    $('d-nome').value=x.nome||'';$('d-url').value=/^https:/.test(x.url||'')?x.url:'';$('d-tipo').value=x.tipo||'Drive';$('d-versao').value=x.versao||'';$('d-resp').value=x.resp||'';$('d-resumo').value=x.resumo||'';
+    $('d-nome').value=x.nome||'';var f=dFontes(x);$('d-url').value=f.link;$('d-filecur').hidden=!f.arquivo;$('d-filerm').checked=false;$('d-tipo').value=x.tipo||'Drive';$('d-versao').value=x.versao||'';$('d-resp').value=x.resp||'';$('d-resumo').value=x.resumo||'';
     $('d-evs').querySelectorAll('input').forEach(function(i){i.checked=dEvs(x).indexOf(i.value)>=0;});
-    $('dformtitle').textContent='Editando: '+x.nome+(/^\/_blob/.test(x.url||'')?' (arquivo enviado; envie outro para trocar)':'');$('dsave').textContent='Salvar alterações';$('dmsg').textContent='';abrirGav('dform','d-nome');return;}
+    $('dformtitle').textContent='Editando: '+x.nome;$('dmsg').textContent=f.arquivo?'Já tem um arquivo enviado. Envie outro para trocar.':'';$('dsave').textContent='Salvar alterações';abrirGav('dform','d-nome');return;}
   var id=e.target.dataset.ddel;if(!id||!db)return;if(e.target.dataset.sure){db.doc('documentos/'+id).delete().catch(function(){});}else{e.target.dataset.sure='1';e.target.textContent='Confirmar exclusão';}});
 renderDocs();
 /* ---------- salas ---------- */
