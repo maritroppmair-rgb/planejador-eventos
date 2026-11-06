@@ -123,8 +123,31 @@ function aplicarTextos(form, ev) {
 
 /** Publica o Forms (no Forms novo, cópias nascem como rascunho e não aceitam respostas). */
 function publicar(form) {
-  if (typeof form.setPublished !== 'function') return; // Forms antigo: já nasce publicado
-  if (!form.isPublished()) form.setPublished(true);
+  if (typeof form.setPublished === 'function' && !form.isPublished()) form.setPublished(true);
+  liberarRespostas(form.getId());
+}
+
+/** No Forms novo, quem pode responder é definido por uma permissão do Drive: "qualquer pessoa com o link". */
+function liberarRespostas(id) {
+  var r = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id + '/permissions?sendNotificationEmail=false', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify({ type: 'anyone', role: 'reader', view: 'published' })
+  });
+  if (r.getResponseCode() >= 300) console.warn('Permissão de resposta: ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 300));
+}
+
+/** Rode pelo editor para conferir e consertar os Forms já criados (publica, libera "qualquer pessoa com o link" e reabre). */
+function consertarForms() {
+  var agora = new Date();
+  fsList('eventos').forEach(function (ev) {
+    if (!ev.inscricao || !ev.inscricao.formId) return;
+    var form = FormApp.openById(ev.inscricao.formId);
+    var antes = 'publicado=' + (typeof form.isPublished === 'function' ? form.isPublished() : '(n/a)') + ' aceitando=' + form.isAcceptingResponses();
+    if (inicio(ev) > agora) { publicar(form); form.setAcceptingResponses(true); }
+    console.log(ev.nome + ' | antes: ' + antes + ' | agora: publicado=' + (typeof form.isPublished === 'function' ? form.isPublished() : '(n/a)') +
+      ' aceitando=' + form.isAcceptingResponses() + ' | ' + form.getPublishedUrl());
+  });
 }
 
 function pastaInscricoes() {
