@@ -147,8 +147,8 @@ function sincronizarEvento(eid, ev) {
   insc.total = lista.length;
   insc.novidades = lista.filter(function (x) { return x.novidades === true; }).length;
   insc.sincronizadoEm = agora.toISOString();
-  if (inicio(ev) <= agora && form.isAcceptingResponses()) form.setAcceptingResponses(false);
-  else if (inicio(ev) > agora) publicar(form);
+  if (inicio(ev) > agora) publicar(form);
+  else if (form.isAcceptingResponses()) form.setAcceptingResponses(false);
   insc.aberto = form.isAcceptingResponses();
   fsPatch('eventos/' + eid, { inscricao: insc });
   return { inscricao: insc };
