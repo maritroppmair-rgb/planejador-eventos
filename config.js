@@ -8,3 +8,5 @@ window.FIREBASE_CONFIG = {
   appId: "1:132872144085:web:64ccec59320f6ca35ace5c"
 };
 
+/* Robô de inscrições (Apps Script). Cole aqui a URL do app da Web (termina em /exec). Vazio = desligado. */
+window.ROBO_URL = '';

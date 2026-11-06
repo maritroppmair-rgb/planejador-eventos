@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261105223432"></script>
-<script src="plataforma.js?v=20261105223432"></script>
+<script src="config.js?v=20261105233800"></script>
+<script src="plataforma.js?v=20261105233800"></script>
 </head>
 <body>
 
@@ -277,6 +277,9 @@ table.slist{min-width:720px}
 .sd-foot{border-top:1px solid var(--line);padding:14px 22px calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface)}
 .sd-foot .note{max-width:300px}
 body.sd-aberto{overflow:hidden}
+.insc{display:grid;gap:6px;justify-items:start;text-align:left}.insc a{color:var(--wine)}.insc .btns{margin:0}.insc .inum b{font-family:var(--display);font-size:20px}
+.insc .ilinks{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}.insc .ilinks a{font-weight:700}
+.imsg{font-size:13px;margin-top:4px;color:var(--green);text-align:left}.imsg.err{color:var(--red)}
 .dcard .acts .alt{font-size:13px;color:var(--muted);text-decoration:underline;margin-right:4px}
 .dcur{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;margin-top:6px}
 /* gavetas laterais genéricas (convidados, calendário, documentos) */
@@ -372,7 +375,7 @@ a.btn{text-decoration:none;display:inline-block}
 @media (max-width:700px){.dviewer{padding:0}.dv-box{height:100vh;height:100dvh;width:100%;border-radius:0}.dv-head{flex-wrap:wrap}.dv-head b{flex-basis:100%}}
 /* ---------- permissões por cargo (a segurança de verdade está nas regras do Firestore) ---------- */
 body:not(.pode-excluir) :is([data-del],[data-delok],[data-gdel],[data-ddel],[data-sdel],[data-cdel]){display:none!important}
-body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,#cnova,#knova,#dnova,[data-dedit]){display:none!important}
+body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,#cnova,#knova,#dnova,[data-iform],[data-isync],[data-iaviso],[data-dedit]){display:none!important}
 body:not(.pode-editar) :is(#stable,#ctable,#ktab,#k-grid) :is(input,select,textarea,button){pointer-events:none;opacity:.6}
 body:not(.pode-editar) #k-grid{pointer-events:none}
 body:not(.pode-gerir) :is(#parsave,#parreset,#backup,#acesso,.mfoot .del-membro){display:none!important}
@@ -1038,6 +1041,7 @@ function detail(e){
     out.push(['Previsão','presentes '+(e.presentesPrev!=null?e.presentesPrev:'—')+' · custo '+(e.custoPrev!=null?brl2(e.custoPrev):'—')+' · nota da data '+(e.notaData!=null?e.notaData:'—')]);
   }
   out.push(['Horário',(e.hora||'—')+(e.duracao?' · '+(e.duracao>=60?Math.floor(e.duracao/60)+'h'+(e.duracao%60?('0'+e.duracao%60).slice(-2):''):e.duracao+' min'):'')]);
+  if(window.ROBO_URL||e.inscricao)out.push(['Inscrições',inscHtml(e)]);
   if(e.convidado||e.equipeConvidado)out.push(['Convidado',esc(e.convidado||'—')+(e.equipeConvidado?' · equipe de '+e.equipeConvidado:'')]);
   var ld=docs.filter(function(x){return (x.eventos||[]).indexOf(e.id)>=0;});if(ld.length)out.push(['Documentos',ld.map(function(x){var u=safeUrl(x.url);return u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(x.nome)+'</a>':esc(x.nome);}).join(' · ')]);
   if(e.excecao)out.push(['Exceção','<ul style="margin:0;padding-left:18px">'+(e.excecao.alertas||[]).map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul><b>Motivo:</b> '+esc(e.excecao.motivo||'')]);
@@ -1135,6 +1139,36 @@ $('etable').addEventListener('click',function(e){var t=e.target;
   else if(t.dataset.del){delOpen=t.dataset.del;regOpen=null;renderBase();}
   else if(t.dataset.cancel){regOpen=null;delOpen=null;renderBase();}
   else if(t.dataset.delok&&db){db.doc('eventos/'+t.dataset.delok).delete().catch(function(){});delOpen=null;}
+});
+/* ---------- inscrições (Forms + robô do Apps Script) ---------- */
+var inscMsg={},inscOcup={};
+function hhmm(iso){var d=new Date(iso);return isNaN(d)?'':d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function inscHtml(e){
+  var i=e.inscricao,id=esc(e.id),oc=inscOcup[e.id],m=inscMsg[e.id]?'<div class="imsg'+(inscMsg[e.id].erro?' err':'')+'">'+esc(inscMsg[e.id].t)+'</div>':'';
+  if(!i||!i.formId){
+    if(!window.ROBO_URL)return '<span class="note">Robô de inscrições ainda não configurado.</span>';
+    if(e.status==='realizado')return '<span class="note">Sem Forms do app.</span>';
+    return '<button type="button" class="btn small" data-iform="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando o Forms…':'Criar Forms de inscrição')+'</button>'+m+'<div class="note">O robô copia o Forms padrão com nome, data, horário, sala e convidado deste evento.</div>';}
+  var u=safeUrl(i.url),ed=safeUrl(i.editUrl),pl=safeUrl(i.planilhaUrl);
+  var aviso=i.avisoEm?'lembrete enviado para '+(i.avisoEnviados||0)+(i.avisoPendentes?' · <b>'+i.avisoPendentes+' na fila</b> (limite diário de e-mails)':''):'lembrete automático '+(window.ROBO_HORAS||48)+' h antes';
+  return '<div class="insc"><div class="inum"><b>'+(+i.total||0)+'</b> inscritos'+(i.novidades?' · '+i.novidades+' querem receber novidades':'')+' · '+(i.aberto===false?'<span class="chip neutral">fechado</span>':'<span class="chip ok">aberto</span>')+'</div>'+
+    '<div class="ilinks">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">Link para divulgar ↗</a><button type="button" class="btn small ghost" data-icopy="'+esc(u)+'">Copiar link</button>':'')+(ed?'<a href="'+esc(ed)+'" target="_blank" rel="noopener">Editar Forms</a>':'')+(pl?'<a href="'+esc(pl)+'" target="_blank" rel="noopener">Planilha de respostas</a>':'')+'</div>'+
+    '<div class="note">'+aviso+' · atualizado '+esc(hhmm(i.sincronizadoEm))+'</div>'+
+    (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-isync="'+id+'"'+(oc?' disabled':'')+'>Atualizar agora</button><button type="button" class="btn small ghost" data-iaviso="'+id+'"'+(oc?' disabled':'')+'>Enviar lembrete agora</button></div>')+m+'</div>';
+}
+function robo(acao,eid){
+  var u=window.firebase&&firebase.auth().currentUser;if(!u)return Promise.reject(new Error('Faça login de novo.'));
+  return u.getIdToken().then(function(t){return fetch(window.ROBO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:acao,evento:eid,idToken:t})});})
+    .then(function(r){return r.json();},function(){throw new Error('Não deu para falar com o robô. Confira a internet.');})
+    .then(function(j){if(!j||!j.ok)throw new Error(j&&j.erro||'O robô não respondeu.');return j;});
+}
+function inscAcao(acao,eid,ok){inscOcup[eid]=1;delete inscMsg[eid];renderBase();
+  robo(acao,eid).then(function(j){inscMsg[eid]={t:ok(j)};},function(err){inscMsg[eid]={t:err.message,erro:1};}).then(function(){delete inscOcup[eid];renderBase();});}
+$('etable').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-iform],[data-isync],[data-iaviso],[data-icopy]');if(!b)return;
+  if(b.dataset.icopy){(navigator.clipboard?navigator.clipboard.writeText(b.dataset.icopy):Promise.reject()).then(function(){b.textContent='Copiado!';},function(){prompt('Copie o link:',b.dataset.icopy);});return;}
+  if(b.dataset.iform)inscAcao('criarForm',b.dataset.iform,function(j){return j.jaExistia?'Esse evento já tinha Forms.':'Forms criado. Confira o texto em "Editar Forms" antes de divulgar.';});
+  else if(b.dataset.isync)inscAcao('sincronizar',b.dataset.isync,function(j){return 'Atualizado: '+(j.inscricao&&j.inscricao.total||0)+' inscritos.';});
+  else if(b.dataset.iaviso){if(b.dataset.sure){inscAcao('enviarAviso',b.dataset.iaviso,function(j){return j.enviados?'Lembrete enviado para '+j.enviados+(j.pendentes?'; '+j.pendentes+' ficaram para amanhã (limite diário).':'.'):'Ninguém novo para avisar.';});}else{b.dataset.sure='1';b.textContent='Confirmar envio';}}
 });
 $('etable').addEventListener('submit',function(e){e.preventDefault();var f=e.target,id=f.dataset.regform;if(!id||!db)return;
   function v(p){var x=$(p+'-'+id).value;return x===''?null:+x;}
