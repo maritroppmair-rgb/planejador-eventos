@@ -37,6 +37,7 @@ function doPost(e) {
     if (!b.evento) throw new Error('Evento não informado.');
     if (b.acao === 'criarForm') out = criarForm(b.evento, u);
     else if (b.acao === 'sincronizar') out = sincronizarEvento(b.evento);
+    else if (b.acao === 'atualizarForm') out = sincronizarEvento(b.evento, null, true);
     else if (b.acao === 'enviarAviso') out = enviarAviso(b.evento);
     else throw new Error('Ação desconhecida.');
     out.ok = true;
@@ -99,7 +100,7 @@ function criarForm(eid, u) {
     var agora = new Date().toISOString();
     var insc = {
       formId: form.getId(), url: curta, editUrl: form.getEditUrl(), planilhaUrl: planilha.getUrl(),
-      criadoEm: agora, criadoPor: u.email, total: 0, novidades: 0, sincronizadoEm: agora,
+      assinatura: assinatura(ev), criadoEm: agora, criadoPor: u.email, total: 0, novidades: 0, sincronizadoEm: agora,
       aberto: true, avisoEnviados: 0, avisoPendentes: 0, avisoEm: null
     };
     fsPatch('eventos/' + eid, { inscricao: insc });
@@ -107,6 +108,11 @@ function criarForm(eid, u) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** O que vai no texto do Forms; se mudar no app, o Forms é atualizado. */
+function assinatura(ev) {
+  return [ev.nome, ev.data, ev.hora, ev.sala, ev.convidado].map(function (x) { return x == null ? '' : String(x); }).join('|');
 }
 
 function aplicarTextos(form, ev) {
@@ -156,10 +162,20 @@ function pastaInscricoes() {
 }
 
 /* ---------- ler respostas ---------- */
-function sincronizarEvento(eid, ev) {
+function sincronizarEvento(eid, ev, forcarTextos) {
   ev = ev || fsGet('eventos/' + eid);
   if (!ev || !ev.inscricao || !ev.inscricao.formId) throw new Error('Esse evento ainda não tem Forms de inscrição.');
   var insc = ev.inscricao, form = FormApp.openById(insc.formId), agora = new Date();
+  // evento mudou no app (nome, data, hora, sala, convidado): atualiza o mesmo Forms, sem criar outro
+  if (forcarTextos || insc.assinatura !== assinatura(ev)) {
+    aplicarTextos(form, ev);
+    var nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
+    try { DriveApp.getFileById(insc.formId).setName('Inscrição · ' + nomeArq); } catch (e) { }
+    try { if (insc.planilhaUrl) SpreadsheetApp.openByUrl(insc.planilhaUrl).rename('Respostas · ' + nomeArq); } catch (e) { }
+    insc.assinatura = assinatura(ev);
+    insc.textoEm = agora.toISOString();
+    if (inicio(ev) > agora && !form.isAcceptingResponses()) { publicar(form); form.setAcceptingResponses(true); } // data mudou para frente: reabre
+  }
   var porEmail = {}, semEmail = [];
   form.getResponses().forEach(function (r) {
     var x = lerResposta(r);

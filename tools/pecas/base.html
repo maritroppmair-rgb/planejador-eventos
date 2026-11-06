@@ -142,6 +142,7 @@ main{padding-block:24px 48px}
 .rooms{display:grid;gap:8px}
 .room{display:grid;grid-template-columns:1fr auto;gap:2px 10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:14px}
 .room.best{border-color:var(--wine);background:var(--wine-soft)}
+.room .rpick{grid-column:1/-1;margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .room small{color:var(--muted);grid-column:1/-1;font-size:12.5px}
 .room .chip{grid-column:1/-1;justify-self:start;font-size:12px;margin-bottom:2px}
 .room b{min-width:0}
@@ -674,6 +675,7 @@ function share(el,W){function c(x){return Math.max(0,Math.min(1,x));}
   return 0.35*c(el/3)+0.25*c((el-3)/Math.max(1,W-6))+0.40*c((el-(W-3))/3);}
 
 /* ---------- render do planejamento ---------- */
+var salaManual=null;
 function plan(){
   var nome=$('f-nome').value.trim()||'Evento sem nome', tipo=$('f-tipo').value, hora=$('f-hora').value;
   var dStr=$('f-data').value; if(!dStr)return;
@@ -709,18 +711,24 @@ function plan(){
   function pick(c){var sc=quant(p,c);var f=pool.filter(function(r){return capEff(r.c)>=sc;}).map(function(r){return {r:r,pen:scoreRoom(r),seats:sc};});f.sort(function(x,y){return (x.pen-y.pen)||(tie(x.r)-tie(y.r));});return f[0]||null;}
   var CR={'no-local':0,'ao-lado':1,'perto':2,'?':3,'longe':4};
   function tie(r){var t=0;if($('f-coffee').checked)t+=CR[r.coffee]==null?3:CR[r.coffee];return t;}
-  var chosen=pick(conf), best=chosen?[chosen]:[];
+  var sug=pick(conf),chosen=sug,avisoSala='';
+  if(salaManual&&(!sug||sug.r.n!==salaManual)){var mr=pool.filter(function(r){return r.n===salaManual;})[0];
+    if(mr)chosen={r:mr,pen:scoreRoom(mr),seats:quant(p,conf)};
+    else{avisoSala='A sala escolhida ('+salaManual+') não está disponível com esses dados; voltamos para a sugerida.';salaManual=null;}}
+  var best=chosen?[chosen]:[];
   var cards=pool.map(function(r){var lv=0.7;for(var i=0;i<LEVELS.length;i++){if(capEff(r.c)>=quant(p,LEVELS[i])){lv=LEVELS[i];break;}}return {r:r,cs:[lv],pen:scoreRoom(r)};});
-  cards.sort(function(x,y){var cx=chosen&&chosen.r===x.r?1:0,cy=chosen&&chosen.r===y.r?1:0;return (cy-cx)||(x.pen-y.pen)||(tie(x.r)-tie(y.r));});
+  cards.sort(function(x,y){var cx=sug&&sug.r===x.r?1:0,cy=sug&&sug.r===y.r?1:0;return (cy-cx)||(x.pen-y.pen)||(tie(x.r)-tie(y.r));});
+  (function(){var ix=-1;cards.forEach(function(o,i){if(chosen&&o.r===chosen.r)ix=i;});if(ix>=3){var o=cards.splice(ix,1)[0];cards.splice(1,0,o);}})();
   function pct(c){return Math.round(c*100)+'%';}
   var roomHtml;
   if(!cards.length){roomHtml='<p class="chip bad">Nenhuma sala viável para '+sMin+' pessoas (70% de confiança) nesta data: veja as descartadas, limite as inscrições ou busque um espaço parceiro.</p>';}
-  else{function isC0(r){return chosen&&chosen.r===r;}var card=function(o,i){var r=o.r,occ=Math.round(m/r.c*100),pfit=0;for(var k=0;k<=capEff(r.c)&&k<p.length;k++)pfit+=p[k];var maxN=maxInsc(capEff(r.c),h,o.cs[0],walk);
+  else{function isC0(r){return sug&&sug.r===r;}var card=function(o,i){var r=o.r,occ=Math.round(m/r.c*100),pfit=0;for(var k=0;k<=capEff(r.c)&&k<p.length;k++)pfit+=p[k];var maxN=maxInsc(capEff(r.c),h,o.cs[0],walk);
     var MG={'0.9':'margem muito alta','0.8':'margem alta','0.7':'margem normal'};var lab=isC0(r)?'sugerida':'alternativa · '+MG[String(o.cs[0])];var isC=chosen&&chosen.r===r;
+    var bt=isC?(isC0(r)?'':'<span class="chip ok">escolhida</span> <button type="button" class="btn small ghost" data-usesala="">Voltar para a sugerida</button>'):'<button type="button" class="btn small ghost" data-usesala="'+esc(r.n)+'">Usar esta sala</button>';
     var falta=(r.infDet||[]).filter(function(t){return / ✗$/.test(t);}).map(function(t){return t.replace(' ✗','');});
-    return '<div class="room'+(isC?' best':'')+'"><span class="chip'+(isC?' ok':'')+'">'+lab+'</span><b>'+esc(r.n)+'</b><span class="num">'+r.c+' lugares</span><small>'+Math.min(99,Math.round(pfit*100))+'% de chance de caber todo mundo · ocupação prevista '+occ+'% · aceita até '+maxN+' inscrições</small><small>'+resTxt(r,r.dl)+' · '+(COFFEE[r.coffee]||COFFEE['?'])+(r.coffeeLocal?' ('+esc(r.coffeeLocal)+')':'')+(falta.length?' · <span style="color:var(--red)">sem '+esc(falta.join(', '))+'</span>':'')+'</small></div>';};
+    return '<div class="room'+(isC?' best':'')+'"><span class="chip'+(isC?' ok':'')+'">'+lab+'</span><b>'+esc(r.n)+'</b><span class="num">'+r.c+' lugares</span><small>'+Math.min(99,Math.round(pfit*100))+'% de chance de caber todo mundo · ocupação prevista '+occ+'% · aceita até '+maxN+' inscrições</small><small>'+resTxt(r,r.dl)+' · '+(COFFEE[r.coffee]||COFFEE['?'])+(r.coffeeLocal?' ('+esc(r.coffeeLocal)+')':'')+(falta.length?' · <span style="color:var(--red)">sem '+esc(falta.join(', '))+'</span>':'')+'</small>'+(bt?'<div class="rpick">'+bt+'</div>':'')+'</div>';};
   var topo=cards.slice(0,3),resto=cards.slice(3);
-  roomHtml='<p class="note" style="margin:4px 0 6px">A sala sugerida e duas alternativas, da que melhor equilibra cadeira sobrando e falta de lugar.</p><div class="rooms">'+topo.map(card).join('')+'</div>'+(resto.length?'<details class="note" style="margin-top:8px"><summary>Ver as outras '+resto.length+' salas possíveis</summary><div class="rooms" style="margin-top:8px">'+resto.map(function(o,i){return card(o,i+3);}).join('')+'</div></details>':'');}
+  roomHtml=(avisoSala?'<p class="chip warn" style="white-space:normal">'+esc(avisoSala)+'</p>':'')+'<p class="note" style="margin:4px 0 6px">A sala sugerida e duas alternativas, da que melhor equilibra cadeira sobrando e falta de lugar. Para usar outra, clique em "Usar esta sala".</p><div class="rooms">'+topo.map(card).join('')+'</div>'+(resto.length?'<details class="note" style="margin-top:8px"><summary>Ver as outras '+resto.length+' salas possíveis</summary><div class="rooms" style="margin-top:8px">'+resto.map(function(o,i){return card(o,i+3);}).join('')+'</div></details>':'');}
   var nPrazo=discarded.filter(function(x){return x.r.c>=sMin&&/prazo/.test(x.why);}).length;
   if(cfgT.externo){roomHtml='<p class="note">'+tipo+' acontece fora da FEA: sem sugestão de sala.</p>';discarded=[];best=[];chosen=null;}
   if(discarded.length)roomHtml+='<details class="note" style="margin-top:8px"><summary>Salas descartadas ('+discarded.length+(nPrazo?', '+nPrazo+' por prazo':'')+')</summary><ul class="factors" style="margin-top:6px">'+discarded.sort(function(a,b){return b.r.c-a.r.c;}).map(function(x){return '<li><span>'+esc(x.r.n)+' ('+x.r.c+')</span><span class="d neg">'+esc(x.why)+'</span></li>';}).join('')+'</ul></details>';
@@ -921,8 +929,8 @@ function inscHtml(e){
   var aviso=i.avisoEm?'lembrete enviado para '+(i.avisoEnviados||0)+(i.avisoPendentes?' · <b>'+i.avisoPendentes+' na fila</b> (limite diário de e-mails)':''):'lembrete automático '+(window.ROBO_HORAS||48)+' h antes';
   return '<div class="insc"><div class="inum"><b>'+(+i.total||0)+'</b> inscritos'+(i.novidades?' · '+i.novidades+' querem receber novidades':'')+' · '+(i.aberto===false?'<span class="chip neutral">fechado</span>':'<span class="chip ok">aberto</span>')+'</div>'+
     '<div class="ilinks">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">Link para divulgar ↗</a><button type="button" class="btn small ghost" data-icopy="'+esc(u)+'">Copiar link</button>':'')+(ed?'<a href="'+esc(ed)+'" target="_blank" rel="noopener">Editar Forms</a>':'')+(pl?'<a href="'+esc(pl)+'" target="_blank" rel="noopener">Planilha de respostas</a>':'')+'</div>'+
-    '<div class="note">'+aviso+' · atualizado '+esc(hhmm(i.sincronizadoEm))+'</div>'+
-    (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-isync="'+id+'"'+(oc?' disabled':'')+'>Atualizar agora</button><button type="button" class="btn small ghost" data-iaviso="'+id+'"'+(oc?' disabled':'')+'>Enviar lembrete agora</button></div>')+m+'</div>';
+    '<div class="note">'+aviso+' · atualizado '+esc(hhmm(i.sincronizadoEm))+'. Se o evento mudar, o Forms se atualiza sozinho em até 10 min.</div>'+
+    (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-isync="'+id+'"'+(oc?' disabled':'')+'>Atualizar inscritos</button><button type="button" class="btn small ghost" data-iatual="'+id+'"'+(oc?' disabled':'')+' title="Reaplica nome, data, horário, sala e convidado do evento no mesmo Forms">Atualizar Forms</button><button type="button" class="btn small ghost" data-iaviso="'+id+'"'+(oc?' disabled':'')+'>Enviar lembrete agora</button></div>')+m+'</div>';
 }
 function robo(acao,eid){
   var u=window.firebase&&firebase.auth().currentUser;if(!u)return Promise.reject(new Error('Faça login de novo.'));
@@ -932,9 +940,10 @@ function robo(acao,eid){
 }
 function inscAcao(acao,eid,ok){inscOcup[eid]=1;delete inscMsg[eid];renderBase();
   robo(acao,eid).then(function(j){inscMsg[eid]={t:ok(j)};},function(err){inscMsg[eid]={t:err.message,erro:1};}).then(function(){delete inscOcup[eid];renderBase();});}
-$('etable').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-iform],[data-isync],[data-iaviso],[data-icopy]');if(!b)return;
+$('etable').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-iform],[data-isync],[data-iatual],[data-iaviso],[data-icopy]');if(!b)return;
   if(b.dataset.icopy){(navigator.clipboard?navigator.clipboard.writeText(b.dataset.icopy):Promise.reject()).then(function(){b.textContent='Copiado!';},function(){prompt('Copie o link:',b.dataset.icopy);});return;}
   if(b.dataset.iform)inscAcao('criarForm',b.dataset.iform,function(j){return j.jaExistia?'Esse evento já tinha Forms.':'Forms criado. Confira o texto em "Editar Forms" antes de divulgar.';});
+  else if(b.dataset.iatual)inscAcao('atualizarForm',b.dataset.iatual,function(){return 'Forms atualizado com os dados atuais do evento.';});
   else if(b.dataset.isync)inscAcao('sincronizar',b.dataset.isync,function(j){return 'Atualizado: '+(j.inscricao&&j.inscricao.total||0)+' inscritos.';});
   else if(b.dataset.iaviso){if(b.dataset.sure){inscAcao('enviarAviso',b.dataset.iaviso,function(j){return j.enviados?'Lembrete enviado para '+j.enviados+(j.pendentes?'; '+j.pendentes+' ficaram para amanhã (limite diário).':'.'):'Ninguém novo para avisar.';});}else{b.dataset.sure='1';b.textContent='Confirmar envio';}}
 });
@@ -1223,10 +1232,11 @@ function formSnap(){var o={};['f-nome','f-tipo','f-hora','f-data','f-dur','f-ins
 function openInPlan(id){var e=events.filter(function(x){return x.id===id;})[0];if(!e)return;
   var f=e.form||{};var map={'f-nome':e.nome,'f-tipo':e.tipo,'f-hora':e.hora,'f-data':e.data,'f-dur':e.duracao,'f-insc':e.inscritosMeta,'f-conv':e.convidado,'f-eq':e.equipeConvidado||''};
   ['f-nome','f-tipo','f-hora','f-data','f-dur','f-insc','f-conf','f-aud','f-coffee','f-mat','f-cpp','f-copy','f-out','f-conv','f-eq','n-mesas','n-proj','n-som','n-tom','n-acess','n-ar'].forEach(function(k){var el=$(k);var v=(k in f)?f[k]:map[k];if(v==null)return;if(el.type==='checkbox')el.checked=!!v;else el.value=v;});
-  editingId=id;savedId=id;showEditBar();
+  editingId=id;savedId=id;showEditBar();salaManual=e.sala||null;
   document.querySelector('[data-tab="plan"]').click();doCalc();window.scrollTo(0,0);}
 function showEditBar(){var e=events.filter(function(x){return x.id===editingId;})[0];$('editbar').hidden=!editingId;if(editingId){$('editname').textContent=e?e.nome:'';$('saveplan').textContent='Atualizar evento';}else{$('saveplan').textContent='Salvar evento';}}
 $('bfilter').addEventListener('change',renderBase);
+$('r-room').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-usesala]');if(!b)return;salaManual=b.dataset.usesala||null;if(!editingId)savedId=null;doCalc();$('savemsg').textContent=salaManual?'Sala trocada para '+salaManual+'. Salve para guardar.':'De volta à sala sugerida.';});
 $('editnew').addEventListener('click',function(){editingId=null;savedId=null;showEditBar();markStale();$('savemsg').textContent='O próximo salvamento cria um evento novo.';});
 function connect(){
   if(!window.claude||!window.claude.use){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>. Nada é salvo.';return;}
