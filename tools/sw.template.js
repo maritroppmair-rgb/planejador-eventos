@@ -15,8 +15,8 @@ self.addEventListener('fetch',function(e){
   var u=new URL(r.url);if(u.origin!==self.location.origin)return;
   var essencial=r.mode==='navigate'||/\/(index\.html|config\.js|plataforma\.js)?$/.test(u.pathname)||/\.(js|html)$/.test(u.pathname)&&!/\/vendor\//.test(u.pathname);
   if(essencial){
-    /* rede primeiro, para pegar sempre a versão nova; cache se estiver sem internet */
-    e.respondWith(fetch(r).then(function(res){var cp=res.clone();caches.open(CACHE).then(function(c){c.put(r,cp);});return res;}).catch(function(){return caches.match(r).then(function(m){return m||caches.match('index.html');});}));
+    /* rede primeiro, sem o cache do navegador (o GitHub Pages guarda 10 min), para pegar sempre a versão nova; cache se estiver sem internet */
+    e.respondWith(fetch(r.mode==='navigate'?new Request(r.url,{cache:'no-cache',credentials:'same-origin'}):new Request(r,{cache:'no-cache'})).then(function(res){var cp=res.clone();caches.open(CACHE).then(function(c){c.put(r,cp);});return res;}).catch(function(){return caches.match(r).then(function(m){return m||caches.match('index.html');});}));
     return;
   }
   e.respondWith(caches.match(r).then(function(m){return m||fetch(r).then(function(res){var cp=res.clone();caches.open(CACHE).then(function(c){c.put(r,cp);});return res;});}));
