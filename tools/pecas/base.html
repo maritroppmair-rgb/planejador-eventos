@@ -520,7 +520,7 @@ body.sd-aberto{overflow:hidden}
         <div class="field" id="d-filebox"><label for="d-file">Arquivo <span class="rq opt">até 20 MB</span></label><input id="d-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.md"><label class="dcur" id="d-filecur" hidden><input type="checkbox" id="d-filerm"> Remover o arquivo já enviado</label></div>
         <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option></select></div>
         <div class="field"><label for="d-versao">Versão / ano <span class="rq opt">opcional</span></label><input id="d-versao" placeholder="ex.: 2026"></div>
-        <div class="field"><label for="d-resp">Responsável <span class="rq opt">opcional</span></label><input id="d-resp"></div>
+        <div class="field"><label for="d-resp">Responsável <span class="rq opt">opcional</span></label><select id="d-resp"><option value="">Sem responsável</option></select></div>
         <div class="field" style="grid-column:1/-1"><label for="d-resumo">Para que serve <span class="rq opt">opcional</span></label><input id="d-resumo"></div>
       </div>
       <p class="note" style="margin:10px 0 0">Pode colocar link e arquivo juntos. Tipo PDF ou Imagem abre o arquivo; os outros tipos (Drive, Doc, Planilha…) abrem o link. O card mostra o outro como alternativa.</p>
@@ -894,6 +894,7 @@ $('pform').addEventListener('submit',function(e){e.preventDefault();var miss=val
 function doSave(exc){
   if(!db){$('savemsg').textContent='Sem conexão com a base: o plano não foi salvo.';return;}
   var data=Object.assign({status:'planejado',criadoEm:new Date().toISOString()},current);
+  if(!editingId){data.responsavel=window.__meuNome||'';data.responsavelId=window.__euId||'';data.criadoPor=window.__euId||'';}
   if(exc)data.excecao=exc;
   if(editingId){delete data.criadoEm;data.editadoEm=new Date().toISOString();if(!exc)data.excecao=null;$('saveplan').disabled=true;$('excbox').hidden=true;db.doc('eventos/'+editingId).update(data).then(function(){$('savemsg').textContent='Evento atualizado'+(exc?' (exceção registrada).':'.');}).catch(function(){$('savemsg').textContent='Não foi possível atualizar.';}).then(function(){$('saveplan').disabled=false;});return;}
   $('saveplan').disabled=true;$('excbox').hidden=true;

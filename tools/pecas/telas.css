@@ -86,3 +86,4 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
 .tpanel a{color:var(--wine);font-weight:700}
 .tmob{display:none}
 @media (max-width:700px){.tmob{display:inline}}
+.tresp{display:flex;align-items:center;gap:12px;font-size:14px}.tresp span{color:var(--muted);min-width:110px}.tresp select{flex:1;max-width:320px}

@@ -33,6 +33,11 @@ document.addEventListener('tela',function(){painelFechar();if(gavAberta)fecharGa
 function blk(t,h){return '<div class="tp-blk">'+(t?'<h4>'+t+'</h4>':'')+h+'</div>';}
 function confirma(b,txt,fn){if(b.dataset.sure){fn();return;}var o=b.textContent;b.dataset.sure='1';b.textContent=txt;setTimeout(function(){delete b.dataset.sure;b.textContent=o;},5000);}
 
+/* ===== membros para escolher responsável ===== */
+function opcoesMembros(sel,valor,vazio){var ms=window.__membros||[];sel.textContent='';sel.appendChild(new Option(vazio||'Sem responsável',''));
+  ms.forEach(function(m){sel.appendChild(new Option(m.nome+(m.apelido&&m.apelido!==m.nome?' (“'+m.apelido+'”)':''),m.nome));});
+  if(valor&&!ms.some(function(m){return m.nome===valor;}))sel.appendChild(new Option(valor+' (fora de Membros)',valor));
+  sel.value=valor||'';}
 /* ===== listas de opções viram botões (como em Salas) ===== */
 function segmentar(id,curtos){var s=$(id);if(!s||s._pinta)return;var w=document.createElement('div');w.className='seg tseg';w.setAttribute('role','group');
   function pinta(){w.textContent='';[].forEach.call(s.options,function(op,i){var b=document.createElement('button');b.type='button';b.textContent=(curtos&&curtos[i])||op.textContent;
@@ -162,7 +167,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var ft=$('dform').querySelector('.btns:last-child'),del=el('<button type="button" class="btn small ghost tdanger" id="d-del" hidden>Excluir</button>');ft.appendChild(del);
   segmentar('d-tipo');
   /* quando o painel abre para editar, mostra o Excluir */
-  var obs=new MutationObserver(function(){var ed=!!docEdit;del.hidden=!ed||!pode('excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
+  var obs=new MutationObserver(function(){var ed=!!docEdit;if(!$('dform-gav').hidden){var dx=ed?docs.filter(function(d){return d.id===docEdit;})[0]:null;opcoesMembros($('d-resp'),dx?dx.resp:'');}del.hidden=!ed||!pode('excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
   obs.observe($('dform-gav'),{attributes:true,attributeFilter:['hidden']});
   del.addEventListener('click',function(){confirma(del,'Confirmar exclusão',function(){var id=docEdit;db.doc('documentos/'+id).delete().then(function(){fecharGav('dform','Documento excluído.');}).catch(function(){$('dmsg').textContent='Não foi possível excluir.';});});});
   renderDocs=function(){
@@ -243,13 +248,13 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var cur=fb.value;fb.innerHTML='<option value="">Todos os tipos</option>'+Object.keys(types).sort().map(function(t){return '<option'+(t===cur?' selected':'')+'>'+esc(t)+'</option>';}).join('');
     if(!all.length){$('etable').innerHTML='<tbody><tr><td class="empty">A base está vazia. Planeje um evento e clique em “Salvar evento”.</td></tr></tbody>';$('b-conta').textContent='';painelAtualizar('view-base');return;}
     var list=all.filter(function(e){if(ft&&e.tipo!==ft)return false;if(!tst&&/\[teste\]/i.test(e.nome||''))return false;
-      if(q&&nrm([e.nome,e.tipo,e.sala,e.convidado].join(' ')).indexOf(q)<0)return false;var dn=e.status==='realizado';if(vista==='prox'&&dn)return false;if(vista==='real'&&!dn)return false;return true;});
+      if(q&&nrm([e.nome,e.tipo,e.sala,e.convidado,e.responsavel].join(' ')).indexOf(q)<0)return false;var dn=e.status==='realizado';if(vista==='prox'&&dn)return false;if(vista==='real'&&!dn)return false;return true;});
     var pen=list.filter(function(e){return e.status!=='realizado'&&e.data&&e.data<today;}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
     var nx=list.filter(function(e){return e.status!=='realizado'&&!(e.data&&e.data<today);}).sort(function(a,b){return (a.data||'9')<(b.data||'9')?-1:1;});
     var dn=list.filter(function(e){return e.status==='realizado';}).sort(function(a,b){return (a.data||'')<(b.data||'')?1:-1;});
     $('b-conta').textContent=list.length+(list.length===1?' evento':' eventos')+(pen.length?' · '+pen.length+' pendente'+(pen.length>1?'s':''):'');
     function row(e){var d=e.data?e.data.slice(8,10)+'/'+e.data.slice(5,7):'—',dnn=e.status==='realizado',cp=dnn&&e.custo&&e.presentes?e.custo/e.presentes:null;
-      var sub=[e.tipo,e.sala?(e.sala+(e.capacidade?' ('+e.capacidade+')':'')):'',e.hora].filter(Boolean).join(' · ');
+      var sub=[e.tipo,e.sala?(e.sala+(e.capacidade?' ('+e.capacidade+')':'')):'',e.hora,e.responsavel?'resp. '+String(e.responsavel).split(' ')[0]:''].filter(Boolean).join(' · ');
       return '<tr data-eopen="'+esc(e.id)+'" tabindex="0"><td class="num"><b>'+d+'</b><span class="tsub">'+(e.data?e.data.slice(0,4):'')+'</span></td><td><span class="tn">'+esc(e.nome||'Sem nome')+'</span>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+'<span class="tsub"><span class="tmob">'+d+' · </span>'+esc(sub)+'</span></td><td>'+insc(e)+'</td><td>'+situ(e,today)+'</td><td class="r">'+(cp!=null?semaf(cp,'cp'):'<span class="note">—</span>')+'</td></tr>';}
     var h='<thead><tr><th>Data</th><th>Evento</th><th>Inscrições</th><th>Situação</th><th class="r">Custo/presente</th></tr></thead><tbody>';
     if(pen.length||nx.length)h+='<tr class="grp"><td colspan="5">Próximos e pendentes ('+(pen.length+nx.length)+')</td></tr>'+pen.concat(nx).map(row).join('');
@@ -269,14 +274,17 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var today=iso(new Date()),dn=e.status==='realizado',late=!dn&&e.data&&e.data<today,reg=pode('editar')&&(bReg===id||late);
     var quando=e.data?D(e.data).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'sem data';
     var sub=quando+(e.hora?' · '+e.hora:'')+(e.sala?' · '+esc(e.sala):'')+' '+situ(e,today);
-    var corpo='';
+    var corpo=blk('',pode('editar')?'<label class="tresp"><span>Responsável</span><select data-tresp="'+esc(id)+'"></select></label>':'<p class="tresp" style="margin:0"><span>Responsável</span><b>'+esc(e.responsavel||'—')+'</b></p>');
     if(reg)corpo+=blk(dn?'Editar resultado':'Registrar resultado',(dn?'':'<p class="note" style="margin:0 0 10px">O evento já aconteceu. Preencha com a lista de presença: é isso que calibra os próximos.</p>')+regForm(e));
     corpo+=blk(dn?'Resultado e previsto × real':'Detalhes',detail(e));
     var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Registrar resultado</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
-  function abrir(id){painelAbrir({sec:'view-base',montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);}});}
+  function abrir(id){painelAbrir({sec:'view-base',montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
   function clique(e){var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
   $('etable').addEventListener('click',clique);$('etable').addEventListener('keydown',clique);
+  sec.addEventListener('change',function(e){var r=e.target.closest('[data-tresp]');if(!r||!db)return;var nm=r.value,m=(window.__membros||[]).filter(function(x){return x.nome===nm;})[0];
+    db.doc('eventos/'+r.dataset.tresp).update({responsavel:nm,responsavelId:m?m.id:''}).catch(function(){alertMsg('Não foi possível salvar o responsável.');});});
+  document.addEventListener('membros',function(){painelAtualizar('view-base');});
   sec.addEventListener('click',function(e){
     var p=e.target.closest('[data-tplan]');if(p){painelFechar();openInPlan(p.dataset.tplan);return;}
     var r=e.target.closest('[data-treg]');if(r){bReg=r.dataset.treg||null;painelAtualizar('view-base');var i=TP&&TP.dr.querySelector('.tp-reg input');if(i)i.focus();return;}

@@ -287,6 +287,9 @@ if(window.claude&&window.claude.use){
       myDoc=members.filter(function(m){return m.id===meId;})[0]||null;
       if(myDoc&&!getTheme()&&(myDoc.tema==='light'||myDoc.tema==='dark'))applyTheme(myDoc.tema);
       renderMe();
+      window.__membros=members.map(function(m){return {id:m.id,nome:m.nome||m.email||'Sem nome',apelido:m.apelido||''};}).sort(function(a,b){return cmp(a.nome,b.nome);});
+      window.__euId=meId;window.__meuNome=(myDoc&&myDoc.nome)||(meInfo&&meInfo.name)||'';
+      document.dispatchEvent(new CustomEvent('membros'));
       if(!$('view-membros').hidden)renderMembros();
       if(!$('view-perfil').hidden)renderPerfil();
     },function(){});
