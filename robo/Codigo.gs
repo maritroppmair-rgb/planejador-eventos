@@ -79,15 +79,23 @@ function criarForm(eid, u) {
     if (!ev.data) throw new Error('O evento precisa ter data antes de abrir inscrições.');
     var pasta = pastaInscricoes();
     var nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
-    var copia = DriveApp.getFileById(CFG.MODELO_FORM_ID).makeCopy('Inscrição · ' + nomeArq, pasta);
-    var form = FormApp.openById(copia.getId());
-    aplicarTextos(form, ev);
-    form.setAcceptingResponses(true);
-    var planilha = SpreadsheetApp.create('Respostas · ' + nomeArq);
-    DriveApp.getFileById(planilha.getId()).moveTo(pasta);
-    form.setDestination(FormApp.DestinationType.SPREADSHEET, planilha.getId());
-    var url = form.getPublishedUrl(), curta = url;
-    try { curta = form.shortenFormUrl(url); } catch (e) { }
+    var copia = DriveApp.getFileById(CFG.MODELO_FORM_ID).makeCopy('Inscrição · ' + nomeArq, pasta), planilha = null;
+    try {
+      var form = FormApp.openById(copia.getId());
+      aplicarTextos(form, ev);
+      publicar(form); // cópias nascem "não publicadas" no Forms novo
+      form.setAcceptingResponses(true);
+      planilha = SpreadsheetApp.create('Respostas · ' + nomeArq);
+      DriveApp.getFileById(planilha.getId()).moveTo(pasta);
+      form.setDestination(FormApp.DestinationType.SPREADSHEET, planilha.getId());
+      var url = form.getPublishedUrl(), curta = url;
+      try { curta = form.shortenFormUrl(url); } catch (e) { }
+    } catch (err) {
+      // não deixa cópia pela metade na pasta
+      try { copia.setTrashed(true); } catch (e) { }
+      try { if (planilha) DriveApp.getFileById(planilha.getId()).setTrashed(true); } catch (e) { }
+      throw err;
+    }
     var agora = new Date().toISOString();
     var insc = {
       formId: form.getId(), url: curta, editUrl: form.getEditUrl(), planilhaUrl: planilha.getUrl(),
@@ -113,6 +121,12 @@ function aplicarTextos(form, ev) {
     '. Você vai receber um lembrete por e-mail antes do evento.');
 }
 
+/** Publica o Forms (no Forms novo, cópias nascem como rascunho e não aceitam respostas). */
+function publicar(form) {
+  if (typeof form.setPublished !== 'function') return; // Forms antigo: já nasce publicado
+  if (!form.isPublished()) form.setPublished(true);
+}
+
 function pastaInscricoes() {
   var it = DriveApp.getFoldersByName(CFG.PASTA);
   return it.hasNext() ? it.next() : DriveApp.createFolder(CFG.PASTA);
@@ -134,6 +148,7 @@ function sincronizarEvento(eid, ev) {
   insc.novidades = lista.filter(function (x) { return x.novidades === true; }).length;
   insc.sincronizadoEm = agora.toISOString();
   if (inicio(ev) <= agora && form.isAcceptingResponses()) form.setAcceptingResponses(false);
+  else if (inicio(ev) > agora) publicar(form);
   insc.aberto = form.isAcceptingResponses();
   fsPatch('eventos/' + eid, { inscricao: insc });
   return { inscricao: insc };
