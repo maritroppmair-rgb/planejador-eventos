@@ -1,6 +1,6 @@
 # Planejador de Eventos · guia para apresentar
 
-Nov 7, 2026 · @Pedro
+Nov 8, 2026 · @Pedro
 
 ## O que é o Planejador
 
@@ -41,7 +41,7 @@ Só entra quem está na lista de acesso, com a conta Google do e-mail USP, e o q
 | Trainee | O mesmo que Coordenador(a), mas não exclui nada |
 | Sem cargo | Só visualiza, até a diretoria atribuir um cargo |
 
-As permissões valem nas telas e também no banco de dados: mesmo quem tentasse burlar a tela não conseguiria gravar o que o cargo não permite. Existe ainda o cargo DEV, só do Pedro, para manutenção técnica; ele não aparece como opção para ninguém.
+As permissões valem nas telas e também no banco de dados: mesmo quem tentasse burlar a tela não conseguiria gravar o que o cargo não permite. Existe ainda o cargo DEV, só do Pedro, para manutenção técnica; ele não aparece como opção para ninguém e, durante a apresentação, o perfil dele fica oculto na tela de Membros.
 
 ## Tour pelas telas
 

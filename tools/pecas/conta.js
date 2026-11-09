@@ -87,7 +87,7 @@ function renderMe(){
   fillAvatar($('avbtn'),myDoc,fb);fillAvatar($('m-av'),myDoc,fb);
   $('m-nome').textContent=myName();
   $('m-sub').textContent=myDoc?(cargoOf(myDoc)||'Sem cargo'):'Perfil ainda não preenchido';
-  $('m-count').textContent=members.length?String(members.length):'';
+  var nVis=membrosVisiveis().length;$('m-count').textContent=nVis?String(nVis):'';
   $('avbtn').setAttribute('aria-label','Conta de '+myName()+': perfil, membros e aparência');
   aplicarPermissoes();
 }
@@ -254,7 +254,10 @@ function mAbrir(id){mCargoSel=null;window.painelAbrir({sec:'view-membros',montar
   var dl=dr.querySelector('#m-del');if(dl)dl.addEventListener('click',function(){if(!dl.dataset.sure){dl.dataset.sure='1';dl.textContent='Confirmar: tirar do app';setTimeout(function(){delete dl.dataset.sure;dl.textContent='Tirar do app';},5000);return;}
     db.doc('membros/'+id).delete().then(function(){window.painelFechar();}).catch(function(){});});
 }});}
+/* Apresentação: esconde o perfil DEV da tela de Membros. Liga/desliga em config.js (OCULTAR_DEV_EM_MEMBROS). */
+function membrosVisiveis(){return window.OCULTAR_DEV_EM_MEMBROS?members.filter(function(m){return cargoOf(m)!=='DEV';}):members;}
 function renderMembros(){
+  var members=membrosVisiveis();
   var sel=$('mfilter'),cur=sel.value,extra={};
   members.forEach(function(m){var c=cargoOf(m);if(c&&CARGOS.indexOf(c)<0)extra[c]=1;});
   var opts=CARGOS.concat(Object.keys(extra).sort(function(a,b){return rank(a)-rank(b);}));
