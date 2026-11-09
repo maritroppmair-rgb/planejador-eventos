@@ -198,8 +198,10 @@ function montarAcesso(meuEmail){
     if(!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(v)){msg.textContent='Digite um e-mail válido.';return;}
     fs.doc('permitidos/'+v).set({email:v,adicionadoEm:new Date().toISOString(),por:meuEmail}).then(function(){inp.value='';msg.textContent='Liberado.';}).catch(function(){msg.textContent='Não foi possível adicionar.';});
   });
+  /* Apresentação: com OCULTAR_DEV_EM_MEMBROS (config.js), o e-mail do DEV também sai desta lista. */
+  (window.OCULTAR_DEV_EM_MEMBROS?fs.doc('config/dev').get().then(function(d){return d.exists?String(d.data().email||'').toLowerCase():'';}).catch(function(){return '';}):Promise.resolve('')).then(function(oculto){
   fs.collection('permitidos').onSnapshot(function(s){
-    var lista=s.docs.map(function(d){return d.id;}).sort();ul.textContent='';
+    var lista=s.docs.map(function(d){return d.id;}).filter(function(em){return em!==oculto;}).sort();ul.textContent='';
     lista.forEach(function(em){
       var li=el('li'),sp=el('span',null,em);if(em===meuEmail)sp.appendChild(el('small',null,'você'));li.appendChild(sp);
       if(em!==meuEmail){var b=el('button','btn small ghost','Remover');b.type='button';
@@ -207,6 +209,7 @@ function montarAcesso(meuEmail){
       ul.appendChild(li);
     });
   },function(){});
+  });
 }
 
 /* ---------- backup: exportar e importar tudo em JSON ---------- */
