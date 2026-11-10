@@ -56,7 +56,7 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: E
 | **Mailing** | Lista de quem pediu para receber os próximos eventos (marcado no Forms), sem e-mail repetido, e os convites programados | Que cada evento novo vira um convite automático no dia útil seguinte, e que o Analytics mostra quantas inscrições vieram do mailing e em que horário |
 | **Convidados** | Lista de palestrantes e contatos, com nota e status | A cobertura por tema, que mostra onde faltam nomes |
 | **Salas** | Cadastro das salas da FEA com capacidade, recursos (inclusive ar-condicionado) e se o espaço ou o coffee é ao ar livre (o padrão é sala coberta, com coffee na própria sala) | A busca e os ícones de recursos; clicar numa sala abre o painel com todos os detalhes. A sugestão do Planejar vem daqui |
-| **Calendário** | Datas importantes do semestre (provas, feriados, outros eventos) | Que isso alimenta a nota da data |
+| **Calendário** | Datas importantes do semestre (provas, feriados, outros eventos) e a previsão do tempo dos próximos 16 dias | Que isso alimenta a nota da data, e o ícone discreto de tempo em cada dia (máxima e chance de chuva), atualizado sempre que o site abre |
 | **Documentos** | Manual, relatórios e links da diretoria | O PDF abre dentro do próprio app |
 | **Parâmetros** | As regras do cálculo: metas de custo, margens, limites e quanto a chuva pesa na nota da data | Só a diretoria altera, com dupla confirmação |
 | **Membros** | Equipe, cargos e lista de quem pode entrar | O botão Atribuir cargo (só a diretoria vê) |

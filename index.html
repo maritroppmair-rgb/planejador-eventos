@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261110085617"></script>
-<script src="plataforma.js?v=20261110085617"></script>
+<script src="config.js?v=20261110090050"></script>
+<script src="plataforma.js?v=20261110090050"></script>
 </head>
 <body>
 
@@ -135,6 +135,10 @@ main{padding-block:24px 48px}
 .calgrid .day.out{background:var(--bg);color:var(--muted)}
 .calgrid .day.wk{background:var(--surface-2)}
 .calgrid .day .n{font-size:12px;font-weight:700}
+.calgrid .dtop{display:flex;align-items:center;gap:4px;min-width:0}
+.calgrid .wx{margin-left:auto;display:inline-flex;align-items:center;gap:2px;font-size:10.5px;font-weight:600;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.calgrid .wx svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.calgrid .wx i{font-style:normal;font-weight:500;opacity:.85}
 .calgrid .day.today .n{background:var(--wine);color:var(--on-wine);border-radius:999px;padding:0 6px;align-self:flex-start}
 .cb{display:block;font-size:11px;line-height:1.3;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cb.feriado{background:var(--red-bg);color:var(--red)}
@@ -143,7 +147,9 @@ main{padding-block:24px 48px}
 .cb.evento{background:var(--wine-soft);color:var(--wine);font-weight:700}
 .callegend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .callegend .cb{display:inline-block}
-@media (max-width:700px){.calgrid .day{min-height:64px;padding:3px}.cb{font-size:9.5px;padding:0 3px}.calgrid .dow{font-size:9.5px;padding:4px 2px}}
+.callegend .wx-leg{font-size:12px;color:var(--muted)}
+@media (max-width:420px){.calgrid .wx svg{display:none}}
+@media (max-width:700px){.calgrid .wx i{display:none}.calgrid .wx{font-size:9.5px}.calgrid .day{min-height:64px;padding:3px}.cb{font-size:9.5px;padding:0 3px}.calgrid .dow{font-size:9.5px;padding:4px 2px}}
 #saveCard{background:transparent;border:0;padding:4px 0}
 .excbox{border-color:var(--amber);background:var(--amber-bg);max-width:640px;display:grid;gap:8px}
 .excbox ul{margin:0;padding-left:18px}
@@ -851,7 +857,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
       </div>
       <p class="note" id="k-hint" aria-live="polite" style="margin:-4px 0 8px"></p>
       <div class="calgrid" id="k-grid"></div>
-      <div class="callegend"><span class="cb feriado">Feriado</span><span class="cb ferias">Férias</span><span class="cb externo">Evento externo / bloqueio</span><span class="cb evento">Evento da Feashion</span><span class="note">Clique num dia ou arraste sobre vários para abrir um novo bloqueio já com o período. No celular: toque no primeiro e depois no último dia.</span></div>
+      <div class="callegend"><span class="cb feriado">Feriado</span><span class="cb ferias">Férias</span><span class="cb externo">Evento externo / bloqueio</span><span class="cb evento">Evento da Feashion</span><span class="wx-leg">☀ 27° = previsão do tempo para os próximos 16 dias (máxima e, se passar de 30%, a chance de chuva)</span><span class="note">Clique num dia ou arraste sobre vários para abrir um novo bloqueio já com o período. No celular: toque no primeiro e depois no último dia.</span></div>
     </div>
     <details class="panel" id="k-details" style="margin-top:16px">
       <summary style="cursor:pointer;font-weight:700">Bloqueios de datas</summary>
@@ -1121,6 +1127,16 @@ function calorPts(cl){var t=Math.round(cl.max);return t>=27?Math.min(10,2*(t-26)
 function semAr(sala){return !!sala&&sala.ar!=='sim';}
 function chuvaAlta(cl){return cl.p>=0.5;}
 function climaResumo(cl){return {fonte:cl.fonte,chuva:Math.round(cl.p*100),max:cl.max==null?null:cl.max,min:cl.min==null?null:cl.min};}
+/* resumo do dia para o calendário: mínima e máxima do dia, maior chance de chuva entre 8h e 22h */
+function climaDia(k){if(!climaPrev)return null;var mx=-99,mn=99,ch=-1;
+  for(var h=0;h<24;h++){var key=k+'T'+('0'+h).slice(-2)+':00',t=climaPrev.t[key],p=climaPrev.p[key];if(t!=null){mx=Math.max(mx,t);mn=Math.min(mn,t);}if(h>=8&&h<=22&&p!=null)ch=Math.max(ch,p);}
+  return mx>-99?{max:Math.round(mx),min:Math.round(mn),chuva:ch<0?null:ch}:null;}
+var WXI={sol:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>',
+  nuvem:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 11.1 3.5 3.5 0 0 0 7 18z"/></svg>',
+  chuva:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 8.1 3.5 3.5 0 0 0 7 15z"/><path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"/></svg>'};
+function wxHtml(k){var c=climaDia(k);if(!c)return '';var ic=c.chuva>=50?'chuva':c.chuva>=20?'nuvem':'sol';
+  var t='Previsão do tempo: '+c.min+' a '+c.max+' °C'+(c.chuva!=null?' · chance de chuva de até '+c.chuva+'%':'');
+  return '<span class="wx" title="'+t+'">'+WXI[ic]+c.max+'°'+(c.chuva>=30?'<i>'+c.chuva+'%</i>':'')+'</span>';}
 function climaAvisos(cl,sala,coffee){var a=[];
   if(semAr(sala)&&calorPts(cl))a.push('Calor: '+(cl.fonte==='previsao'?'previsão de ':'nesta época, máxima típica de ')+cl.max+' °C no horário do evento e a '+sala.n+(sala.ar==='nao'?' não tem ar-condicionado':' pode não ter ar-condicionado (não sabemos)')+'. Prefira uma sala com ar.');
   if(cl.frio)a.push(cl.fonte==='previsao'?'Frio: previsão de '+cl.min+' °C no horário do evento. Avise o público para vir agasalhado.':'Frio: nesta época, '+cl.pf+'% dos dias ficam abaixo de '+CLIMA_FRIO+' °C no horário do evento.');
@@ -1129,7 +1145,7 @@ function climaAvisos(cl,sala,coffee){var a=[];
   if(ruim&&coffee&&sala&&sala.coffeeAberto==='sim')a.push('Coffee ao ar livre'+(sala.coffeeLocal?' ('+sala.coffeeLocal+')':'')+' com '+ruim+': combine um espaço coberto para servir.');
   return a;}
 function climaCarregar(){
-  try{var c=JSON.parse(localStorage.getItem('feashion-clima')||'null');if(c&&c.p&&Date.now()-c.em<3*36e5){climaPrev=c;return;}}catch(e){}
+  try{var c=JSON.parse(localStorage.getItem('feashion-clima')||'null');if(c&&c.p&&Date.now()-c.em<24*36e5)climaPrev=c;}catch(e){}
   if(!window.fetch)return;
   fetch('https://api.open-meteo.com/v1/forecast?latitude='+CLIMA_LAT+'&longitude='+CLIMA_LON+'&hourly=precipitation_probability,temperature_2m&timezone=America%2FSao_Paulo&forecast_days=16')
    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){
@@ -1137,6 +1153,7 @@ function climaCarregar(){
     hh.time.forEach(function(t,i){o.p[t]=hh.precipitation_probability[i];o.t[t]=hh.temperature_2m[i];});
     climaPrev=o;try{localStorage.setItem('feashion-clima',JSON.stringify(o));}catch(e){}
     if(calcDone&&!stale)plan();
+    if($('k-grid'))renderMonth();
     climaAgendar();
   }).catch(function(){});
 }
@@ -1707,7 +1724,7 @@ function renderMonth(){
     var items='';
     rows.forEach(function(x){var fim=x.fim||x.inicio;if(k>=x.inicio&&k<=fim){var t=x.tipo||'outro';items+='<span class="cb '+esc(t)+'" title="'+esc(x.nome)+'">'+esc(x.nome)+'</span>';}});
     events.forEach(function(e){if(e.data===k)items+='<span class="cb evento" title="'+esc(e.nome||'')+(e.hora?' · '+esc(e.hora):'')+'">'+(e.hora?esc(e.hora)+' ':'')+esc(e.nome||'Evento')+'</span>';});
-    h+='<button type="button" class="day'+(d.getMonth()!==mo?' out':'')+(w===0||w===6?' wk':'')+(k===today?' today':'')+'" data-day="'+k+'" aria-label="'+d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+'"><span class="n">'+d.getDate()+'</span>'+items+'</button>';}
+    h+='<button type="button" class="day'+(d.getMonth()!==mo?' out':'')+(w===0||w===6?' wk':'')+(k===today?' today':'')+'" data-day="'+k+'" aria-label="'+d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+'"><span class="dtop"><span class="n">'+d.getDate()+'</span>'+(k>=today?wxHtml(k):'')+'</span>'+items+'</button>';}
   $('k-grid').innerHTML=h;
   paintSel();
 }
