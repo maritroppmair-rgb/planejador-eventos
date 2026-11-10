@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261110082139"></script>
-<script src="plataforma.js?v=20261110082139"></script>
+<script src="config.js?v=20261110083234"></script>
+<script src="plataforma.js?v=20261110083234"></script>
 </head>
 <body>
 
@@ -1013,7 +1013,7 @@ var TYPEMAP={'Palestra':'Palestra','Bate-papo':'Palestra','Masterclass':'Masterc
 /* regras de data por tipo (eventos para público externo): fds = 'obrigatorio' | 'proibido' | 'livre'; janela = respeita 17h–19h30 */
 var TYPECFG={'Visita técnica':{fds:'obrigatorio',janela:false,externo:true},'Desfile':{fds:'obrigatorio',janela:false,externo:true},'Feira de brechós':{fds:'livre',janela:false}};
 function tcfg(t){return TYPECFG[t]||{fds:'proibido',janela:true};}
-var PDEF={tcVerde:55,tcAmarelo:30,pvVerde:70,pvAmarelo:51,atVerde:10,atAmarelo:14,metaPresente:15,limiteAmarelo:20,faltaCoffee:2,folga:10,wVazia:3,wExcesso:1,wInfra:0.1,janIni:'17:00',janFim:'19:30',picoFrac:70,picoMin:10,tPapel:30,tQR:8,esperaMax:120};
+var PDEF={tcVerde:55,tcAmarelo:30,pvVerde:70,pvAmarelo:51,atVerde:10,atAmarelo:14,metaPresente:15,limiteAmarelo:20,faltaCoffee:2,folga:10,wVazia:3,wExcesso:1,wInfra:0.1,janIni:'17:00',janFim:'19:30',picoFrac:70,picoMin:10,tPapel:30,tQR:8,esperaMax:120,pesoChuva:20};
 var P=Object.assign({},PDEF);
 var JANELA=['17:00','19:30'];
 var NEEDS=[['n-mesas','mesas','mesas móveis'],['n-proj','proj','projetor'],['n-som','som','som'],['n-tom','tomadas','tomadas'],['n-acess','acess','acessibilidade'],['n-ar','ar','ar-condicionado']];
@@ -1090,8 +1090,45 @@ function poisPmf(l){var o=[],t=Math.exp(-l),c=t,k=0;o.push(t);while(c<0.9999&&k<
 function totalPmf(n,h,lam){var bb=pmf(n,h.a,h.b),po=poisPmf(lam),o=new Array(bb.length+po.length-1).fill(0);
   for(var i=0;i<bb.length;i++){if(bb[i]<1e-12)continue;for(var j=0;j<po.length;j++)o[i+j]+=bb[i]*po[j];}return o;}
 
+/* ---------- clima na FEA (Open-Meteo: gratuito, sem chave) ---------- */
+/* Datas a até 16 dias usam a previsão do tempo; as outras, o histórico 2006–2025 (ERA5), por dia do ano e suavizado em ±7 dias.
+   tarde = fim de tarde (chuva 16h–20h); dia = 9h–18h. c = % de anos com chuva ≥ 1 mm; q = % com máxima acima de 28 °C;
+   f = % com mínima abaixo de 10 °C; t = máxima média (°C). */
+var CLIMA_HIST={"tarde":{"c":[31,32,32,33,35,35,36,36,37,36,36,35,34,33,32,33,34,34,34,33,32,33,32,31,30,31,31,30,30,30,29,27,26,25,26,26,24,25,25,25,25,25,25,26,26,26,26,28,28,28,28,30,28,28,28,28,27,28,27,26,26,27,26,26,27,26,24,25,25,26,27,26,25,26,25,25,23,22,21,20,21,20,18,17,15,15,14,13,14,14,15,15,15,13,12,10,12,11,11,11,10,10,9,9,8,7,7,7,8,8,8,8,8,8,8,7,7,7,6,6,6,6,6,6,5,5,5,5,6,5,6,6,7,7,7,7,8,7,7,7,8,7,7,6,6,6,6,5,6,6,6,6,6,7,7,6,7,7,7,7,6,7,7,6,6,6,6,6,5,6,6,5,5,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,7,6,6,7,7,7,8,7,7,7,7,7,7,7,6,5,6,6,6,5,5,5,5,5,5,4,5,6,6,5,5,4,5,5,5,5,4,4,4,4,4,4,4,4,4,5,4,4,4,4,4,4,5,5,5,4,4,4,5,5,5,6,7,7,8,9,9,9,10,12,13,14,14,14,14,14,14,14,15,14,14,14,15,14,14,14,14,15,15,15,15,15,14,14,14,15,16,15,15,15,16,16,16,16,17,18,18,19,20,20,20,19,20,20,19,19,18,17,18,16,16,17,17,18,18,18,18,19,19,20,20,20,21,21,22,23,22,21,21,21,22,23,23,24,24,25,25,24,25,24,24,25,26,26,26,25,24,24,24,25,24,25,27,28,30,31,30,30],"q":[15,15,15,15,14,14,14,13,14,14,15,16,17,17,18,17,16,17,16,16,16,17,17,17,17,18,18,18,18,19,20,21,20,21,21,21,21,21,21,21,21,20,20,18,17,17,18,17,17,16,16,15,15,14,14,14,15,15,15,15,15,15,15,15,15,14,14,13,13,13,12,12,12,12,12,11,10,10,10,10,9,8,8,7,7,7,7,6,6,6,6,6,5,5,4,4,4,4,5,5,5,5,4,4,4,5,4,5,5,6,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,5,5,5,4,4,4,4,4,3,3,2,2,2,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,2,3,3,3,4,5,6,7,7,7,8,10,11,12,13,13,12,13,13,13,13,14,15,16,16,15,13,14,15,16,19,21,22,23,24,25,25,24,24,25,26,27,27,25,24,22,20,18,16,15,15,14,13,12,11,12,10,9,9,10,10,10,12,13,13,13,13,14,15,15,15,15,15,15,14,15,15,13,14,14,14,14,13,13,13,12,12,12,11,12,11,10,10,9,9,9,9,10,10,10,10,10,10,10,9,9,9,9,9,9,8,8,8,7,7,6,7,7,7,8,9,10,10,10,10,11,11,11,12,12,13,14,14,15,16,16,16,17,17,18,18,19,19,19,19,17,17,16,16],"f":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,2,1,1,1,2,2,2,2,3,2,3,3,2,2,2,2,2,2,3,2,3,2,2,2,2,2,3,3,3,4,4,4,4,4,4,3,3,3,3,3,2,2,2,2,2,1,1,1,1,1,2,2,3,3,3,3,2,3,3,3,2,2,2,2,3,2,3,2,2,2,2,2,2,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"t":[25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,26,26,26,26,26,26,26,26,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,23,23,23,24,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,22,22,22,22,22,22,22,22,22,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,20,20,20,20,20,20,20,20,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,23,23,23,23,24,24,24,24,24,24,24,24,24,24,24,24,24,23,23,23,23,23,23,23,23,22,22,22,22,22,22,22,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,22,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25]},"dia":{"c":[69,70,70,71,73,74,74,74,73,72,70,70,68,67,66,66,66,67,67,65,64,64,64,63,62,63,62,62,61,61,61,59,57,57,57,57,56,56,58,59,59,59,61,62,62,61,61,63,63,64,64,65,65,62,61,60,61,60,60,61,61,61,60,59,59,59,58,57,59,60,61,59,58,58,57,56,54,52,51,51,51,49,49,46,43,42,41,40,40,40,40,41,40,39,36,34,35,35,35,35,32,31,31,29,29,28,26,25,26,26,25,24,23,23,23,22,22,20,19,17,16,16,16,15,15,14,14,13,14,12,14,15,15,15,16,17,17,16,16,16,17,16,16,15,16,16,15,16,17,17,17,17,17,18,18,17,17,17,18,17,15,15,14,13,12,12,11,11,10,10,11,11,10,9,9,10,10,11,10,9,9,9,9,9,8,7,8,8,8,8,8,8,8,8,9,9,9,10,11,11,12,12,12,13,12,12,12,12,12,12,12,11,10,10,10,9,8,8,7,8,8,9,9,10,11,11,12,11,10,11,12,13,13,13,12,12,11,11,12,11,10,10,11,12,11,11,10,10,10,11,11,11,11,10,11,13,15,15,16,17,17,19,21,22,22,25,26,27,29,31,30,28,29,30,31,32,32,32,32,32,32,33,34,34,34,34,34,33,32,32,34,35,37,37,38,37,37,38,38,38,40,41,42,45,45,45,45,44,45,46,47,47,46,45,45,44,44,43,43,45,45,45,45,46,47,47,48,49,50,52,52,53,54,55,55,55,56,57,57,57,57,56,56,56,56,58,57,58,59,58,58,59,58,58,58,59,60,61,63,65,65,66,68,68,69],"q":[34,35,34,35,34,34,34,35,35,35,36,37,40,40,39,38,38,38,38,38,38,38,37,37,37,36,36,35,35,36,37,38,39,40,41,41,42,43,43,42,42,43,42,41,41,41,41,40,39,38,37,36,36,37,38,37,39,39,38,36,38,36,35,35,35,35,35,34,33,33,33,31,31,31,30,28,27,27,26,26,24,24,23,22,21,19,18,18,16,16,15,15,13,12,11,10,9,9,10,9,9,8,8,8,8,9,9,9,10,10,11,10,10,10,10,10,10,10,9,9,9,9,8,8,7,7,7,6,6,6,6,5,5,5,4,3,3,2,2,2,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,2,3,3,4,4,4,4,5,6,7,8,10,11,12,12,12,13,15,16,17,18,17,17,17,18,17,17,18,20,21,21,21,19,20,22,23,26,28,30,32,33,34,35,35,36,37,39,41,41,40,38,36,35,34,32,32,31,30,29,27,26,26,26,24,24,24,24,25,27,27,26,27,27,27,27,27,26,25,26,26,26,26,26,24,24,26,26,26,26,27,26,25,25,24,22,23,23,22,23,22,21,20,20,20,19,20,20,21,22,23,23,23,22,22,23,23,24,23,24,25,25,26,26,26,27,27,27,28,28,28,29,29,29,29,30,30,32,35,36,36,37,37,37,37,38,39,38,39,40,39,38,36,33,33,33],"f":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,2,3,3,3,3,3,3,4,4,5,5,4,3,4,4,4,3,3,3,2,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"t":[27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,24,24,24,24,24,24,24,24,24,24,24,24,24,23,23,23,23,23,23,23,23,23,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,21,22,22,22,21,21,21,21,21,21,21,21,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,24,24,24,24,24,24,24,24,25,25,25,25,26,25,25,25,26,26,26,26,26,26,26,25,25,25,25,25,25,25,25,24,24,24,24,24,24,24,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27]}};
+var CLIMA_LAT=-23.559,CLIMA_LON=-46.731,CLIMA_QUENTE=28,CLIMA_FRIO=10,climaPrev=null;
+function climaIdx(d){var m=d.getMonth(),dd=d.getDate();if(m===1&&dd===29)dd=28;return Math.round((Date.UTC(2001,m,dd)-Date.UTC(2001,0,1))/864e5);}
+function climaJanela(tipo,hora,dur){if(!tcfg(tipo).janela)return {k:'dia',ini:540,fim:1080};
+  var ini=hora?hmin(hora):hmin(JANELA[0]),fim=hora?ini+(+dur||90):hmin(JANELA[1]);return {k:'tarde',ini:ini,fim:fim};}
+function climaH(m){m=Math.round(m);return Math.floor(m/60)%24+'h'+(m%60?('0'+m%60).slice(-2):'');}
+function clima(d,tipo,hora,dur){
+  var w=climaJanela(tipo,hora,dur),key=iso(d),faixa='das '+climaH(w.ini)+' às '+climaH(w.fim);
+  if(climaPrev){var pr=-1,mx=-99,mn=99,h0=Math.floor(w.ini/60),h1=Math.ceil(w.fim/60);
+    for(var h=h0;h<=h1;h++){var k=key+'T'+('0'+h).slice(-2)+':00';
+      if(h>h0&&climaPrev.p[k]!=null)pr=Math.max(pr,climaPrev.p[k]);
+      if(climaPrev.t[k]!=null){mx=Math.max(mx,climaPrev.t[k]);mn=Math.min(mn,climaPrev.t[k]);}}
+    if(pr>=0&&mx>-99)return {fonte:'previsao',p:pr/100,faixa:faixa,max:Math.round(mx),min:Math.round(mn),quente:mx>CLIMA_QUENTE,frio:mn<CLIMA_FRIO};}
+  var H=CLIMA_HIST[w.k],i=climaIdx(d);
+  return {fonte:'historico',k:w.k,p:H.c[i]/100,max:H.t[i],pq:H.q[i],pf:H.f[i],quente:H.q[i]>=25,frio:H.f[i]>=25};
+}
+function climaAvisos(cl){var a=[];
+  if(cl.quente)a.push(cl.fonte==='previsao'?'Calor: previsão de até '+cl.max+' °C no horário do evento. Prefira sala com ar-condicionado e tenha água para o público.':'Calor: nesta época, '+cl.pq+'% dos dias passam de '+CLIMA_QUENTE+' °C no horário do evento. Prefira sala com ar-condicionado.');
+  if(cl.frio)a.push(cl.fonte==='previsao'?'Frio: previsão de '+cl.min+' °C no horário do evento. Avise o público para vir agasalhado.':'Frio: nesta época, '+cl.pf+'% dos dias ficam abaixo de '+CLIMA_FRIO+' °C no horário do evento.');
+  return a;}
+function climaCarregar(){
+  try{var c=JSON.parse(localStorage.getItem('feashion-clima')||'null');if(c&&c.p&&Date.now()-c.em<3*36e5){climaPrev=c;return;}}catch(e){}
+  if(!window.fetch)return;
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+CLIMA_LAT+'&longitude='+CLIMA_LON+'&hourly=precipitation_probability,temperature_2m&timezone=America%2FSao_Paulo&forecast_days=16')
+   .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){
+    var o={em:Date.now(),p:{},t:{}},hh=j&&j.hourly;if(!hh||!hh.time)return;
+    hh.time.forEach(function(t,i){o.p[t]=hh.precipitation_probability[i];o.t[t]=hh.temperature_2m[i];});
+    climaPrev=o;try{localStorage.setItem('feashion-clima',JSON.stringify(o));}catch(e){}
+    if(calcDone&&!stale)plan();
+  }).catch(function(){});
+}
+climaCarregar();
+
 /* ---------- nota da data ---------- */
-function scoreDate(d,tipo,selfId){
+function scoreDate(d,tipo,selfId,hora,dur){
   var s=100,f=[],key=iso(d),w=d.getDay(),cfg=tcfg(tipo),wk=(w===0||w===6);
   calList().forEach(function(x){var fim=x.fim||x.inicio;if(key>=x.inicio&&key<=fim){var t=CALTIPO[x.tipo]||CALTIPO.outro;var pen=(x.penalidade===''||x.penalidade==null)?t[1]:+x.penalidade;s-=pen;f.push([t[0]+': '+x.nome,-pen]);}});
   if(cfg.fds==='proibido'&&wk){s-=100;f.push(['Fim de semana: '+tipo+' não pode ser no fim de semana',-100]);}
@@ -1102,9 +1139,12 @@ function scoreDate(d,tipo,selfId){
   var near=events.filter(function(e){return e.id!==selfId&&e.data&&e.data!==key&&Math.abs(Math.round((D(e.data)-d)/MS))<=2;});
   if(same.length){s-=40;f.push(['Outro evento da Feashion no mesmo dia ('+same[0].nome+')',-40]);}
   else if(near.length){s-=5;f.push(['Outro evento da Feashion a até 2 dias ('+near[0].nome+')',-5]);}
-  s=Math.max(0,s);
-  if(!f.length)f.push(['Sem conflitos encontrados',0]);
-  return {s:s,f:f};
+  var conflitos=f.length,cl=clima(d,tipo,hora,dur),pc=Math.round((+P.pesoChuva||0)*cl.p);
+  f.push([cl.fonte==='previsao'?'Previsão do tempo: '+Math.round(cl.p*100)+'% de chance de chuva '+cl.faixa+' · '+cl.min+' a '+cl.max+' °C':
+    'Clima da época: chove em '+Math.round(cl.p*100)+'% '+(cl.k==='dia'?'dos dias (9h às 18h)':'dos fins de tarde')+' · máxima típica de '+cl.max+' °C (histórico de 20 anos)',-pc]);
+  s-=pc;s=Math.max(0,s);
+  if(!conflitos)f.unshift(['Sem conflitos encontrados',0]);
+  return {s:s,f:f,clima:cl};
 }
 function label(s){return s>=80?['Ótima','ok']:s>=60?['Boa','warn']:['Arriscada','bad'];}
 
@@ -1126,11 +1166,12 @@ function plan(){
   /* nota da data */
   var LD=learned(tipo);$('durhint').textContent=LD.dur?tipo+' na base: média de '+(LD.dur.m>=60?Math.floor(LD.dur.m/60)+'h'+(Math.round(LD.dur.m%60)?('0'+Math.round(LD.dur.m%60)).slice(-2):''):Math.round(LD.dur.m)+' min')+' ('+LD.dur.n+' evento'+(LD.dur.n>1?'s':'')+')':'';
   var dur=+$('f-dur').value||90, fimMin=hmin(hora)+dur, fimTxt=Math.floor(fimMin/60)%24+':'+('0'+fimMin%60).slice(-2);
-  var sc=scoreDate(d,tipo,savedId), lab=label(sc.s), cfgT=tcfg(tipo), foraJ=cfgT.janela&&(hmin(hora)<hmin(JANELA[0])||fimMin>hmin(JANELA[1]));
-  var alts=[];for(var i=-10;i<=10;i++){if(!i)continue;var dd=add(d,i);var x=scoreDate(dd,tipo,savedId);if(x.s>sc.s)alts.push({d:dd,s:x.s});}
+  var sc=scoreDate(d,tipo,savedId,hora,dur), lab=label(sc.s), cfgT=tcfg(tipo), foraJ=cfgT.janela&&(hmin(hora)<hmin(JANELA[0])||fimMin>hmin(JANELA[1]));
+  var hoje0=new Date();hoje0.setHours(0,0,0,0);
+  var alts=[];for(var i=-10;i<=10;i++){if(!i)continue;var dd=add(d,i);if(dd<hoje0)continue;var x=scoreDate(dd,tipo,savedId,hora,dur);if(x.s>sc.s)alts.push({d:dd,s:x.s});}
   alts.sort(function(a,b){return b.s-a.s||Math.abs(a.d-d)-Math.abs(b.d-d);});alts=alts.slice(0,3);
   $('r-score').innerHTML='<div class="btns"><span class="big num">'+sc.s+'<small>/100</small></span><span class="chip '+lab[1]+'">'+lab[0]+'</span></div>'+
-   '<p class="note">'+fmtLong(d)+', das '+hora+' às '+fimTxt+'</p>'+(foraJ?'<p class="chip warn" style="margin:4px 0">Fora da janela padrão de '+tipo+': o evento precisa caber entre '+hfmt(JANELA[0])+' e '+hfmt(JANELA[1])+'</p>':'')+'<ul class="factors">'+sc.f.map(function(x){return '<li><span>'+esc(x[0])+'</span><span class="d '+(x[1]<0?'neg':'pos')+'">'+(x[1]?x[1]:'0')+'</span></li>';}).join('')+'</ul>'+
+   '<p class="note">'+fmtLong(d)+', das '+hora+' às '+fimTxt+'</p>'+(foraJ?'<p class="chip warn" style="margin:4px 0">Fora da janela padrão de '+tipo+': o evento precisa caber entre '+hfmt(JANELA[0])+' e '+hfmt(JANELA[1])+'</p>':'')+climaAvisos(sc.clima).map(function(t){return '<p class="chip warn" style="margin:4px 0;white-space:normal">'+esc(t)+'</p>';}).join('')+'<ul class="factors">'+sc.f.map(function(x){return '<li><span>'+esc(x[0])+'</span><span class="d '+(x[1]<0?'neg':'pos')+'">'+(x[1]?x[1]:'0')+'</span></li>';}).join('')+'</ul>'+
    (alts.length?'<p class="note">Datas melhores perto desta:</p><div class="alts">'+alts.map(function(a){return '<button type="button" data-d="'+iso(a.d)+'">'+fmtLong(a.d)+' · '+a.s+'</button>';}).join('')+'</div>':'');
 
   /* sala */
@@ -1637,6 +1678,7 @@ renderCal();
 var PFORM=[['Compras',[['metaPresente','Meta de custo por presente (R$)','number','0.5'],['limiteAmarelo','Limite do amarelo no semáforo (R$)','number','0.5'],['faltaCoffee','Faltar coffee ou material é quantas vezes pior que sobrar','number','0.5']]],
  ['Salas',[['folga','Aperto aceitável acima da capacidade (%)','number','1'],['wVazia','Peso da cadeira vazia','number','0.5'],['wExcesso','Peso da pessoa além da folga','number','0.5'],['wInfra','Peso de cada ponto de infraestrutura na ordem','number','0.05']]],
  ['Janela de horário',[['janIni','Início da janela padrão','time',''],['janFim','Fim da janela padrão','time','']]],
+ ['Clima',[['pesoChuva','Pontos tirados da nota da data com 100% de chance de chuva (0 desliga)','number','1']]],
  ['Semáforo da base de eventos',[['tcVerde','Comparecimento: verde a partir de (%)','number','1'],['tcAmarelo','Comparecimento: amarelo a partir de (%)','number','1'],['pvVerde','Ocupação: verde a partir de (%)','number','1'],['pvAmarelo','Ocupação: amarelo a partir de (%)','number','1'],['atVerde','Atraso: verde até (min)','number','1'],['atAmarelo','Atraso: amarelo até (min)','number','1']]],
  ['Check-in',[['picoFrac','Público que chega no pico (%)','number','5'],['picoMin','Duração do pico (minutos antes do início)','number','1'],['tPapel','Tempo por pessoa na lista de papel (s)','number','1'],['tQR','Tempo por pessoa com QR (s)','number','1'],['esperaMax','Espera máxima aceitável (s)','number','10']]]];
 function renderPar(){var h='';PFORM.forEach(function(g){h+='<fieldset><legend>'+g[0]+'</legend>';g[1].forEach(function(f){h+='<div class="field"><label for="par-'+f[0]+'">'+f[1]+' <span class="rq opt">padrão: '+PDEF[f[0]]+'</span></label><input id="par-'+f[0]+'" data-pk="'+f[0]+'" type="'+f[2]+'"'+(f[3]?' step="'+f[3]+'" min="0"':'')+' value="'+esc(P[f[0]])+'"></div>';});h+='</fieldset>';});$('parform').innerHTML=h;}
@@ -1650,6 +1692,7 @@ function checarPar(){
   var erros=[],ruim={};function err(ks,m){erros.push(m);ks.forEach(function(k){ruim[k]=1;});}
   Object.keys(c).forEach(function(k){if(typeof c[k]==='number'&&(!isFinite(c[k])||c[k]<0))err([k],'Nenhum valor pode ser negativo.');});
   ['tcVerde','tcAmarelo','pvVerde','pvAmarelo','picoFrac','folga'].forEach(function(k){if(c[k]>100)err([k],'Percentuais vão de 0 a 100.');});
+  if(c.pesoChuva>100)err(['pesoChuva'],'A penalidade da chuva vai de 0 a 100 pontos.');
   ['faltaCoffee','tPapel','tQR','picoMin','esperaMax'].forEach(function(k){if(!(c[k]>0))err([k],'Pesos e tempos precisam ser maiores que zero.');});
   if(c.tcVerde<c.tcAmarelo)err(['tcVerde','tcAmarelo'],'Comparecimento: o verde precisa ser maior ou igual ao amarelo.');
   if(c.pvVerde<c.pvAmarelo)err(['pvVerde','pvAmarelo'],'Ocupação: o verde precisa ser maior ou igual ao amarelo.');
