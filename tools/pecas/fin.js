@@ -100,7 +100,7 @@ function aplicar(lista){(lista||[]).forEach(function(e){
   if(c&&c.total!=null){e.custo=c.total;e.custoNaoPrev=arred(soma(c.adicionais));e.custoBasico=arred(c.total-e.custoNaoPrev);e.custoFin=true;}
   else{e.custo=e._orig.custo;e.custoBasico=e._orig.custoBasico;e.custoNaoPrev=e._orig.custoNaoPrev;e.custoFin=false;}});}
 window.__finAplicar=aplicar;
-finAplicar=function(){aplicar(events);adiar('view-fin-custos',renderCustos);};
+finAplicar=function(){aplicar(events);adiar('view-fin-custos',renderCustos);if(typeof renderAna==='function')renderAna();};
 function realDe(e){var c=fin.custos[e.id];if(c&&c.total!=null)return c.total;var o=e._orig?e._orig.custo:e.custo;return o!=null&&o!==''?+o:null;}
 function situacao(e,hoje){var c=fin.custos[e.id];if(c&&c.total!=null)return 'lancado';var o=e._orig?e._orig.custo:e.custo;
   if(!e.data||e.data>hoje)return 'futuro';return o!=null&&o!==''?'base':'lancar';}
@@ -184,7 +184,7 @@ function abrirCusto(id){var e=events.filter(function(x){return x.id===id;})[0];i
   }});}
 function salvarCusto(id,dr){var msg=dr.querySelector('#fc-msg');if(!db){msg.textContent='Sem conexão com a base.';return;}
   var r=lerForm(dr);if(r.erro){msg.textContent=r.erro;return;}
-  var d=r.d;d.lancadoEm=new Date().toISOString();
+  var d=r.d,ev=events.filter(function(x){return x.id===id;})[0];d.nome=ev&&ev.nome||'';d.lancadoEm=new Date().toISOString();
   msg.textContent='Salvando…';
   db.doc('fin_custos/'+id).set(d).then(function(){painelFechar();$('fin-custos-ok')&&($('fin-custos-ok').textContent='Gasto salvo.');}).catch(function(){msg.textContent='Não foi possível salvar.';});}
 function anexarNota(id,dr){var msg=dr.querySelector('#fc-nfmsg');if(!db){msg.textContent='Sem conexão com a base.';return;}
@@ -206,6 +206,86 @@ function cliqueFc(ev){var tr=ev.target.closest('[data-fcopen]');if(tr&&(ev.type=
 $('fc-tab').addEventListener('click',cliqueFc);$('fc-tab').addEventListener('keydown',cliqueFc);
 document.addEventListener('fin',function(){aplicar(events);adiar('view-fin-custos',renderCustos);adiar('view-base',renderBase,function(){return regOpen!=null;});refresh();});
 renderCustos();
+
+/* ---------------- Analytics do Financeiro ---------------- */
+var sa=secao('fin-ana','Analytics','Para onde vai o dinheiro dos eventos e quanto o real fica do previsto. Conta só eventos já realizados com gasto lançado (fora os [teste]). Os gráficos são uma primeira proposta: dá para trocar com a área.');
+sa.insertAdjacentHTML('beforeend','<div class="afilt"><label class="sr" for="fa-sem">Semestre</label><select id="fa-sem"><option value="">Todos os semestres</option></select></div><div class="akpis" id="fa-kpis"></div>'+
+  '<div class="acharts">'+
+  '<article class="acard full"><h3>Previsto × real por evento</h3><p class="sub">Quanto o Planejar previu e quanto foi gasto de fato, em ordem de data.</p><div id="fa-c1"></div></article>'+
+  '<article class="acard"><h3>Para onde vai o dinheiro</h3><p class="sub">Gasto lançado em cada semestre, por tipo de gasto.</p><div id="fa-c2"></div></article>'+
+  '<article class="acard"><h3>Custo por presente</h3><p class="sub">Por evento, com a meta e o limite da aba Parâmetros.</p><div id="fa-c3"></div></article>'+
+  '<article class="acard"><h3>Gasto por local de coffee</h3><p class="sub">Soma do coffee lançado em cada fornecedor.</p><div id="fa-c4"></div></article>'+
+  '<article class="acard"><h3>Gasto mês a mês</h3><p class="sub">Soma do gasto real dos eventos de cada mês.</p><div id="fa-c5"></div></article>'+
+  '</div>');
+$('fa-sem').addEventListener('change',function(){renderAna();});
+var CATS=[['coffee','Coffee','var(--f-cof)'],['material','Material','var(--f-mat)'],['sala','Sala','var(--f-sala)'],['ad','Adicionais','var(--f-ad)']];
+function anaVisivel(){var v=$('view-fin-ana');return v&&!v.hidden;}
+function rs(v){return reais(v,0);}
+function renderAna(){
+  var G=window.__graf;if(!G||!anaVisivel())return;
+  var hoje=iso(new Date()),fs=$('fa-sem').value;
+  var todos=events.filter(function(e){return !/\[teste\]/i.test(e.nome||'');});
+  var sems={};todos.forEach(function(e){var s=semestre(e.data);if(s)sems[s]=1;});
+  var sel=$('fa-sem'),cur=sel.value;sel.innerHTML='<option value="">Todos os semestres</option>'+Object.keys(sems).sort().reverse().map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>';}).join('');
+  var doSem=todos.filter(function(e){return !fs||semestre(e.data)===fs;});
+  var L=doSem.filter(function(e){var s=situacao(e,hoje);return s==='lancado'||s==='base';}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
+  var falta=doSem.filter(function(e){return situacao(e,hoje)==='lancar';}).length;
+  var R=0,RP=0,PV=0,CP=0,PR=0,COF=0,DET=0;
+  L.forEach(function(e){var r=realDe(e);R+=r;if(e.custoPrev!=null){RP+=r;PV+=+e.custoPrev;}if(+e.presentes){CP+=r;PR+=+e.presentes;}var c=fin.custos[e.id];if(c&&c.total!=null){COF+=+c.coffee||0;DET+=c.total;}});
+  var pc=PV?Math.round((RP-PV)/PV*100):null,meta=+P.metaPresente;
+  $('fa-kpis').innerHTML=[[rs(R),'gasto lançado ('+L.length+(L.length===1?' evento':' eventos')+')',''],[pc==null?'—':(pc>0?'+':'')+pc+'%','acima ou abaixo do previsto',pc>0?'kbad':''],
+    [PR?reais(CP/PR):'—','custo médio por presente'+(meta?' (meta '+rs(meta)+')':''),PR&&meta&&CP/PR>meta?'kbad':''],[DET?Math.round(COF/DET*100)+'%':'—','do gasto vai para o coffee',''],[falta,falta===1?'evento sem gasto lançado':'eventos sem gasto lançado',falta?'kbad':'']]
+    .map(function(k){return '<div class="kpi '+k[2]+'"><div class="v num">'+k[0]+'</div><div class="l">'+k[1]+'</div></div>';}).join('');
+  /* 1. previsto × real (halteres) */
+  (function(){var el=$('fa-c1'),Rr=L.filter(function(e){return e.custoPrev!=null;});
+    if(!Rr.length)return G.vazio(el,'Nenhum evento com previsto e gasto lançado neste filtro.');
+    var W=G.largura(el),lw=Math.min(190,Math.max(90,W*0.3)),vw=W<420?92:150,rh=30,mt=4,H=mt+Rr.length*rh+4,pw=W-lw-vw;
+    var mx=G.teto(Math.max.apply(null,Rr.map(function(e){return Math.max(+e.custoPrev,realDe(e));}))||1),x=function(v){return lw+v/mx*pw;};
+    var s='<svg class="achart" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Previsto e real por evento">';
+    Rr.forEach(function(e,i){var y0=mt+i*rh,cy=y0+rh/2,p=+e.custoPrev,r=realDe(e),a=x(p),b=x(r),d=r-p,dp=p?Math.round(d/p*100):0;
+      var tip='<b>'+esc(e.nome||'Evento')+'</b>'+esc(G.dm(e.data))+'<br>Previsto: '+reais(p)+'<br>Real: '+reais(r)+' ('+(d>=0?'+':'')+dp+'%)';
+      s+='<g class="m" data-tip="'+esc(tip)+'"><rect class="hl" x="0" y="'+y0+'" width="'+W+'" height="'+rh+'"/>';
+      s+='<text x="'+(lw-8)+'" y="'+(cy+4)+'" text-anchor="end">'+esc(G.curto(e.nome,Math.floor(lw/6.6)))+'</text>';
+      s+='<line x1="'+Math.min(a,b)+'" x2="'+Math.max(a,b)+'" y1="'+cy+'" y2="'+cy+'" stroke="'+(d>0?'var(--red)':'var(--axis)')+'" stroke-width="2"/>';
+      s+='<circle cx="'+a+'" cy="'+cy+'" r="5" fill="var(--s-ins)" stroke="var(--surface)" stroke-width="2"/><circle cx="'+b+'" cy="'+cy+'" r="5" fill="var(--s-pres)" stroke="var(--surface)" stroke-width="2"/>';
+      s+='<text class="v" x="'+(lw+pw+10)+'" y="'+(cy+4)+'">'+(W<420?(d>=0?'+':'')+dp+'%':rs(p)+' → '+rs(r))+'</text><rect class="hit" x="0" y="'+y0+'" width="'+W+'" height="'+rh+'"/></g>';});
+    el.innerHTML=G.legenda([['Previsto','var(--s-ins)'],['Real','var(--s-pres)']])+s+'</svg>'+G.tabela(['Evento','Data','Previsto','Real','Diferença'],Rr.map(function(e){var r=realDe(e),d=r-e.custoPrev;return [e.nome||'',G.dm(e.data),reais(+e.custoPrev),reais(r),(d>=0?'+':'−')+reais(Math.abs(d))];}));})();
+  /* 2. composição por semestre (barras empilhadas) */
+  (function(){var el=$('fa-c2'),S={};
+    L.forEach(function(e){var c=fin.custos[e.id];if(!c||c.total==null)return;var k=semestre(e.data)||'sem data';S[k]=S[k]||{coffee:0,material:0,sala:0,ad:0};S[k].coffee+=+c.coffee||0;S[k].material+=+c.material||0;S[k].sala+=+c.sala||0;S[k].ad+=soma(c.adicionais);});
+    var ks=Object.keys(S).sort();if(!ks.length)return G.vazio(el,'Nenhum gasto lançado em detalhe neste filtro. Os eventos com só o total da Base não entram aqui.');
+    var tot=function(k){return S[k].coffee+S[k].material+S[k].sala+S[k].ad;};
+    var W=G.largura(el),lw=64,vw=72,rh=34,bh=18,H=ks.length*rh+4,pw=W-lw-vw,mx=G.teto(Math.max.apply(null,ks.map(tot))||1);
+    var s='<svg class="achart" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Gasto por tipo em cada semestre">';
+    ks.forEach(function(k,i){var y0=i*rh,by=y0+(rh-bh)/2,xx=lw,t=tot(k);
+      var tip='<b>'+esc(k)+'</b>'+CATS.map(function(c){return c[1]+': '+reais(S[k][c[0]])+(t?' ('+Math.round(S[k][c[0]]/t*100)+'%)':'');}).join('<br>');
+      s+='<g class="m" data-tip="'+esc(tip)+'"><rect class="hl" x="0" y="'+y0+'" width="'+W+'" height="'+rh+'"/><text x="'+(lw-8)+'" y="'+(y0+rh/2+4)+'" text-anchor="end">'+esc(k)+'</text>';
+      CATS.forEach(function(c){var w=S[k][c[0]]/mx*pw;if(w>0){s+='<rect x="'+xx+'" y="'+by+'" width="'+Math.max(0,w-1)+'" height="'+bh+'" fill="'+c[2]+'"/>';xx+=w;}});
+      s+='<text class="v" x="'+(xx+6)+'" y="'+(y0+rh/2+4)+'">'+rs(t)+'</text><rect class="hit" x="0" y="'+y0+'" width="'+W+'" height="'+rh+'"/></g>';});
+    el.innerHTML=G.legenda(CATS.map(function(c){return [c[1],c[2]];}))+s+'</svg>'+G.tabela(['Semestre'].concat(CATS.map(function(c){return c[1];})).concat(['Total']),ks.map(function(k){return [k].concat(CATS.map(function(c){return reais(S[k][c[0]]);})).concat([reais(tot(k))]);}));})();
+  /* 3. custo por presente */
+  var lim=+P.limiteAmarelo;
+  G.barrasH($('fa-c3'),L.filter(function(e){return +e.presentes;}).map(function(e){var v=realDe(e)/e.presentes,st=meta&&v<=meta?'dentro da meta':lim&&v<=lim?'acima da meta':'acima do limite';
+      return {l:e.nome||'Evento',v:v,t:rs(v),cor:meta&&v>meta?(lim&&v<=lim?'var(--s-ins)':'var(--red)'):'var(--s-pres)',tip:'<b>'+esc(e.nome||'Evento')+'</b>'+esc(G.dm(e.data))+'<br>Gasto: '+reais(realDe(e))+'<br>Presentes: '+e.presentes+'<br>'+reais(v)+' por presente · '+st,linha:[e.nome||'',G.dm(e.data),reais(realDe(e)),e.presentes,reais(v),st]};}),
+    {titulo:'Custo por presente',vazio:'Sem eventos com gasto e presentes registrados neste filtro.',refs:[meta?{v:meta,t:'meta '+rs(meta)}:null,lim?{v:lim,t:'limite '+rs(lim)}:null].filter(Boolean),cab:['Evento','Data','Gasto','Presentes','Por presente','Situação']});
+  /* 4. por local de coffee */
+  (function(){var M={},N={};L.forEach(function(e){var c=fin.custos[e.id];if(!c||!(+c.coffee))return;var k=c.coffeeLocal||'';M[k]=(M[k]||0)+(+c.coffee);N[k]=(N[k]||0)+1;});
+    G.barrasH($('fa-c4'),Object.keys(M).map(function(k){var loc=fin.coffee.filter(function(x){return x.id===k;})[0],nome=loc?loc.nome:k?'local excluído':'Sem local informado';
+      return {l:nome,v:M[k],t:rs(M[k]),tip:'<b>'+esc(nome)+'</b>'+reais(M[k])+' em '+N[k]+(N[k]===1?' evento':' eventos')+'<br>média de '+reais(M[k]/N[k])+' por evento',linha:[nome,N[k],reais(M[k]),reais(M[k]/N[k])]};}).sort(function(a,b){return b.v-a.v;}),
+      {titulo:'Gasto por local de coffee',vazio:'Nenhum coffee lançado neste filtro.',cab:['Local','Eventos','Total','Média por evento']});})();
+  /* 5. mês a mês */
+  (function(){var el=$('fa-c5'),M={};L.forEach(function(e){if(!e.data)return;var k=e.data.slice(0,7);M[k]=(M[k]||0)+realDe(e);});var ks=Object.keys(M).sort();
+    if(!ks.length)return G.vazio(el,'Nenhum gasto lançado neste filtro.');
+    var NM=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'],nome=function(k){return NM[+k.slice(5,7)-1]+'/'+k.slice(2,4);};
+    var W=G.largura(el),H=200,ml=48,mr=8,mt=12,mb=24,pw=W-ml-mr,ph=H-mt-mb,mx=G.teto(Math.max.apply(null,ks.map(function(k){return M[k];}))||1),band=pw/ks.length,bw=Math.max(6,Math.min(36,band*0.6)),y=function(v){return mt+ph-v/mx*ph;};
+    var s='<svg class="achart" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Gasto por mês">';
+    for(var g=0;g<=4;g++){var v=mx*g/4,yy=y(v);s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--grid)" stroke-width="1"/><text x="'+(ml-6)+'" y="'+(yy+4)+'" text-anchor="end">'+(v>=1000?Math.round(v/100)/10+' mil':Math.round(v))+'</text>';}
+    ks.forEach(function(k,i){var cx=ml+i*band+band/2;s+='<g class="m" data-tip="'+esc('<b>'+nome(k)+'</b>'+reais(M[k]))+'"><rect class="hl" x="'+(ml+i*band)+'" y="'+mt+'" width="'+band+'" height="'+ph+'"/><path d="'+G.barraV(cx-bw/2,y(M[k]),bw,mt+ph-y(M[k]))+'" fill="var(--s-pres)"/><rect class="hit" x="'+(ml+i*band)+'" y="'+mt+'" width="'+band+'" height="'+(ph+mb)+'"/></g><text x="'+cx+'" y="'+(mt+ph+16)+'" text-anchor="middle">'+nome(k)+'</text>';});
+    el.innerHTML=s+'<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+(mt+ph)+'" y2="'+(mt+ph)+'" stroke="var(--axis)"/></svg>'+G.tabela(['Mês','Gasto'],ks.map(function(k){return [nome(k),reais(M[k])];}));})();
+}
+document.addEventListener('tela',function(e){if(e.detail==='fin-ana')setTimeout(renderAna);});
+document.addEventListener('fin',function(){renderAna();});
+var rtA;window.addEventListener('resize',function(){clearTimeout(rtA);rtA=setTimeout(renderAna,150);});
 
 /* ---------------- dados ---------------- */
 var ligado=false;

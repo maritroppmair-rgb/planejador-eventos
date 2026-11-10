@@ -97,6 +97,9 @@ function barrasH(el,rows,opt){
   el.innerHTML=s+tabela(opt.cab,rows.map(function(r){return r.linha;}));
 }
 
+/* peças de gráfico reaproveitadas pelo Analytics do Financeiro (fin.js) */
+window.__graf={barrasH:barrasH,barraV:barraV,legenda:legenda,tabela:tabela,largura:largura,teto:teto,vazio:vazio,curto:curto,dm:dm};
+
 /* 2. comparecimento por tipo */
 function g2(L){
   var t={};L.forEach(function(e){var i=num(e.inscritos);if(!i||!e.tipo)return;t[e.tipo]=t[e.tipo]||{i:0,p:0,n:0};t[e.tipo].i+=i;t[e.tipo].p+=Math.max(0,(num(e.presentes)||0)-(num(e.semInscricao)||0));t[e.tipo].n++;});
@@ -158,7 +161,7 @@ function render(){
 /* dica ao passar o mouse ou tocar */
 var tip=document.createElement('div');tip.className='atip';tip.hidden=true;document.body.appendChild(tip);
 function mostrar(g,x,y){tip.innerHTML=g.getAttribute('data-tip');tip.hidden=false;var w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.max(8,Math.min(window.innerWidth-w-8,x+14))+'px';tip.style.top=Math.max(8,(y-h-12<8?y+18:y-h-12))+'px';}
-document.addEventListener('pointermove',function(e){var g=e.target&&e.target.closest?e.target.closest('#view-ana [data-tip]'):null;if(g)mostrar(g,e.clientX,e.clientY);else tip.hidden=true;});
+document.addEventListener('pointermove',function(e){var g=e.target&&e.target.closest?e.target.closest('#view-ana [data-tip],#view-fin-ana [data-tip]'):null;if(g)mostrar(g,e.clientX,e.clientY);else tip.hidden=true;});
 document.addEventListener('scroll',function(){tip.hidden=true;},true);
 
 ['a-sem','a-tipo','a-teste'].forEach(function(id){$(id).addEventListener('change',render);});

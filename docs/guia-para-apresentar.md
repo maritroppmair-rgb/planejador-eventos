@@ -65,23 +65,24 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da 
 | **Documentos** | Manuais, relatórios, notas fiscais e links de todas as áreas, organizados em pastas: Geral e uma pasta para cada evento | Que o documento ligado a um evento entra sozinho na pasta dele, o filtro pela área de quem subiu e que o PDF abre dentro do próprio app |
 | **Parâmetros** | As regras do cálculo: metas de custo, margens, limites e quanto a chuva pesa na nota da data; também o backup | Só a diretoria de Eventos e a presidência alteram, com dupla confirmação. Se o último backup tiver mais de 30 dias, aparece um aviso no topo para elas |
 | **Membros** | Equipe, com as áreas e o cargo de cada um, e a lista de quem pode entrar | O filtro por área e, ao clicar numa pessoa, os cargos de cada área (só aparecem para mudar os cargos abaixo do seu) |
-| **Lixeira** | O que foi excluído de eventos, salas, calendário, convidados e documentos, por 30 dias | Restaurar com um clique. Só a diretoria para cima vê; a diretoria restaura o que é da própria área, a presidência restaura tudo |
+| **Lixeira** | O que foi excluído de eventos, salas, calendário, convidados, documentos e do Financeiro, por 30 dias | Restaurar com um clique. Só a diretoria para cima vê; a diretoria restaura o que é da própria área, a presidência restaura tudo |
 | **Histórico** | Quem criou, editou ou excluiu o quê, e quando | O filtro por área, pessoa e ação. Só a diretoria para cima vê |
 
 As telas das outras áreas já estão no menu, ainda em branco, para serem desenhadas uma a uma com cada área:
 
 | Área | Telas |
 | --- | --- |
-| **Financeiro** | Analytics (em construção); Custos por evento e Contatos de coffee (prontas, veja abaixo) |
+| **Financeiro** | Custos por evento, Contatos de coffee e Analytics (prontas, veja abaixo) |
 | **Marketing** | Posts e Métricas |
 | **C&D** | Capacitações e Trilha do trainee |
 | **RH** | Visão geral (o conteúdo ainda será definido com a área) |
 
-**Telas do Financeiro já prontas:**
+**Telas do Financeiro:**
 
 | Tela | Para que serve | O que vale mostrar |
 | --- | --- | --- |
 | **Custos por evento** | O previsto de cada evento (calculado no Planejar) ao lado do gasto real: coffee (com o local), material, sala e quantos gastos adicionais forem precisos, com as notas fiscais anexadas | A diferença em verde ou vermelho, os eventos já realizados sem gasto lançado no topo e que a nota anexada vai sozinha para a pasta do evento em Documentos |
+| **Analytics (Financeiro)** | Visão dos gastos, com filtro por semestre: gasto lançado, quanto ficou acima ou abaixo do previsto, custo médio por presente e quanto vai para o coffee | Os gráficos previsto × real, para onde vai o dinheiro, custo por presente contra a meta, gasto por local de coffee e mês a mês. É uma primeira proposta: a área escolhe quais ficam |
 | **Contatos de coffee** | Fornecedores de coffee e lanches: local, pessoa de contato, telefone, endereço e os itens com preço e unidade | O menor preço por pessoa de cada local, o botão de WhatsApp e em quantos eventos cada local já foi usado |
 
 Na **Base**, o comparecimento é calculado como (presentes − quem veio sem se inscrever) ÷ inscritos, para medir quantos inscritos de fato apareceram. Eventos marcados como \[teste\] ficam fora dos indicadores.
@@ -131,11 +132,11 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 **Limites atuais (vale ser honesta se perguntarem):**
 
 - Arquivos anexados têm até 10 MB cada.
-- Por enquanto só Eventos tem telas prontas. As telas de Financeiro, Marketing, C&D e RH já aparecem no menu, mas ainda em branco.
+- Por enquanto Eventos e Financeiro têm telas prontas. As telas de Marketing, C&D e RH já aparecem no menu, mas ainda em branco.
 - O Calendário aparece para todas as áreas, mas por enquanto só quem é de Eventos edita.
 - Os gastos reais agora são lançados só pelo Financeiro, em Custos por evento. Eventos antigos que tinham só o total registrado na Base continuam com esse total até o Financeiro lançar o detalhado. Eventos salvos antes desta versão mostram só o total previsto, sem a divisão por item.
 - Esconder as telas de outras áreas é feito no app; quem tem acesso ainda consegue ler os dados das outras áreas no banco. Editar e excluir, não.
-- A Lixeira guarda eventos, salas, calendário, convidados e documentos. Perfis, lista de acesso e mailing ficam no Histórico, mas não vão para a Lixeira.
+- A Lixeira guarda eventos, salas, calendário, convidados, documentos, contatos de coffee e gastos dos eventos. Perfis, lista de acesso e mailing ficam no Histórico, mas não vão para a Lixeira.
 - A previsão ainda tem poucos eventos de base; ela melhora a cada resultado registrado.
 - A previsão do tempo de verdade só existe para os próximos 16 dias; antes disso, a nota da data usa o histórico de chuva e temperatura da época. A atualização automática acontece na primeira vez que alguém da equipe abre o app depois de cada marco.
 - A Ideia de evento faz até 30 propostas por pessoa por dia e fica marcada como BETA até a Base ter pelo menos 8 eventos realizados de cada tipo principal, em 2 semestres, com erro médio da previsão abaixo de 15%. A própria tela mostra quanto falta.
@@ -147,5 +148,5 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 2. **Inscrições entrando sozinhas no app:** as respostas do Forms aparecem no evento, sem copiar planilha.
 3. **E-mails e mailing (já no app, em fase de testes):** confirmação, lembrete, aviso de mudança e agradecimento para os inscritos, e o convite do mailing para quem quer saber dos próximos eventos, tudo de graça.
 4. **Planejamento com IA (já no app, em BETA):** a pessoa descreve em texto corrido o evento que quer, e a IA propõe nome, formato, convidados da nossa lista, datas e, para séries, cada evento da série, usando o histórico de eventos como base. Público, sala e compras saem do cálculo do Planejar, e a diretoria revisa e aprova antes de salvar. O selo BETA sai sozinho quando a Base tiver eventos suficientes.
-5. **Telas das outras áreas (já no menu, em branco):** Financeiro (custos por evento, contatos de coffee e analytics de gastos), Marketing (posts e métricas), C&D (capacitações e trilha do trainee) e RH, desenhadas uma a uma com cada área, já com as permissões por área prontas.
+5. **Telas das outras áreas (já no menu, em branco):** Marketing (posts e métricas), C&D (capacitações e trilha do trainee) e RH, desenhadas uma a uma com cada área, já com as permissões por área prontas. O Financeiro já está pronto.
 6. **Depois:** presença no evento, séries agrupadas na Base e domínio próprio para o site.

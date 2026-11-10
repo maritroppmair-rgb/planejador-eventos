@@ -7,7 +7,7 @@
 function $(i){return document.getElementById(i);}
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var DIAS_LIXEIRA=30,DIAS_BACKUP=30,PASSO=200;
-var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro'};
+var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro',fin_coffee:'Contato de coffee',fin_custos:'Gasto de evento'};
 var ACAO={criou:'criou',editou:'editou',excluiu:'excluiu',restaurou:'restaurou',exportou:'exportou',importou:'importou'};
 var CAMPO={areas:'cargos',presidencia:'presidência',responsavel:'responsável',responsavelId:'',hora:'horário',duracao:'duração',obs:'observações',inicio:'início',fim:'fim',penalidade:'penalidade',ativa:'ativa',potencial:'potencial'};
 function tipo(c){return TIPO[c]||c;}
@@ -23,7 +23,7 @@ function secao(id,titulo,nota,ferr){
   s.innerHTML='<div class="section-head"><div><h2 id="'+id+'-title">'+titulo+'</h2><p class="note">'+nota+'</p></div><span class="note" id="'+id+'-count"></span></div><div class="mtools">'+ferr+'</div><div id="'+id+'-list"></div>';
   main.appendChild(s);return s;
 }
-secao('lixeira','Lixeira','O que foi excluído de eventos, salas, calendário, convidados e documentos fica aqui por '+DIAS_LIXEIRA+' dias. A presidência restaura qualquer coisa; a diretoria, só o que é da própria área.',
+secao('lixeira','Lixeira','O que foi excluído de eventos, salas, calendário, convidados, documentos e contatos de coffee fica aqui por '+DIAS_LIXEIRA+' dias. A presidência restaura qualquer coisa; a diretoria, só o que é da própria área.',
   '<label for="lx-area" class="sr">Área</label><select id="lx-area"></select><span class="msg" id="lx-msg" role="status"></span>');
 secao('hist','Histórico','Quem criou, editou ou excluiu o quê, e quando. Atualizações automáticas (como a nota do clima) não entram.',
   '<label for="hs-busca" class="sr">Buscar</label><input id="hs-busca" type="search" placeholder="Buscar por pessoa ou item" style="flex:1;min-width:200px;max-width:380px"><label for="hs-area" class="sr">Área</label><select id="hs-area"></select><label for="hs-acao" class="sr">Ação</label><select id="hs-acao"><option value="">Todas as ações</option><option value="criou">Criou</option><option value="editou">Editou</option><option value="excluiu">Excluiu</option><option value="restaurou">Restaurou</option><option value="exportou">Backup</option></select><button type="button" class="btn small ghost" id="hs-atual">Atualizar</button>');
