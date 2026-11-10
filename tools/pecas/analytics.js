@@ -163,13 +163,15 @@ document.addEventListener('scroll',function(){tip.hidden=true;},true);
 
 ['a-sem','a-tipo','a-teste'].forEach(function(id){$(id).addEventListener('change',render);});
 document.addEventListener('tela',function(e){if(e.detail==='ana')render();});
+/* o gasto lançado pelo Financeiro vale como custo do evento */
+document.addEventListener('fin',function(){if(window.__finAplicar&&eventos){__finAplicar(eventos);render();}});
 var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(render,150);});
 
 if(window.claude&&window.claude.use)window.claude.use('db').then(function(db){
   if(!db)return;
   var n=0;function ok(){if(++n>=3)pronto=true;render();}
   var f={e:0,c:0,p:0};
-  db.collection('eventos').onSnapshot(function(s){eventos=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});if(!f.e){f.e=1;ok();}else render();},function(){});
+  db.collection('eventos').onSnapshot(function(s){eventos=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});if(window.__finAplicar)__finAplicar(eventos);if(!f.e){f.e=1;ok();}else render();},function(){});
   db.collection('convidados').onSnapshot(function(s){convidados=s.docs.map(function(d){return d.data();});if(!f.c){f.c=1;ok();}else render();},function(){});
   db.collection('parametros').onSnapshot(function(s){par={};s.docs.forEach(function(d){if(d.id==='geral')par=d.data()||{};});if(!f.p){f.p=1;ok();}else render();},function(){});
 });

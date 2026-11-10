@@ -304,7 +304,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function regForm(e){var dn=e.status==='realizado',g=function(k){return dn&&e[k]!=null?e[k]:'';};
     var ins=dn?e.inscritos:(e.inscricao&&e.inscricao.formId?e.inscricao.total:(e.inscritosMeta||''));
     return '<form class="tp-reg" data-regform="'+esc(e.id)+'" novalidate><div class="treg">'+fld(e,'ri','Inscritos',ins,1)+fld(e,'rp','Presentes (total)',g('presentes'),1)+fld(e,'rw','Vieram sem inscrição',g('semInscricao'))+fld(e,'rm','Membros presentes',g('membros'))+fld(e,'rpc','Porções compradas',g('porcoesCompradas'))+fld(e,'rpu','Porções consumidas',g('porcoesConsumidas'))+fld(e,'rd','Duração real (min)',g('duracaoReal'))+fld(e,'ra','Atraso (min)',g('atraso'))+
-      fld(e,'rcb','Custo básico (R$)',dn?(e.custoBasico!=null?e.custoBasico:(e.custo!=null?e.custo:'')):'',0,'0.01')+fld(e,'rcn','Custo não previsto (R$)',g('custoNaoPrev'),0,'0.01')+
+      '<p class="note" style="grid-column:1/-1;margin:2px 0">Os gastos do evento são lançados pelo Financeiro, em <b>Custos por evento</b>.</p>'+
       '<div class="field"><label for="rmt-'+esc(e.id)+'">Método de check-in</label><select id="rmt-'+esc(e.id)+'"><option value="">—</option><option value="papel"'+(e.metodoCheckin==='papel'?' selected':'')+'>Lista de papel</option><option value="qr"'+(e.metodoCheckin==='qr'?' selected':'')+'>QR</option></select></div></div>'+
       '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">Salvar resultado</button>'+(dn?'<button class="btn ghost" type="button" data-treg="">Cancelar</button>':'')+'</div></form>';}
   /* ----- e-mails para os inscritos ----- */

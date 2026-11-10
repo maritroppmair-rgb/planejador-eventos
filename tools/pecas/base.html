@@ -879,7 +879,7 @@ function plan(){
   else if(label(sc.s)[0]==='Arriscada')alertas.push('Data arriscada (nota '+sc.s+'/100): '+sc.f.filter(function(x){return x[1]<0;}).map(function(x){return x[0];}).join('; ')+'.');
   if(!cfgT.externo&&!cards.length)alertas.push('Nenhuma sala viável para este público nesta data.');
   if(foraJ)alertas.push('Fora da janela padrão de '+tipo+': das '+hora+' às '+fimTxt+' (padrão: '+hfmt(JANELA[0])+' às '+hfmt(JANELA[1])+').');
-  current={nome:nome,tipo:tipo,data:dStr,hora:hora,duracao:dur,inscritosMeta:n,semInscricaoPrev:Math.round(walk*10)/10,sala:best.length?best[0].r.n:'',capacidade:best.length?best[0].r.c:null,presentesPrev:Math.round(m),notaData:sc.s,notaClima:climaResumo(sc.clima),climaAvisos:avisosClima,convidado:$('f-conv').value.trim(),equipeConvidado:Math.max(0,Math.round(+$('f-eq').value||0)),custoPrev:Math.round(total*100)/100,custoPorPresentePrev:Math.round(perP*100)/100,form:formSnap()};
+  current={nome:nome,tipo:tipo,data:dStr,hora:hora,duracao:dur,inscritosMeta:n,semInscricaoPrev:Math.round(walk*10)/10,sala:best.length?best[0].r.n:'',capacidade:best.length?best[0].r.c:null,presentesPrev:Math.round(m),notaData:sc.s,notaClima:climaResumo(sc.clima),climaAvisos:avisosClima,convidado:$('f-conv').value.trim(),equipeConvidado:Math.max(0,Math.round(+$('f-eq').value||0)),custoPrev:Math.round(total*100)/100,custoPrevItens:{coffee:Math.round(cost*100)/100,material:Math.round(prints*cpy*100)/100,sala:salaCusto,outros:other,porcoes:portions},custoPorPresentePrev:Math.round(perP*100)/100,form:formSnap()};
 }
 var LR={}, editingId=null, alertas=[], current=null, calcDone=false, stale=false, savedId=null;
 function maxInsc(cap,h,conf,lam){if(cap<=0)return 0;if(quant(totalPmf(1,h,lam),conf)>cap)return 0;var lo=1,hi=1500;while(lo<hi){var mid=Math.ceil((lo+hi)/2);if(quant(totalPmf(mid,h,lam),conf)<=cap)lo=mid;else hi=mid-1;}return lo;}
@@ -1068,8 +1068,8 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   else if(b.dataset.iaviso){if(b.dataset.sure){inscAcao('enviarAviso',b.dataset.iaviso,function(j){return j.enviados?'Lembrete enviado para '+j.enviados+(j.pendentes?'; '+j.pendentes+' ficaram para amanhã (limite diário).':'.'):'Ninguém novo para avisar.';});}else{b.dataset.sure='1';b.textContent='Confirmar envio';}}
 });
 function salvarRegistro(e){e.preventDefault();var f=e.target,id=f.dataset.regform;if(!id||!db)return;
-  function v(p){var x=$(p+'-'+id).value;return x===''?null:+x;}
-  var cb=v('rcb'),cn=v('rcn');
+  function v(p){var el=$(p+'-'+id);if(!el)return null;var x=el.value;return x===''?null:+x;}
+  var cb=null,cn=null; /* os gastos agora são lançados pelo Financeiro (Custos por evento) */
   var erro=(function(){var pr=v('rp'),ins=v('ri'),sw=v('rw')||0,mb=v('rm'),pc=v('rpc'),pu=v('rpu');
     var campos=[['ri',ins],['rp',pr],['rw',v('rw')],['rm',mb],['rd',v('rd')],['rpc',pc],['rpu',pu],['rcb',cb],['rcn',cn]];
     for(var i=0;i<campos.length;i++){if(campos[i][1]!=null&&campos[i][1]<0)return 'Os números não podem ser negativos.';}
@@ -1081,7 +1081,7 @@ function salvarRegistro(e){e.preventDefault();var f=e.target,id=f.dataset.regfor
     return '';})();
   var em=f.querySelector('.regerro');if(!em){em=document.createElement('p');em.className='msg regerro';em.setAttribute('role','alert');em.style.cssText='color:var(--red);font-weight:700;margin:8px 0 0';f.appendChild(em);}
   em.textContent=erro;if(erro)return;
-  var upd={status:'realizado',inscritos:v('ri'),presentes:v('rp'),semInscricao:v('rw'),custoBasico:cb,custoNaoPrev:cn,membros:v('rm'),duracaoReal:v('rd'),porcoesCompradas:v('rpc'),porcoesConsumidas:v('rpu'),metodoCheckin:$('rmt-'+id).value||null,custo:(cb==null&&cn==null)?null:Math.round(((cb||0)+(cn||0))*100)/100,atraso:v('ra')};
+  var upd={status:'realizado',inscritos:v('ri'),presentes:v('rp'),semInscricao:v('rw'),membros:v('rm'),duracaoReal:v('rd'),porcoesCompradas:v('rpc'),porcoesConsumidas:v('rpu'),metodoCheckin:$('rmt-'+id).value||null,atraso:v('ra')};
   db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;if(window.aposRegistro)aposRegistro(id);delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
 }
 $('etable').addEventListener('submit',salvarRegistro);
@@ -1372,11 +1372,11 @@ function connect(){
     if(!d){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>. Nada é salvo.';return;}
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
     if(typeof finLigar==='function')finLigar();
-    db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
+    db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});if(typeof finAplicar==='function')finAplicar();$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
     db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}});},function(){});
     db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
     db.collection('salas').onSnapshot(function(s){CARR.sal=1;climaAgendar();salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
-    db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();refresh();},function(){});
+    db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();if(typeof finDocs==='function')finDocs();refresh();},function(){});
     db.collection('convidados').onSnapshot(function(s){guests=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-conv',renderGuests);renderChks();},function(){});
     db.collection('listas').onSnapshot(function(s){s.docs.forEach(function(x){if(x.id==='convidados'){var d=x.data();listas={temas:d.temas||[],segmentos:d.segmentos||[]};renderChks();renderGuests();}});},function(){});
   }).catch(function(){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>.';});

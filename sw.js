@@ -1,5 +1,5 @@
 /* Service worker: deixa o app instalável e abre mesmo sem internet (os dados vêm do cache do Firestore). */
-var VERSAO='20261110151421';
+var VERSAO='20261110151806';
 var CACHE='planejador-'+VERSAO;
 var BASE=['./','index.html','config.js','plataforma.js','manifest.webmanifest',
   'vendor/firebase-app-compat.js','vendor/firebase-auth-compat.js','vendor/firebase-firestore-compat.js',
