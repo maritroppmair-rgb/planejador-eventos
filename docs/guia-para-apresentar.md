@@ -44,11 +44,13 @@ Só entra quem está na lista de acesso, com a conta Google do e-mail USP. O que
 | Trainee | Cria e edita, mas não exclui | Não vê as telas |
 | Sem cargo | Só visualiza | Não vê as telas |
 
-Quem tem mais de uma área soma as permissões. Documentos, Membros e Meu perfil aparecem para todos. Parâmetros e a lista de acesso só são alterados pela diretoria de Eventos, pela presidência e pelo DEV. As permissões de edição valem nas telas e também no banco de dados: mesmo quem tentasse burlar a tela não conseguiria gravar o que o cargo não permite. O cargo DEV é só do Pedro, para manutenção técnica, e hoje tem as mesmas permissões da presidência; durante a apresentação, o perfil dele fica oculto na tela de Membros.
+Quem tem mais de uma área soma as permissões. Calendário, Documentos, Membros e Meu perfil aparecem para todos. Parâmetros e a lista de acesso só são alterados pela diretoria de Eventos, pela presidência e pelo DEV. As permissões de edição valem nas telas e também no banco de dados: mesmo quem tentasse burlar a tela não conseguiria gravar o que o cargo não permite. O cargo DEV é só do Pedro, para manutenção técnica, e hoje tem as mesmas permissões da presidência; durante a apresentação, o perfil dele fica oculto na tela de Membros.
 
 ## Tour pelas telas
 
-O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: Eventos, Recursos e Ajustes. Cada pessoa só vê no menu as telas das áreas dela; as telas de Eventos são as que aparecem abaixo. O círculo com a foto, no canto superior direito, leva a Meu perfil, Membros, Aparência (claro/escuro) e Sair.
+**Escolher a área.** Embaixo de "Planejador de Eventos", no topo, fica a área em que você está: **Diretoria de Eventos ▾**. Clicando, abre a lista das áreas que você pode ver; as que você só pode ver aparecem com "só leitura". Quem tem uma área só vê o nome dela, sem seta. O app lembra a última área escolhida. No celular, a escolha fica no topo do menu.
+
+O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da área escolhida e, embaixo, o grupo **Geral**, igual em todas: Calendário, Documentos, Membros e, para a diretoria para cima, Lixeira e Histórico. Em Eventos, o menu tem os grupos Eventos, Recursos e Ajustes, com as telas da tabela abaixo. O círculo com a foto, no canto superior direito, leva a Meu perfil, Membros, Aparência (claro/escuro) e Sair.
 
 | Tela | Para que serve | O que vale mostrar |
 | --- | --- | --- |
@@ -65,6 +67,15 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: E
 | **Membros** | Equipe, com as áreas e o cargo de cada um, e a lista de quem pode entrar | O filtro por área e, ao clicar numa pessoa, os cargos de cada área (só aparecem para mudar os cargos abaixo do seu) |
 | **Lixeira** | O que foi excluído de eventos, salas, calendário, convidados e documentos, por 30 dias | Restaurar com um clique. Só a diretoria para cima vê; a diretoria restaura o que é da própria área, a presidência restaura tudo |
 | **Histórico** | Quem criou, editou ou excluiu o quê, e quando | O filtro por área, pessoa e ação. Só a diretoria para cima vê |
+
+As telas das outras áreas já estão no menu, ainda em branco, para serem desenhadas uma a uma com cada área:
+
+| Área | Telas |
+| --- | --- |
+| **Financeiro** | Custos por evento, Caixa e Orçamento |
+| **Marketing** | Posts e Métricas |
+| **C&D** | Capacitações e Trilha do trainee |
+| **RH** | Visão geral (o conteúdo ainda será definido com a área) |
 
 Na **Base**, o comparecimento é calculado como (presentes − quem veio sem se inscrever) ÷ inscritos, para medir quantos inscritos de fato apareceram. Eventos marcados como \[teste\] ficam fora dos indicadores.
 
@@ -113,7 +124,8 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 **Limites atuais (vale ser honesta se perguntarem):**
 
 - Arquivos anexados têm até 10 MB cada.
-- Por enquanto só Eventos tem telas próprias. Quem é só de outra área vê Documentos, Membros e o próprio perfil até as telas da área ficarem prontas.
+- Por enquanto só Eventos tem telas prontas. As telas de Financeiro, Marketing, C&D e RH já aparecem no menu, mas ainda em branco.
+- O Calendário aparece para todas as áreas, mas por enquanto só quem é de Eventos edita.
 - Esconder as telas de outras áreas é feito no app; quem tem acesso ainda consegue ler os dados das outras áreas no banco. Editar e excluir, não.
 - A Lixeira guarda eventos, salas, calendário, convidados e documentos. Perfis, lista de acesso e mailing ficam no Histórico, mas não vão para a Lixeira.
 - A previsão ainda tem poucos eventos de base; ela melhora a cada resultado registrado.
@@ -127,5 +139,5 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 2. **Inscrições entrando sozinhas no app:** as respostas do Forms aparecem no evento, sem copiar planilha.
 3. **E-mails e mailing (já no app, em fase de testes):** confirmação, lembrete, aviso de mudança e agradecimento para os inscritos, e o convite do mailing para quem quer saber dos próximos eventos, tudo de graça.
 4. **Planejamento com IA (já no app, em BETA):** a pessoa descreve em texto corrido o evento que quer, e a IA propõe nome, formato, convidados da nossa lista, datas e, para séries, cada evento da série, usando o histórico de eventos como base. Público, sala e compras saem do cálculo do Planejar, e a diretoria revisa e aprova antes de salvar. O selo BETA sai sozinho quando a Base tiver eventos suficientes.
-5. **Telas das outras áreas:** Financeiro (custo de cada evento), Marketing (cronograma de posts e métricas), C&D e RH, já com as permissões por área prontas.
+5. **Telas das outras áreas (já no menu, em branco):** Financeiro (custos por evento, caixa e orçamento), Marketing (posts e métricas), C&D (capacitações e trilha do trainee) e RH, desenhadas uma a uma com cada área, já com as permissões por área prontas.
 6. **Depois:** presença no evento, séries agrupadas na Base e domínio próprio para o site.

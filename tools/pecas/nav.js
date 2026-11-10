@@ -17,33 +17,68 @@ var I={
   membros:'<circle cx="9" cy="9" r="3"/><path d="M3 20c.9-3 3.2-4.6 6-4.6s5.1 1.6 6 4.6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18 15.6c1.4.6 2.4 2 3 4.4"/>',
   perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>',
   lixeira:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
-  hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'
+  hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  'fin-custos':'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  'fin-caixa':'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M15.5 14.5h2"/>',
+  'fin-orc':'<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  'mkt-posts':'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  'mkt-met':'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  'cd-cap':'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2.5 2 9.5 2 12 0v-5"/>',
+  'cd-trilha':'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  'rh':'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
 };
-/* área dona de cada tela: some do menu de quem não tem acesso (Documentos e Membros são de todos; Lixeira e Histórico, da diretoria para cima) */
-var AREA={ia:'Eventos',plan:'Eventos',base:'Eventos',ana:'Eventos',mail:'Eventos',conv:'Eventos',salas:'Eventos',cal:'Eventos',par:'Eventos',lixeira:'gov',hist:'gov'};
-var GRUPOS=[
-  ['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
-  ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['cal','Calendário','tab'],['docs','Documentos','tab']]],
-  ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go'],['lixeira','Lixeira','view'],['hist','Histórico','view']]]
-];
+/* menu por área: a área é escolhida no subtítulo do topo ("Diretoria de Eventos ▾") e o menu mostra só as telas dela.
+   O grupo Geral (Calendário, Documentos, Membros, Lixeira, Histórico) aparece em todas. Lixeira e Histórico: diretoria para cima. */
+var AREAS=['Eventos','Financeiro','Marketing','C&D','RH'];
+var MENU={
+  'Eventos':[['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
+             ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab']]],
+             ['Ajustes',[['par','Parâmetros','tab']]]],
+  'Financeiro':[['Financeiro',[['fin-custos','Custos por evento','view'],['fin-caixa','Caixa','view'],['fin-orc','Orçamento','view']]]],
+  'Marketing':[['Marketing',[['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
+  'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
+  'RH':[['RH',[['rh','Visão geral','view']]]]
+};
+var GERAL=['Geral',[['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+/* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
+var NOVAS={
+  'fin-custos':['Custos por evento','Financeiro','Previsto e real de cada evento, com os comprovantes.'],
+  'fin-caixa':['Caixa','Financeiro','Entradas e saídas da Feashion, com o saldo do mês e do semestre.'],
+  'fin-orc':['Orçamento','Financeiro','Quanto cada área pode gastar no semestre e quanto já gastou.'],
+  'mkt-posts':['Posts','Marketing','Do rascunho à publicação: ideia, produção, aprovação e publicado.'],
+  'mkt-met':['Métricas','Marketing','Seguidores, alcance e engajamento, mês a mês.'],
+  'cd-cap':['Capacitações','C&D','Treinamentos e aulas, com data, tema, quem dá e presença.'],
+  'cd-trilha':['Trilha do trainee','C&D','As etapas de cada trainee e o progresso de cada um.'],
+  'rh':['RH','RH','O que a área de RH vai acompanhar aqui ainda será definido.']
+};
+var main=document.querySelector('main');
+var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist'];
+Object.keys(NOVAS).forEach(function(k){
+  var n=NOVAS[k],sec=document.createElement('section');sec.id='view-'+k;sec.hidden=true;sec.setAttribute('aria-labelledby',k+'-title');
+  sec.innerHTML='<div class="section-head"><div><h2 id="'+k+'-title"></h2><p class="note"></p></div></div><div class="embreve"><b>Tela em construção</b><span>Vamos desenhar esta tela juntos.</span></div>';
+  sec.querySelector('h2').textContent=n[0];sec.querySelector('.note').textContent=n[2];
+  main.appendChild(sec);SOLTAS.push(sec.id);
+});
 function icone(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+I[k]+'</svg>';}
-var main=document.querySelector('main'),hdr=document.querySelector('header.app');
+var hdr=document.querySelector('header.app');
 var shell=document.createElement('div');shell.className='shell';
 var side=document.createElement('aside');side.className='side';side.id='side';side.setAttribute('aria-label','Menu');
 var back=document.createElement('div');back.className='sback';
 main.parentNode.insertBefore(shell,main);shell.appendChild(side);shell.appendChild(main);document.body.appendChild(back);
 var nav=document.createElement('nav');nav.setAttribute('aria-label','Seções');nav.style.cssText='display:grid;gap:18px';
-GRUPOS.forEach(function(g){
-  var box=document.createElement('div');box.className='sgroup';
+function grupo(g,area){
+  var box=document.createElement('div');box.className='sgroup';box.dataset.area=area;
   var h=document.createElement('h4');h.textContent=g[0];box.appendChild(h);
   g[1].forEach(function(it){
-    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];
+    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4])b.dataset.gov='1';
     b.innerHTML=icone(it[0]);var sp=document.createElement('span');sp.textContent=it[1];b.appendChild(sp);if(it[3]){var bt=document.createElement('span');bt.className='beta';bt.textContent=it[3];b.appendChild(bt);}
     b.addEventListener('click',function(){ir(it[0],it[2]);});
     box.appendChild(b);
   });
   nav.appendChild(box);
-});
+}
+AREAS.forEach(function(a){MENU[a].forEach(function(g){grupo(g,a);});});
+grupo(GERAL,'');
 side.appendChild(nav);
 var foot=document.createElement('div');foot.className='sfoot';
 var pb=document.createElement('button');pb.type='button';pb.className='sitem';pb.dataset.alvo='perfil';pb.dataset.modo='go';
@@ -68,7 +103,7 @@ back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
 /* navegação */
-function esconderAna(){['view-ana','view-mail','view-ia','view-lixeira','view-hist'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
+function esconderAna(){SOLTAS.forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
 function ir(alvo,modo){
   fechar();
   if(modo==='tab'){esconderAna();var t=$('tab-'+alvo);if(t)t.click();}
@@ -90,16 +125,78 @@ function marcar(){
   var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});
   side.querySelectorAll('.sitem').forEach(function(b){if(b.dataset.alvo===vis)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
 }
+/* ---------- área escolhida ---------- */
+var CHAVE_AREA='feashion-area',atual=null;
+try{atual=localStorage.getItem(CHAVE_AREA);}catch(e){}
+if(AREAS.indexOf(atual)<0)atual='Eventos';
+function visiveis(){var P=window.__perm;if(!P||!P.carregado())return [atual];return AREAS.filter(function(a){return !!P.podeEm(a).ver;});}
+function telaAberta(){var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});return vis;}
+function primeira(){return side.querySelector('.sgroup:not([hidden]) .sitem:not([hidden])');}
+function mostrarGrupos(){
+  var P=window.__perm,ok=P&&P.carregado();
+  side.querySelectorAll('.sgroup').forEach(function(g){var algum=false,daArea=!g.dataset.area||g.dataset.area===atual;
+    g.querySelectorAll('.sitem').forEach(function(b){var v=!b.dataset.gov||(ok&&P.diretorAlgum());b.hidden=!v;if(v)algum=true;});
+    g.hidden=!daArea||!algum;});
+  rotulos();
+}
 function aplicarAreas(){
   var P=window.__perm;if(!P||!P.carregado())return;
-  side.querySelectorAll('.sgroup').forEach(function(g){var algum=false;
-    g.querySelectorAll('.sitem').forEach(function(b){var a=AREA[b.dataset.alvo];var ok=!a||(a==='gov'?P.diretorAlgum():!!P.podeEm(a).ver);b.hidden=!ok;if(ok)algum=true;});
-    g.hidden=!algum;});
-  /* a tela aberta ficou fora do alcance: vai para a primeira permitida */
-  var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});
-  var bt=vis&&side.querySelector('.sitem[data-alvo="'+vis+'"]');
-  if(bt&&bt.hidden){var f=side.querySelector('.sitem:not([hidden])');if(f)ir(f.dataset.alvo,f.dataset.modo);}
+  var vis=visiveis();
+  if(vis.indexOf(atual)<0){var mi=P.minhas().filter(function(a){return vis.indexOf(a)>=0;});atual=mi[0]||vis[0]||null;}
+  mostrarGrupos();
+  /* a tela aberta ficou fora da área (ou do alcance): vai para a primeira da área */
+  var t=telaAberta(),bt=t&&side.querySelector('.sitem[data-alvo="'+t+'"]');
+  if(bt&&(bt.hidden||bt.closest('.sgroup').hidden)){var f=primeira();if(f)ir(f.dataset.alvo,f.dataset.modo);}
 }
+function escolher(a){
+  if(a===atual)return fecharSel();
+  atual=a;try{localStorage.setItem(CHAVE_AREA,a);}catch(e){}
+  mostrarGrupos();fecharSel();
+  var f=side.querySelector('.sgroup[data-area="'+a+'"]:not([hidden]) .sitem:not([hidden])')||primeira();if(f)ir(f.dataset.alvo,f.dataset.modo);
+}
+/* seletor: no subtítulo do topo (computador) e no topo do menu (celular) */
+var SETA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+var selTopo=document.createElement('button');selTopo.type='button';selTopo.className='asel';
+var sm=document.querySelector('header.app .brand .bt small');if(sm)sm.parentNode.replaceChild(selTopo,sm);
+var selSide=document.createElement('button');selSide.type='button';selSide.className='sarea';
+side.insertBefore(selSide,side.firstChild);
+var amenu=document.createElement('div');amenu.className='amenu';amenu.id='amenu';amenu.setAttribute('role','menu');amenu.setAttribute('aria-label','Escolher área');amenu.hidden=true;
+document.body.appendChild(amenu);
+[selTopo,selSide].forEach(function(b){b.setAttribute('aria-haspopup','menu');b.setAttribute('aria-controls','amenu');b.setAttribute('aria-expanded','false');
+  b.addEventListener('click',function(e){e.stopPropagation();if(b.classList.contains('so1'))return;amenu.hidden?abrirSel(b):fecharSel();});});
+function nomeArea(a){return a?'Diretoria de '+a:'Sem área';}
+function rotulos(){
+  var vis=visiveis(),um=vis.length<=1,txt=nomeArea(atual);
+  [selTopo,selSide].forEach(function(b){b.classList.toggle('so1',um);b.disabled=false;b.setAttribute('aria-disabled',String(um));
+    b.title=um?'':'Trocar de área';b.innerHTML='';
+    if(b===selSide){var l=document.createElement('small');l.textContent='Área';b.appendChild(l);}
+    var t=document.createElement('span');t.textContent=txt;b.appendChild(t);b.insertAdjacentHTML('beforeend',SETA);});
+}
+var aberto=null;
+function abrirSel(b){
+  var P=window.__perm,ok=P&&P.carregado();amenu.innerHTML='';
+  var h=document.createElement('div');h.className='ahead';h.textContent='Áreas';amenu.appendChild(h);
+  visiveis().forEach(function(a){
+    var it=document.createElement('button');it.type='button';it.setAttribute('role','menuitemradio');it.setAttribute('aria-checked',String(a===atual));it.className='aitem';
+    var n=document.createElement('span');n.textContent=a;it.appendChild(n);
+    if(ok&&!P.podeEm(a).editar){var r=document.createElement('em');r.textContent='só leitura';it.appendChild(r);}
+    it.addEventListener('click',function(){escolher(a);});amenu.appendChild(it);
+  });
+  var r=b.getBoundingClientRect();amenu.hidden=false;
+  amenu.style.top=Math.round(r.bottom+6)+'px';amenu.style.left=Math.round(Math.max(8,Math.min(r.left,window.innerWidth-amenu.offsetWidth-8)))+'px';
+  aberto=b;b.setAttribute('aria-expanded','true');
+  var c=amenu.querySelector('[aria-checked="true"]')||amenu.querySelector('.aitem');if(c)c.focus();
+}
+function fecharSel(){if(amenu.hidden)return;amenu.hidden=true;if(aberto){aberto.setAttribute('aria-expanded','false');aberto.focus();}aberto=null;}
+document.addEventListener('click',function(e){if(!amenu.hidden&&!amenu.contains(e.target))fecharSel();});
+amenu.addEventListener('keydown',function(e){
+  var its=[].slice.call(amenu.querySelectorAll('.aitem')),i=its.indexOf(document.activeElement);
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();var n=its[(i+(e.key==='ArrowDown'?1:-1)+its.length)%its.length];if(n)n.focus();}
+  else if(e.key==='Escape'||e.key==='Tab'){e.preventDefault();e.stopPropagation();fecharSel();}
+});
+var largura=window.innerWidth;window.addEventListener('resize',function(){if(window.innerWidth!==largura){largura=window.innerWidth;fecharSel();}});
+window.addEventListener('scroll',function(e){if(!amenu.hidden&&!amenu.contains(e.target)&&e.target!==document&&e.target!==window)fecharSel();},true);
+mostrarGrupos();
 document.addEventListener('permissoes',aplicarAreas);
 new MutationObserver(marcar).observe(main,{attributes:true,attributeFilter:['hidden'],subtree:true});
 marcar();
