@@ -46,7 +46,7 @@ head = f'''<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Planejador de Eventos · Feashion</title>
 <meta name="description" content="Planejamento de eventos da Diretoria de Eventos da Feashion.">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#8a0d10">
 <meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.png">

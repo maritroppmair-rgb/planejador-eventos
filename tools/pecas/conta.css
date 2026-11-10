@@ -1,6 +1,6 @@
 /* ---------- conta: círculo de perfil, menu, Meu perfil, Membros ---------- */
 .toprow{flex-basis:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative}
-.avbtn{width:42px;height:42px;border-radius:50%;border:2px solid var(--brand);padding:0;background:#2a2424;color:#fff;cursor:pointer;overflow:hidden;display:grid;place-items:center;font:700 14px var(--label);letter-spacing:.04em;flex:none;transition:border-color .15s}
+.avbtn{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);padding:0;background:#2a2424;color:#fff;cursor:pointer;overflow:hidden;display:grid;place-items:center;font:700 14px var(--label);letter-spacing:.04em;flex:none;transition:border-color .15s}
 .avbtn:hover,.avbtn[aria-expanded="true"]{border-color:var(--on-ink)}
 .avbtn svg{width:22px;height:22px}
 .av{border-radius:50%;overflow:hidden;display:grid;place-items:center;color:#fff;font-family:var(--label);font-weight:700;flex:none;background:var(--surface-2)}
