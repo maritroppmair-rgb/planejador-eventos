@@ -180,3 +180,21 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 .ia-meta .ia-steps span.ok{background:var(--green-bg);color:var(--green);font-weight:700}
 .ia-head h3{text-transform:none;letter-spacing:0;color:var(--fg)}
 .ia-card h4{text-transform:none;letter-spacing:0}
+/* Documentos em pastas */
+#darea{max-width:220px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:var(--surface);color:var(--fg);font:inherit}
+@media (max-width:700px){#darea{max-width:none;flex:1 1 100%}}
+.dpastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.dpasta{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);padding:12px 14px;cursor:pointer;font:inherit;min-width:0}
+.dpasta:hover{border-color:var(--wine);background:var(--surface-2)}
+.dpasta:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.dpasta svg{width:26px;height:26px;flex:none;color:var(--wine)}
+.dpasta.vazia svg{color:var(--muted)}
+.dpasta .dp-t{display:grid;min-width:0;flex:1}
+.dpasta .dp-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dpasta .dp-t small{color:var(--muted);font-size:12.5px}
+.dpasta .dp-n{font-weight:800;font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:2px 9px}
+.dvaz{display:inline-flex;margin-top:12px}
+.dcrumb{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.dcrumb h3{display:flex;align-items:center;gap:8px;margin:0;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fg)}
+.dcrumb h3 svg{width:22px;height:22px;color:var(--wine)}
+.dbusca{margin:0 0 8px}

@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261110140435"></script>
-<script src="plataforma.js?v=20261110140435"></script>
+<script src="config.js?v=20261110151143"></script>
+<script src="plataforma.js?v=20261110151143"></script>
 </head>
 <body>
 
@@ -680,6 +680,24 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 .ia-meta .ia-steps span.ok{background:var(--green-bg);color:var(--green);font-weight:700}
 .ia-head h3{text-transform:none;letter-spacing:0;color:var(--fg)}
 .ia-card h4{text-transform:none;letter-spacing:0}
+/* Documentos em pastas */
+#darea{max-width:220px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:var(--surface);color:var(--fg);font:inherit}
+@media (max-width:700px){#darea{max-width:none;flex:1 1 100%}}
+.dpastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.dpasta{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);padding:12px 14px;cursor:pointer;font:inherit;min-width:0}
+.dpasta:hover{border-color:var(--wine);background:var(--surface-2)}
+.dpasta:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.dpasta svg{width:26px;height:26px;flex:none;color:var(--wine)}
+.dpasta.vazia svg{color:var(--muted)}
+.dpasta .dp-t{display:grid;min-width:0;flex:1}
+.dpasta .dp-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dpasta .dp-t small{color:var(--muted);font-size:12.5px}
+.dpasta .dp-n{font-weight:800;font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:2px 9px}
+.dvaz{display:inline-flex;margin-top:12px}
+.dcrumb{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.dcrumb h3{display:flex;align-items:center;gap:8px;margin:0;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fg)}
+.dcrumb h3 svg{width:22px;height:22px;color:var(--wine)}
+.dbusca{margin:0 0 8px}
 </style>
 
 <script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
@@ -918,7 +936,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
   <!-- DOCUMENTOS -->
   <section id="view-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
     <div class="section-head">
-      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios e arquivos da Diretoria. Cada documento pode ser ligado a um ou mais eventos; os ligados aparecem no ▸ do evento na Base de eventos.</p></div>
+      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento tem uma pasta: o documento ligado a um evento entra na pasta dele; o que não é de nenhum evento fica em Geral.</p></div>
       <div class="btns"><span class="msg" id="dform-ok" aria-live="polite"></span><button class="btn" type="button" id="dnova">+ Novo documento</button></div>
     </div>
     <form class="panel" id="dform" style="margin-bottom:18px" autocomplete="off" novalidate>
@@ -927,7 +945,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
         <div class="field"><label for="d-nome">Nome <span class="rq">obrigatório</span></label><input id="d-nome"></div>
         <div class="field"><label for="d-url">Link <span class="rq opt">ou envie um arquivo</span></label><input id="d-url" type="url" placeholder="https://drive.google.com/..."></div>
         <div class="field" id="d-filebox"><label for="d-file">Arquivo <span class="rq opt">até 10 MB</span></label><input id="d-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.md"><label class="dcur" id="d-filecur" hidden><input type="checkbox" id="d-filerm"> Remover o arquivo já enviado</label></div>
-        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option></select></div>
+        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option><option>Nota fiscal</option></select></div>
         <div class="field"><label for="d-versao">Versão / ano <span class="rq opt">opcional</span></label><input id="d-versao" placeholder="ex.: 2026"></div>
         <div class="field"><label for="d-resp">Responsável <span class="rq opt">opcional</span></label><select id="d-resp"><option value="">Sem responsável</option></select></div>
         <div class="field" style="grid-column:1/-1"><label for="d-resumo">Para que serve <span class="rq opt">opcional</span></label><input id="d-resumo"></div>
@@ -1096,7 +1114,7 @@ var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['di
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
 /* documento pode ter um link externo (Drive etc.) e um arquivo enviado; o Tipo decide qual abre primeiro */
 function dFontes(x){var u=String(x.url||''),bl=/^\/_blob\//.test(u);var link=x.link!=null?x.link:(bl?'':u),arq=x.arquivo!=null?x.arquivo:(bl?u:'');return {link:safeUrl(link),arquivo:safeUrl(arq)};}
-function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem';return arqPrimeiro?(arq||link):(link||arq);}
+function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem'||tipo==='Nota fiscal';return arqPrimeiro?(arq||link):(link||arq);}
 function docLinks(et){var l=docs.filter(function(x){return x.etapa===et&&safeUrl(x.url);});if(!l.length)return '';return '<div class="dlinks">'+l.map(function(x){return '<a href="'+esc(safeUrl(x.url))+'" target="_blank" rel="noopener">'+esc(x.nome)+'</a>';}).join('')+'</div>';}
 var $=function(id){return document.getElementById(id);};
 
@@ -1620,7 +1638,7 @@ function renderDocs(){
       '<div class="acts">'+(u?'<a class="open" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir →</a>'+alt:'<span class="note">Link inválido</span>')+'<button type="button" class="btn small ghost" data-dedit="'+esc(x.id)+'">Editar</button><button type="button" class="btn small ghost" data-ddel="'+esc(x.id)+'">Excluir</button></div></div>';}).join('')+'</div>';
 }
 function resetDocForm(){docEdit=null;['d-nome','d-url','d-versao','d-resp','d-resumo'].forEach(function(i){$(i).value='';});$('d-file').value='';$('d-filerm').checked=false;$('d-filecur').hidden=true;$('d-evs').querySelectorAll('input').forEach(function(i){i.checked=false;});$('dformtitle').textContent='Novo documento';$('dsave').textContent='Adicionar documento';}
-$('dsearch').addEventListener('input',renderDocs);$('dfilter').addEventListener('change',renderDocs);
+$('dsearch').addEventListener('input',function(){renderDocs();});$('dfilter').addEventListener('change',function(){renderDocs();});
 $('dcancel').addEventListener('click',function(){fecharGav('dform');});
 gavAoFechar.dform=function(){resetDocForm();$('dmsg').textContent='';};
 $('dnova').addEventListener('click',function(){resetDocForm();$('dmsg').textContent='';abrirGav('dform','d-nome');});
@@ -1633,7 +1651,7 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
   if(u&&!safeUrl(u)){$('dmsg').textContent='Use um link que comece com https://';return;}
   var data={nome:nome,tipo:$('d-tipo').value,versao:$('d-versao').value.trim(),resp:$('d-resp').value.trim(),resumo:$('d-resumo').value.trim(),eventos:Array.prototype.map.call($('d-evs').querySelectorAll('input:checked'),function(i){return i.value;})};
   function fixar(arq){data.link=u;data.arquivo=arq;data.url=dPrincipal(data.tipo,u,arq);}
-  function save(){var pr=docEdit?db.doc('documentos/'+docEdit).update(data):db.collection('documentos').add(Object.assign({criadoEm:new Date().toISOString()},data));
+  function save(){var pr=docEdit?db.doc('documentos/'+docEdit).update(data):db.collection('documentos').add(Object.assign({criadoEm:new Date().toISOString(),area:window.__areaAtual?window.__areaAtual():'Eventos'},data));
     pr.then(function(){var m=docEdit?'Alterações salvas.':'Documento adicionado.';resetDocForm();fecharGav('dform',m);}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
   if(file){if(file.size>10*1024*1024){$('dmsg').textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
     var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',csv:'text/csv',txt:'text/plain',md:'text/markdown'};
@@ -2028,21 +2046,58 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var obs=new MutationObserver(function(){var ed=!!docEdit;if(!$('dform-gav').hidden){var dx=ed?docs.filter(function(d){return d.id===docEdit;})[0]:null;opcoesMembros($('d-resp'),dx?dx.resp:'');}del.hidden=!ed||!pode('docs-excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
   obs.observe($('dform-gav'),{attributes:true,attributeFilter:['hidden']});
   del.addEventListener('click',function(){confirma(del,'Confirmar exclusão',function(){var id=docEdit;db.doc('documentos/'+id).delete().then(function(){fecharGav('dform','Documento excluído.');}).catch(function(){$('dmsg').textContent='Não foi possível excluir.';});});});
+  /* pastas: Geral + uma por evento; dentro da pasta, filtro pela área de quem subiu */
+  var pasta=null,vazias=false,AREAS_D=['Eventos','Financeiro','Marketing','C&D','RH'];
+  $('dfilter').hidden=true;
+  var dbar=$('dsearch').parentNode;
+  var fa=el('<select id="darea" aria-label="Área de quem subiu"><option value="">Todas as áreas</option></select>');
+  AREAS_D.forEach(function(a){fa.appendChild(new Option(a,a));});dbar.appendChild(fa);
+  fa.addEventListener('change',function(){renderDocs();});
+  function dArea(x){return x.area||'Eventos';}
+  function evDe(id){return events.filter(function(e){return e.id===id;})[0];}
+  function dataEv(e){return e&&e.data?fmt(D(e.data))+'/'+e.data.slice(2,4):'sem data';}
+  function linha(x,comPasta){var f=dFontes(x),u=dPrincipal(x.tipo,f.link,f.arquivo),ev=dEvs(x);
+    var alt=f.link&&f.arquivo?(u===f.arquivo?'<a class="alt" href="'+esc(f.link)+'" target="_blank" rel="noopener">link</a>':'<a class="alt" href="'+esc(f.arquivo)+'" target="_blank" rel="noopener">arquivo</a>'):'';
+    var outras=ev.filter(function(id){return id!==pasta;});
+    var onde=comPasta?(ev.length?ev.map(function(id){return '<span class="ttag">'+esc(evName(id))+'</span>';}).join(''):'<span class="ttag">Geral</span>'):(outras.length&&pasta!=='__geral'?'<span class="tsub">também em '+esc(outras.map(evName).join(', '))+'</span>':'');
+    return '<tr data-dopen="'+esc(x.id)+'" tabindex="0"><td><span class="tn">'+esc(x.nome)+'</span>'+(x.resumo?'<span class="tsub">'+esc(x.resumo)+'</span>':'')+(comPasta?'':onde)+'</td>'+
+      (comPasta?'<td>'+onde+'</td>':'')+
+      '<td><span class="chip neutral">'+esc(x.tipo||'—')+(x.versao?' · '+esc(x.versao):'')+'</span></td><td>'+esc(dArea(x))+'</td><td>'+(x.resp?esc(x.resp):'<span class="note">—</span>')+'</td>'+
+      '<td class="r topen">'+(u?'<a class="open" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir ↗</a>'+(alt?' <span class="note">ou</span> '+alt:''):'<span class="note">sem link</span>')+'</td></tr>';}
+  function tabela(l,comPasta,vazio){
+    var h='<div class="tablewrap"><table class="tlist" id="dtab"><thead><tr><th>Documento</th>'+(comPasta?'<th>Pasta</th>':'')+'<th>Tipo</th><th>Área</th><th>Responsável</th><th class="r"></th></tr></thead><tbody>';
+    if(!l.length)h+='<tr><td colspan="'+(comPasta?6:5)+'" class="empty">'+vazio+'</td></tr>';
+    l.forEach(function(x){h+=linha(x,comPasta);});return h+'</tbody></table></div>';}
+  var PASTA_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
   renderDocs=function(){
     renderDocEvChoices();pintar('d-tipo');
-    var q=nrm($('dsearch').value).trim(),fe=$('dfilter').value;
-    if(!docs.length){$('dlist').innerHTML='<div class="panel empty">Nenhum documento ainda. Clique em “+ Novo documento”.</div>';return;}
-    var l=docs.filter(function(x){if(q&&nrm([x.nome,x.resp,x.resumo,x.versao,x.tipo].join(' ')).indexOf(q)<0)return false;if(fe==='__geral')return !dEvs(x).length;if(fe)return dEvs(x).indexOf(fe)>=0;return true;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
-    var h='<div class="tablewrap"><table class="tlist" id="dtab"><thead><tr><th>Documento</th><th>Eventos ligados</th><th>Tipo</th><th>Responsável</th><th class="r"></th></tr></thead><tbody>';
-    if(!l.length)h+='<tr><td colspan="5" class="empty">Nenhum documento com esse filtro.</td></tr>';
-    l.forEach(function(x){var f=dFontes(x),u=dPrincipal(x.tipo,f.link,f.arquivo),ev=dEvs(x);
-      var alt=f.link&&f.arquivo?(u===f.arquivo?'<a class="alt" href="'+esc(f.link)+'" target="_blank" rel="noopener">link</a>':'<a class="alt" href="'+esc(f.arquivo)+'" target="_blank" rel="noopener">arquivo</a>'):'';
-      h+='<tr data-dopen="'+esc(x.id)+'" tabindex="0"><td><span class="tn">'+esc(x.nome)+'</span>'+(x.resumo?'<span class="tsub">'+esc(x.resumo)+'</span>':'')+'</td>'+
-        '<td>'+(ev.length?ev.map(function(id){return '<span class="ttag">'+esc(evName(id))+'</span>';}).join(''):'<span class="note">geral</span>')+'</td>'+
-        '<td><span class="chip neutral">'+esc(x.tipo||'—')+(x.versao?' · '+esc(x.versao):'')+'</span></td><td>'+(x.resp?esc(x.resp):'<span class="note">—</span>')+'</td>'+
-        '<td class="r topen">'+(u?'<a class="open" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir ↗</a>'+(alt?' <span class="note">ou</span> '+alt:''):'<span class="note">sem link</span>')+'</td></tr>';});
-    $('dlist').innerHTML=h+'</tbody></table></div>';
+    var q=nrm($('dsearch').value).trim(),ar=fa.value,box=$('dlist');
+    var porArea=docs.filter(function(x){return !ar||dArea(x)===ar;});
+    if(pasta&&pasta!=='__geral'&&!evDe(pasta))pasta=null;
+    /* busca: procura em todas as pastas */
+    if(q){var l=porArea.filter(function(x){return nrm([x.nome,x.resp,x.resumo,x.versao,x.tipo].join(' ')).indexOf(q)>=0;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
+      box.innerHTML='<p class="note dbusca">'+l.length+(l.length===1?' documento encontrado':' documentos encontrados')+' em todas as pastas.</p>'+tabela(l,true,'Nenhum documento com essa busca.');return;}
+    if(!pasta){
+      var cont={__geral:0};porArea.forEach(function(x){var ev=dEvs(x).filter(evDe);if(!ev.length)cont.__geral++;ev.forEach(function(id){cont[id]=(cont[id]||0)+1;});});
+      var evs=events.filter(function(e){return vazias||cont[e.id];}).sort(function(a,b){return (a.data||'')<(b.data||'')?1:-1;});
+      var nVaz=events.filter(function(e){return !cont[e.id];}).length;
+      function card(id,nome,sub,n){return '<button type="button" class="dpasta'+(n?'':' vazia')+'" data-dpasta="'+esc(id)+'">'+PASTA_IC+'<span class="dp-t"><b>'+esc(nome)+'</b><small>'+esc(sub)+'</small></span><span class="dp-n">'+n+'</span></button>';}
+      var h='<div class="dpastas">'+card('__geral','Geral','documentos sem evento',cont.__geral);
+      evs.forEach(function(e){h+=card(e.id,e.nome||'(evento sem nome)',dataEv(e),cont[e.id]||0);});
+      h+='</div>';
+      if(nVaz)h+='<label class="check dvaz"><input type="checkbox" id="dvazias"'+(vazias?' checked':'')+'> Mostrar pastas vazias ('+nVaz+(nVaz===1?' evento sem documento':' eventos sem documento')+')</label>';
+      box.innerHTML=h;return;}
+    var e=pasta==='__geral'?null:evDe(pasta);
+    var l=porArea.filter(function(x){var ev=dEvs(x).filter(evDe);return pasta==='__geral'?!ev.length:ev.indexOf(pasta)>=0;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
+    box.innerHTML='<div class="dcrumb"><button type="button" class="btn small ghost" data-dpasta="">← Todas as pastas</button><h3>'+PASTA_IC+esc(e?e.nome||'(evento sem nome)':'Geral')+'</h3><span class="note">'+(e?dataEv(e)+' · ':'')+l.length+(l.length===1?' documento':' documentos')+'</span></div>'+
+      tabela(l,false,ar?'Nenhum documento de '+esc(ar)+' nesta pasta.':'Esta pasta está vazia. Clique em “+ Novo documento” para adicionar.');
   };
+  $('dlist').addEventListener('click',function(e){var b=e.target.closest('[data-dpasta]');if(!b)return;pasta=b.dataset.dpasta||null;renderDocs();var v=$('view-docs');if(v.getBoundingClientRect().top<0)v.scrollIntoView();
+    var f=$('dlist').querySelector(pasta?'.dcrumb button':'[data-dpasta]');if(f)f.focus();});
+  $('dlist').addEventListener('change',function(e){if(e.target.id==='dvazias'){vazias=e.target.checked;renderDocs();}});
+  /* "+ Novo documento" dentro da pasta de um evento já liga o documento a ele */
+  $('dnova').addEventListener('click',function(){if(!pasta||pasta==='__geral')return;var i=$('d-evs').querySelector('input[value="'+pasta.replace(/"/g,'')+'"]');if(i)i.checked=true;});
+  window.docsAbrirPasta=function(id){pasta=id||null;$('dsearch').value='';renderDocs();};
   function clique(e){if(e.target.closest('a'))return;var tr=e.target.closest('[data-dopen]');if(!tr||!(e.type==='click'||e.key==='Enter'||e.key===' '))return;if(e.type==='keydown')e.preventDefault();
     var b=document.createElement('button');b.type='button';b.hidden=true;b.dataset.dedit=tr.dataset.dopen;$('dlist').appendChild(b);b.click();b.remove();}
   $('dlist').addEventListener('click',clique);$('dlist').addEventListener('keydown',clique);
@@ -3097,6 +3152,8 @@ function marcar(){
 var CHAVE_AREA='feashion-area',atual=null;
 try{atual=localStorage.getItem(CHAVE_AREA);}catch(e){}
 if(AREAS.indexOf(atual)<0)atual='Eventos';
+/* área em que a pessoa está agora: os documentos novos guardam isso */
+window.__areaAtual=function(){return atual||'Eventos';};
 function visiveis(){var P=window.__perm;if(!P||!P.carregado())return [atual];return AREAS.filter(function(a){return !!P.podeEm(a).ver;});}
 function telaAberta(){var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});return vis;}
 function primeira(){return side.querySelector('.sgroup:not([hidden]) .sitem:not([hidden])');}

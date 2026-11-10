@@ -129,6 +129,8 @@ function marcar(){
 var CHAVE_AREA='feashion-area',atual=null;
 try{atual=localStorage.getItem(CHAVE_AREA);}catch(e){}
 if(AREAS.indexOf(atual)<0)atual='Eventos';
+/* área em que a pessoa está agora: os documentos novos guardam isso */
+window.__areaAtual=function(){return atual||'Eventos';};
 function visiveis(){var P=window.__perm;if(!P||!P.carregado())return [atual];return AREAS.filter(function(a){return !!P.podeEm(a).ver;});}
 function telaAberta(){var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});return vis;}
 function primeira(){return side.querySelector('.sgroup:not([hidden]) .sitem:not([hidden])');}
