@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261110090050"></script>
-<script src="plataforma.js?v=20261110090050"></script>
+<script src="config.js?v=20261110090346"></script>
+<script src="plataforma.js?v=20261110090346"></script>
 </head>
 <body>
 
@@ -145,6 +145,10 @@ main{padding-block:24px 48px}
 .cb.ferias{background:var(--amber-bg);color:var(--amber)}
 .cb.externo,.cb.outro{background:var(--surface-2);color:var(--fg);border:1px solid var(--line)}
 .cb.evento{background:var(--wine-soft);color:var(--wine);font-weight:700}
+.calgrid .day.h-feriado,.callegend .lg.h-feriado{background-image:repeating-linear-gradient(135deg,var(--red-bg) 0 6px,transparent 6px 12px)}
+.calgrid .day.h-ferias,.callegend .lg.h-ferias{background-image:repeating-linear-gradient(135deg,var(--amber-bg) 0 6px,transparent 6px 12px)}
+.hlab{display:block;font-size:11px;line-height:1.3;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hlab.feriado{color:var(--red)}.hlab.ferias{color:var(--amber)}
+.callegend .lg{display:inline-block;font-size:11px;line-height:1.3;padding:1px 6px;border:1px solid var(--line);border-radius:4px;font-weight:600}.callegend .lg.h-feriado{color:var(--red)}.callegend .lg.h-ferias{color:var(--amber)}
 .callegend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .callegend .cb{display:inline-block}
 .callegend .wx-leg{font-size:12px;color:var(--muted)}
@@ -857,7 +861,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
       </div>
       <p class="note" id="k-hint" aria-live="polite" style="margin:-4px 0 8px"></p>
       <div class="calgrid" id="k-grid"></div>
-      <div class="callegend"><span class="cb feriado">Feriado</span><span class="cb ferias">Férias</span><span class="cb externo">Evento externo / bloqueio</span><span class="cb evento">Evento da Feashion</span><span class="wx-leg">☀ 27° = previsão do tempo para os próximos 16 dias (máxima e, se passar de 30%, a chance de chuva)</span><span class="note">Clique num dia ou arraste sobre vários para abrir um novo bloqueio já com o período. No celular: toque no primeiro e depois no último dia.</span></div>
+      <div class="callegend"><span class="lg h-feriado">Feriado</span><span class="lg h-ferias">Férias</span><span class="cb externo">Evento externo / bloqueio</span><span class="cb evento">Evento da Feashion</span><span class="wx-leg">☀ 27° = previsão do tempo para os próximos 16 dias (máxima e, se passar de 30%, a chance de chuva)</span><span class="note">Clique num dia ou arraste sobre vários para abrir um novo bloqueio já com o período. No celular: toque no primeiro e depois no último dia.</span></div>
     </div>
     <details class="panel" id="k-details" style="margin-top:16px">
       <summary style="cursor:pointer;font-weight:700">Bloqueios de datas</summary>
@@ -1721,10 +1725,14 @@ function renderMonth(){
   ['dom','seg','ter','qua','qui','sex','sáb'].forEach(function(w){h+='<div class="dow">'+w+'</div>';});
   for(var i=0;i<42;i++){var d=add(startD,i),k=iso(d),w=d.getDay();
     if(i===35&&d.getMonth()!==mo)break;
-    var items='';
-    rows.forEach(function(x){var fim=x.fim||x.inicio;if(k>=x.inicio&&k<=fim){var t=x.tipo||'outro';items+='<span class="cb '+esc(t)+'" title="'+esc(x.nome)+'">'+esc(x.nome)+'</span>';}});
+    var items='',hach='',hlab='';
+    /* feriado e férias: o dia inteiro fica hachurado; o nome aparece sem cartão (férias: só no 1º dia e no começo de cada semana) */
+    rows.forEach(function(x){var fim=x.fim||x.inicio;if(k>=x.inicio&&k<=fim){var t=x.tipo||'outro';
+      if(t==='feriado'||t==='ferias'){if(t==='feriado'||!hach)hach=t;if(t==='feriado'||k===x.inicio||w===0||i===0)hlab+='<span class="hlab '+t+'" title="'+esc(x.nome)+'">'+esc(x.nome)+'</span>';return;}
+      items+='<span class="cb '+esc(t)+'" title="'+esc(x.nome)+'">'+esc(x.nome)+'</span>';}});
+    items=hlab+items;
     events.forEach(function(e){if(e.data===k)items+='<span class="cb evento" title="'+esc(e.nome||'')+(e.hora?' · '+esc(e.hora):'')+'">'+(e.hora?esc(e.hora)+' ':'')+esc(e.nome||'Evento')+'</span>';});
-    h+='<button type="button" class="day'+(d.getMonth()!==mo?' out':'')+(w===0||w===6?' wk':'')+(k===today?' today':'')+'" data-day="'+k+'" aria-label="'+d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+'"><span class="dtop"><span class="n">'+d.getDate()+'</span>'+(k>=today?wxHtml(k):'')+'</span>'+items+'</button>';}
+    h+='<button type="button" class="day'+(d.getMonth()!==mo?' out':'')+(w===0||w===6?' wk':'')+(k===today?' today':'')+(hach?' h-'+hach:'')+'" data-day="'+k+'" aria-label="'+d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+'"><span class="dtop"><span class="n">'+d.getDate()+'</span>'+(k>=today?wxHtml(k):'')+'</span>'+items+'</button>';}
   $('k-grid').innerHTML=h;
   paintSel();
 }
