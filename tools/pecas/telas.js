@@ -167,7 +167,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var ft=$('dform').querySelector('.btns:last-child'),del=el('<button type="button" class="btn small ghost tdanger" id="d-del" hidden>Excluir</button>');ft.appendChild(del);
   segmentar('d-tipo');
   /* quando o painel abre para editar, mostra o Excluir */
-  var obs=new MutationObserver(function(){var ed=!!docEdit;if(!$('dform-gav').hidden){var dx=ed?docs.filter(function(d){return d.id===docEdit;})[0]:null;opcoesMembros($('d-resp'),dx?dx.resp:'');}del.hidden=!ed||!pode('excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
+  var obs=new MutationObserver(function(){var ed=!!docEdit;if(!$('dform-gav').hidden){var dx=ed?docs.filter(function(d){return d.id===docEdit;})[0]:null;opcoesMembros($('d-resp'),dx?dx.resp:'');}del.hidden=!ed||!pode('docs-excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
   obs.observe($('dform-gav'),{attributes:true,attributeFilter:['hidden']});
   del.addEventListener('click',function(){confirma(del,'Confirmar exclusão',function(){var id=docEdit;db.doc('documentos/'+id).delete().then(function(){fecharGav('dform','Documento excluído.');}).catch(function(){$('dmsg').textContent='Não foi possível excluir.';});});});
   renderDocs=function(){

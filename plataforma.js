@@ -6,7 +6,7 @@
 (function(){
 "use strict";
 var EMU=/[?&]emulador\b/.test(location.search);
-var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados'];
+var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados','mailing','mailingEnvios','mailingConfig','descadastros','inscricoes'];
 var saindo=false;
 var PARTE=700000; /* caracteres base64 por parte de arquivo (o Firestore aceita até 1 MiB por documento) */
 
@@ -18,6 +18,60 @@ else{fs.enablePersistence({synchronizeTabs:true}).catch(function(){});}
 var usuario=null,liberado=false,esperando=[];
 function quandoLiberado(){return liberado?Promise.resolve():new Promise(function(r){esperando.push(r);});}
 function liberar(){liberado=true;esperando.splice(0).forEach(function(r){r();});}
+
+/* ---------- lixeira e histórico ----------
+   Toda gravação do app passa por aqui: criar, editar e excluir viram uma linha em "registro" (quem, o quê, quando),
+   e o que é excluído de eventos, salas, calendário, convidados e documentos vai antes para a "lixeira". */
+var SEM_REGISTRO=['registro','lixeira','arquivos','config','perfisImportados','inscricoes'];
+var COM_LIXEIRA=['eventos','salas','calendario','convidados','documentos'];
+var SO_SISTEMA=['notaData','notaHist','notaClima','climaAvisos','tema','atualizadoEm','editadoEm','cargoPor','cargoEm'];
+var PREFIXO={fin:'Financeiro',mkt:'Marketing',cd:'C&D',rh:'RH'};
+/* área dona de cada coleção (igual às regras): Documentos, Membros e acesso são de todos; fin_, mkt_, cd_ e rh_ são das outras áreas */
+function areaDa(c){if(['documentos','arquivos','membros','permitidos'].indexOf(c)>=0)return 'Comum';var m=/^(fin|mkt|cd|rh)_/.exec(c);return m?PREFIXO[m[1]]:'Eventos';}
+window.areaDaColecao=areaDa;
+function nomeDe(d){return String(d&&(d.nome||d.titulo||d.n||d.email)||'').slice(0,120);}
+var DR=firebase.firestore.DocumentReference.prototype,CR=firebase.firestore.CollectionReference.prototype;
+var origSet=DR.set,origUpd=DR.update,origDel=DR.delete,origAdd=CR.add;
+function rastreia(ref){var p=ref.path.split('/');return p.length===2&&SEM_REGISTRO.indexOf(p[0])<0;}
+function registrar(acao,ref,nome,campos){
+  if(!usuario)return Promise.resolve();
+  var c=ref.path.split('/')[0],d={acao:acao,colecao:c,docId:ref.id,nome:nome||'',area:areaDa(c),por:usuario.uid,porNome:String(window.__meuNome||usuario.displayName||usuario.email||'').slice(0,80),em:new Date().toISOString()};
+  if(campos&&campos.length)d.campos=campos.slice(0,15);
+  return origAdd.call(fs.collection('registro'),d).catch(function(){});
+}
+window.__registrar=function(acao,c,id,nome){return registrar(acao,fs.doc(c+'/'+id),nome);};
+function nomeCache(ref,dados){if(dados&&nomeDe(dados))return Promise.resolve(nomeDe(dados));return ref.get({source:'cache'}).then(function(s){return s.exists?nomeDe(s.data()):'';},function(){return '';});}
+DR.set=function(dados,op){
+  var ref=this;if(window.__semRegistro||!rastreia(ref))return origSet.apply(ref,arguments);
+  var antes=ref.get({source:'cache'}).then(function(s){return s.exists;},function(){return false;});
+  return origSet.apply(ref,arguments).then(function(r){antes.then(function(ex){return nomeCache(ref,dados).then(function(n){registrar(ex||(op&&op.merge)?'editou':'criou',ref,n,ex?Object.keys(dados||{}).filter(function(k){return SO_SISTEMA.indexOf(k)<0;}):null);});});return r;});
+};
+DR.update=function(dados){
+  var ref=this;if(window.__semRegistro||!rastreia(ref)||typeof dados!=='object')return origUpd.apply(ref,arguments);
+  var campos=Object.keys(dados).filter(function(k){return SO_SISTEMA.indexOf(k)<0;});
+  if(!campos.length)return origUpd.apply(ref,arguments); /* atualizações automáticas (nota do clima, tema) não entram */
+  return origUpd.apply(ref,arguments).then(function(r){nomeCache(ref,null).then(function(n){registrar('editou',ref,n,campos);});return r;});
+};
+DR.delete=function(){
+  var ref=this;if(window.__semRegistro||!rastreia(ref))return origDel.call(ref);
+  var c=ref.path.split('/')[0];
+  return ref.get().catch(function(){return ref.get({source:'cache'});}).catch(function(){return null;}).then(function(s){
+    var dados=s&&s.exists?s.data():null,nome=nomeDe(dados);
+    var feito;
+    if(dados&&COM_LIXEIRA.indexOf(c)>=0){
+      var b=fs.batch();
+      b.set(fs.collection('lixeira').doc(),{colecao:c,docId:ref.id,nome:nome,area:areaDa(c),dados:dados,por:usuario?usuario.uid:'',porNome:String(window.__meuNome||(usuario&&usuario.displayName)||'').slice(0,80),em:new Date().toISOString()});
+      b.delete(ref);
+      /* se as regras novas ainda não estiverem no ar, exclui sem lixeira */
+      feito=b.commit().catch(function(e){if(e&&e.code==='permission-denied')return origDel.call(ref);throw e;});
+    }else feito=origDel.call(ref);
+    return feito.then(function(){registrar('excluiu',ref,nome);});
+  });
+};
+CR.add=function(dados){
+  var col=this,sem=window.__semRegistro;
+  return origAdd.apply(col,arguments).then(function(ref){if(!sem&&rastreia(ref))registrar('criou',ref,nomeDe(dados));return ref;});
+};
 
 /* ---------- arquivos guardados no próprio Firestore, em partes ---------- */
 function idNovo(){var a=new Uint8Array(16);crypto.getRandomValues(a);return Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join('');}
@@ -232,6 +286,10 @@ function montarBackup(){
       var blob=new Blob([JSON.stringify(obj)],{type:'application/json'}),u=URL.createObjectURL(blob),a=el('a');
       a.href=u;a.download='planejador-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},4000);
       msg.textContent='Backup baixado.';
+      /* lembrete de backup: guarda quando foi o último */
+      window.__semRegistro=true;fs.doc('parametros/backup').set({em:new Date().toISOString(),por:usuario?usuario.uid:'',porNome:String(window.__meuNome||(usuario&&usuario.displayName)||'').slice(0,80)}).catch(function(){});window.__semRegistro=false;
+      registrar('exportou',fs.doc('parametros/backup'),'Backup completo');
+      document.dispatchEvent(new CustomEvent('backup-feito'));
     }).catch(function(e){msg.textContent='Erro ao exportar ('+(e&&e.message||e)+').';}).then(function(){ex.disabled=false;});
   });
   var pend=null;
@@ -246,7 +304,7 @@ function montarBackup(){
     if(!pend)return;
     armar(ok,'Clique de novo para importar','Confirmar importação',function(){
       var o=pend;pend=null;ok.hidden=true;msg.textContent='Importando…';
-      importar(o,function(f){msg.textContent='Importando… '+Math.round(f*100)+'%';}).then(function(n){msg.textContent=n+' registros importados.';})
+      importar(o,function(f){msg.textContent='Importando… '+Math.round(f*100)+'%';}).then(function(n){msg.textContent=n+' registros importados.';registrar('importou',fs.doc('parametros/backup'),n+' registros');})
         .catch(function(e){msg.textContent='Erro na importação ('+(e&&e.message||e)+'). Parte dos dados pode ter sido gravada; importe de novo.';});
     });
   });

@@ -15,12 +15,16 @@ var I={
   docs:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
   par:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
   membros:'<circle cx="9" cy="9" r="3"/><path d="M3 20c.9-3 3.2-4.6 6-4.6s5.1 1.6 6 4.6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18 15.6c1.4.6 2.4 2 3 4.4"/>',
-  perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>'
+  perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>',
+  lixeira:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'
 };
+/* área dona de cada tela: some do menu de quem não tem acesso (Documentos e Membros são de todos; Lixeira e Histórico, da diretoria para cima) */
+var AREA={ia:'Eventos',plan:'Eventos',base:'Eventos',ana:'Eventos',mail:'Eventos',conv:'Eventos',salas:'Eventos',cal:'Eventos',par:'Eventos',lixeira:'gov',hist:'gov'};
 var GRUPOS=[
   ['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
   ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['cal','Calendário','tab'],['docs','Documentos','tab']]],
-  ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go']]]
+  ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go'],['lixeira','Lixeira','view'],['hist','Histórico','view']]]
 ];
 function icone(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+I[k]+'</svg>';}
 var main=document.querySelector('main'),hdr=document.querySelector('header.app');
@@ -64,7 +68,7 @@ back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
 /* navegação */
-function esconderAna(){['view-ana','view-mail','view-ia'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
+function esconderAna(){['view-ana','view-mail','view-ia','view-lixeira','view-hist'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
 function ir(alvo,modo){
   fechar();
   if(modo==='tab'){esconderAna();var t=$('tab-'+alvo);if(t)t.click();}
@@ -86,6 +90,17 @@ function marcar(){
   var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});
   side.querySelectorAll('.sitem').forEach(function(b){if(b.dataset.alvo===vis)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
 }
+function aplicarAreas(){
+  var P=window.__perm;if(!P||!P.carregado())return;
+  side.querySelectorAll('.sgroup').forEach(function(g){var algum=false;
+    g.querySelectorAll('.sitem').forEach(function(b){var a=AREA[b.dataset.alvo];var ok=!a||(a==='gov'?P.diretorAlgum():!!P.podeEm(a).ver);b.hidden=!ok;if(ok)algum=true;});
+    g.hidden=!algum;});
+  /* a tela aberta ficou fora do alcance: vai para a primeira permitida */
+  var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});
+  var bt=vis&&side.querySelector('.sitem[data-alvo="'+vis+'"]');
+  if(bt&&bt.hidden){var f=side.querySelector('.sitem:not([hidden])');if(f)ir(f.dataset.alvo,f.dataset.modo);}
+}
+document.addEventListener('permissoes',aplicarAreas);
 new MutationObserver(marcar).observe(main,{attributes:true,attributeFilter:['hidden'],subtree:true});
 marcar();
 /* altura do cabeçalho para o menu grudar logo abaixo dele */

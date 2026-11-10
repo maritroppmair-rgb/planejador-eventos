@@ -1,12 +1,17 @@
 rules_version = '2';
 // Planejador de Eventos · Feashion
 // - Só quem está em "permitidos" (ou é o DEV) lê qualquer coisa.
-// - O que cada um pode fazer depende do cargo, gravado no próprio perfil (membros/{uid}):
-//     DEV e Diretor(a): tudo.
-//     Coordenador(a) e Membro(a): editam e excluem dados de eventos; não mexem em Parâmetros, Membros e acesso.
-//     Trainee: edita dados de eventos, mas não exclui; não mexe em Parâmetros, Membros e acesso.
-//     Sem cargo: só visualiza (e edita o próprio perfil).
-// - Cada pessoa edita o próprio perfil, mas não o próprio cargo. Só a diretoria atribui cargos.
+// - Cada perfil (membros/{uid}) tem as áreas da pessoa, cada uma com um cargo: areas = {'Eventos': 'Diretor(a)', 'RH': ''}.
+//   Perfis antigos, sem "areas", contam como Eventos com o "cargo" que tinham.
+// - A presidência fica fora das áreas: presidencia = 'Presidente' | 'Vice-presidente' | ''.
+// - Hierarquia: DEV > Presidente > Vice-presidente > Diretor(a) > Coordenador(a) > Membro(a) > Trainee > Sem cargo.
+// - DEV e presidência: tudo, em todas as áreas.
+// - Na própria área: Diretor(a) faz tudo e atribui cargos; Coordenador(a) e Membro(a) editam e excluem;
+//   Trainee edita sem excluir; sem cargo só lê. (Esconder as abas de outras áreas é feito na tela.)
+// - Área de cada coleção: documentos e arquivos são de todas; coleções com prefixo fin_, mkt_, cd_ e rh_ são de
+//   Financeiro, Marketing, C&D e RH; o resto é de Eventos.
+// - Só quem está acima muda o cargo de quem está abaixo. Ninguém muda o próprio cargo (só o DEV).
+// - Lixeira e registro de alterações: a diretoria (de qualquer área) para cima lê.
 // No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -27,76 +32,168 @@ service cloud.firestore {
         || exists(/databases/$(database)/documents/permitidos/$(emailLogado()))
       );
     }
-    function meuCargo() {
-      let m = /databases/$(database)/documents/membros/$(request.auth.uid);
-      return exists(m) ? get(m).data.get('cargo', '') : '';
+
+    // ---------- cargos ----------
+    function AREAS() { return ['Eventos', 'Financeiro', 'RH', 'C&D', 'Marketing']; }
+    function EDITA() { return ['Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee']; }
+    function EXCLUI() { return ['Diretor(a)', 'Coordenador(a)', 'Membro(a)']; }
+    function DIRIGE() { return ['Diretor(a)']; }
+    function nivel(c) {
+      return {'DEV': 0, 'Presidente': 1, 'Vice-presidente': 2, 'Diretor(a)': 3,
+              'Coordenador(a)': 4, 'Membro(a)': 5, 'Trainee': 6}.get(c, 7);
     }
-    function diretoria() {
-      return liberado() && (ehDev() || meuCargo() == 'Diretor(a)');
+    function areasDe(d) {
+      return d.get('areas', {'Eventos': d.get('cargo', '')});
     }
-    function podeEditar() {
-      return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee']);
+    function presDe(d) {
+      return d.get('presidencia', '');
     }
-    function podeExcluir() {
-      return liberado() && (ehDev() || meuCargo() in ['Diretor(a)', 'Coordenador(a)', 'Membro(a)']);
+    function eu() {
+      return /databases/$(database)/documents/membros/$(request.auth.uid);
     }
-    function cargoNovo() {
-      return request.resource.data.get('cargo', '');
+    function temPerfil() {
+      return exists(eu());
     }
-    function cargoAntigo() {
-      return resource.data.get('cargo', '');
+    function presidente(me) {
+      return presDe(me) in ['Presidente', 'Vice-presidente'];
     }
-    function cargoAtribuivel() {
-      return cargoNovo() in ['', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'];
+    // área dona da coleção: 'Comum', 'Financeiro', 'Marketing', 'C&D', 'RH' ou 'Eventos'
+    function ehComum(c) { return c in ['documentos', 'arquivos']; }
+    function cargoNaColecao(me, c, cargos) {
+      let ar = areasDe(me);
+      return (ehComum(c) && ar.values().hasAny(cargos))
+        || (c.matches('fin_.*') && ar.get('Financeiro', null) in cargos)
+        || (c.matches('mkt_.*') && ar.get('Marketing', null) in cargos)
+        || (c.matches('cd_.*') && ar.get('C&D', null) in cargos)
+        || (c.matches('rh_.*') && ar.get('RH', null) in cargos)
+        || (!ehComum(c) && !c.matches('(fin|mkt|cd|rh)_.*') && ar.get('Eventos', null) in cargos);
+    }
+    // posso fazer algo numa coleção com um destes cargos? (DEV e presidência: sempre)
+    function podeNa(c, cargos) {
+      return liberado() && (ehDev()
+        || (temPerfil() && (presidente(get(eu()).data) || cargoNaColecao(get(eu()).data, c, cargos))));
+    }
+    function diretorAlgum() {
+      return liberado() && (ehDev()
+        || (temPerfil() && (presidente(get(eu()).data) || areasDe(get(eu()).data).values().hasAny(DIRIGE()))));
+    }
+    // estou acima do cargo c na área a? (presidência vale em todas; diretoria só na própria área)
+    function acima(me, a, c) {
+      return nivel(presDe(me)) < nivel(c)
+        || (areasDe(me).get(a, '') == 'Diretor(a)' && 3 < nivel(c));
     }
 
-    // perfis
+    // ---------- perfis ----------
+    function antes() { return resource.data; }
+    function depois() { return request.resource.data; }
+    // a própria pessoa: entra numa área sem cargo, sai de uma área, mas não muda cargo
+    function areaPropriaOk(a) {
+      let n = areasDe(depois());
+      let v = areasDe(antes());
+      return !(a in n)
+        || (a in v && n[a] == v[a])
+        || (!(a in v) && n[a] == '');
+    }
+    function proprioOk() {
+      return depois().get('cargo', '') == antes().get('cargo', '')
+        && presDe(depois()) == presDe(antes())
+        && areasDe(depois()).keys().hasOnly(AREAS())
+        && areaPropriaOk('Eventos') && areaPropriaOk('Financeiro') && areaPropriaOk('RH')
+        && areaPropriaOk('C&D') && areaPropriaOk('Marketing');
+    }
+    // outra pessoa acima mudando o cargo numa área
+    function areaGestaoOk(me, a) {
+      let n = areasDe(depois());
+      let v = areasDe(antes());
+      return ((a in n) == (a in v) && n.get(a, '') == v.get(a, ''))
+        || (acima(me, a, v.get(a, '')) && acima(me, a, n.get(a, '')) && acima(me, a, presDe(antes())));
+    }
+    function gestaoOk(me) {
+      return depois().diff(antes()).affectedKeys().hasOnly(['areas', 'presidencia', 'cargoPor', 'cargoEm'])
+        && areasDe(depois()).keys().hasOnly(AREAS())
+        && areasDe(depois()).values().hasOnly(['', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'])
+        && (presDe(depois()) == presDe(antes())
+            || (presDe(depois()) in ['', 'Presidente', 'Vice-presidente']
+                && nivel(presDe(me)) < nivel(presDe(antes()))
+                && nivel(presDe(me)) < nivel(presDe(depois()))))
+        && areaGestaoOk(me, 'Eventos') && areaGestaoOk(me, 'Financeiro') && areaGestaoOk(me, 'RH')
+        && areaGestaoOk(me, 'C&D') && areaGestaoOk(me, 'Marketing');
+    }
+    // tirar alguém do app: diretoria para cima, acima da pessoa em todas as áreas dela
+    function areaRemoveOk(me, a) {
+      return !(a in areasDe(antes())) || acima(me, a, areasDe(antes())[a]);
+    }
+    function removeOk(me) {
+      return (presidente(me) || areasDe(me).values().hasAny(DIRIGE()))
+        && (presDe(antes()) == '' || nivel(presDe(me)) < nivel(presDe(antes())))
+        && areaRemoveOk(me, 'Eventos') && areaRemoveOk(me, 'Financeiro') && areaRemoveOk(me, 'RH')
+        && areaRemoveOk(me, 'C&D') && areaRemoveOk(me, 'Marketing');
+    }
+    function perfilNovoOk() {
+      return presDe(depois()) == ''
+        && (depois().get('cargo', '') == '' || (depois().get('cargo', '') == 'DEV' && ehDev()))
+        && depois().get('areas', {}).keys().hasOnly(AREAS())
+        && depois().get('areas', {}).values().hasOnly(['']);
+    }
+
     match /membros/{uid} {
       allow read: if liberado();
-      // perfil novo: sempre sem cargo (o DEV cria o dele já como DEV)
-      allow create: if liberado() && request.auth.uid == uid
-        && (cargoNovo() == '' || (cargoNovo() == 'DEV' && ehDev()));
+      allow create: if liberado() && request.auth.uid == uid && perfilNovoOk();
       allow update: if liberado() && (
-        // a própria pessoa: edita tudo, menos o cargo
-        (request.auth.uid == uid && cargoNovo() == cargoAntigo())
-        // o DEV: tudo; o cargo DEV só nele mesmo
-        || (ehDev() && (cargoAtribuivel() || (cargoNovo() == 'DEV' && request.auth.uid == uid)))
-        // a diretoria: só o cargo de outra pessoa, nunca o do DEV
-        || (diretoria() && request.auth.uid != uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cargo', 'cargoPor', 'cargoEm'])
-            && cargoAntigo() != 'DEV' && cargoAtribuivel())
+        ehDev()
+        || (request.auth.uid == uid && proprioOk())
+        || (request.auth.uid != uid && antes().get('cargo', '') != 'DEV'
+            && temPerfil() && gestaoOk(get(eu()).data))
       );
-      allow delete: if diretoria() && (cargoAntigo() != 'DEV' || ehDev());
+      allow delete: if liberado() && request.auth.uid != uid && (
+        ehDev()
+        || (antes().get('cargo', '') != 'DEV' && temPerfil() && removeOk(get(eu()).data))
+      );
     }
 
-    // perfis vindos de um backup: a diretoria grava; cada pessoa lê e apaga o seu ao entrar
+    // perfis vindos de um backup: quem gere Eventos grava; cada pessoa lê e apaga o seu ao entrar
     match /perfisImportados/{email} {
       allow read: if liberado();
-      allow create, update: if diretoria();
-      allow delete: if diretoria() || (liberado() && email == emailLogado());
+      allow create, update: if podeNa('parametros', DIRIGE());
+      allow delete: if podeNa('parametros', DIRIGE()) || (liberado() && email == emailLogado());
     }
 
-    // lista de acesso, parâmetros e quem é o DEV: só a diretoria
+    // lista de acesso e parâmetros: diretoria de Eventos, presidência e DEV. Quem é o DEV: só o DEV.
     match /permitidos/{email} {
       allow read: if liberado();
-      allow write: if diretoria() || (ehDev() && email == emailLogado());
+      allow write: if podeNa('parametros', DIRIGE()) || (ehDev() && email == emailLogado());
     }
     match /parametros/{doc} {
       allow read: if liberado();
-      allow write: if diretoria();
+      allow write: if podeNa('parametros', DIRIGE());
     }
     match /config/{doc} {
       allow read: if liberado();
       allow write: if ehDev() && (doc != 'dev' || request.resource.data.email == emailLogado());
     }
 
-    // dados de eventos: eventos, salas, calendário, convidados, listas, documentos e arquivos
+    // lixeira: entra quem pode excluir aquele item; restaura (ou apaga de vez) a diretoria da área, a presidência e o DEV
+    match /lixeira/{id} {
+      allow read: if diretorAlgum();
+      allow create: if request.resource.data.por == request.auth.uid
+        && podeNa(request.resource.data.colecao, EXCLUI());
+      allow delete: if podeNa(resource.data.colecao, DIRIGE());
+    }
+
+    // registro de alterações: cada um grava só em nome próprio; ninguém edita nem apaga
+    match /registro/{id} {
+      allow read: if diretorAlgum();
+      allow create: if liberado() && request.resource.data.por == request.auth.uid;
+    }
+
+    // dados das áreas: eventos, salas, calendário, convidados, listas, mailing, documentos, arquivos...
+    function reservada(c) {
+      return c in ['membros', 'perfisImportados', 'permitidos', 'parametros', 'config', 'lixeira', 'registro'];
+    }
     match /{colecao}/{documento=**} {
       allow read: if liberado();
-      allow create, update: if podeEditar()
-        && !(colecao in ['membros', 'perfisImportados', 'permitidos', 'parametros', 'config']);
-      allow delete: if podeExcluir()
-        && !(colecao in ['membros', 'perfisImportados', 'permitidos', 'parametros', 'config']);
+      allow create, update: if !reservada(colecao) && podeNa(colecao, EDITA());
+      allow delete: if !reservada(colecao) && podeNa(colecao, EXCLUI());
     }
   }
 }

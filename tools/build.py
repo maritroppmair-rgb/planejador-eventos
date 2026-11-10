@@ -28,7 +28,7 @@ a = s.index('<div class="brand">'); b = s.index('\n    <nav class="tabs"')
 s = s[:a] + P('menu.html').replace('{{BRAND}}', s[a:b]) + s[b:]
 troca('</main>', P('conta.html') + P('analytics.html') + P('mailing.html') + P('ideia.html') + '</main>')
 e = s.rindex('</script>') + len('</script>')
-s = s[:e] + '\n' + P('conta.js') + '\n' + P('viewer.html') + '\n' + P('nav.js') + '\n' + P('analytics.js') + s[e:]
+s = s[:e] + '\n' + P('conta.js') + '\n' + P('viewer.html') + '\n' + P('nav.js') + '\n' + P('analytics.js') + '\n' + P('gov.js') + s[e:]
 
 # ajustes do app fora do Claude
 troca('<meta name="claude:viewport-fit-sides" content="cover">\n', '')

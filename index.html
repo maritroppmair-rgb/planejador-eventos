@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261110090346"></script>
-<script src="plataforma.js?v=20261110090346"></script>
+<script src="config.js?v=20261110101619"></script>
+<script src="plataforma.js?v=20261110101619"></script>
 </head>
 <body>
 
@@ -385,13 +385,29 @@ label.btn{display:inline-block}
 a.btn{text-decoration:none;display:inline-block}
 @media (max-width:700px){.dviewer{padding:0}.dv-box{height:100vh;height:100dvh;width:100%;border-radius:0}.dv-head{flex-wrap:wrap}.dv-head b{flex-basis:100%}}
 /* ---------- permissões por cargo (a segurança de verdade está nas regras do Firestore) ---------- */
-body:not(.pode-excluir) :is([data-del],[data-delok],[data-gdel],[data-ddel],[data-sdel],[data-cdel]){display:none!important}
-body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#dform,#cnova,#knova,#dnova,[data-iform],[data-isync],[data-iatual],[data-iaviso],[data-dedit]){display:none!important}
+body:not(.pode-excluir) :is([data-del],[data-delok],[data-gdel],[data-sdel],[data-cdel]){display:none!important}
+body:not(.pode-editar) :is(#saveplan,#editnew,[data-reg],#cform,#snova,#kform,#cnova,#knova,[data-iform],[data-isync],[data-iatual],[data-iaviso]){display:none!important}
+/* Documentos são de todas as áreas */
+body:not(.pode-docs-excluir) [data-ddel]{display:none!important}
+body:not(.pode-docs-editar) :is(#dform,#dnova,[data-dedit]){display:none!important}
 body:not(.pode-editar) :is(#stable,#ctable,#ktab,#k-grid) :is(input,select,textarea,button){pointer-events:none;opacity:.6}
 body:not(.pode-editar) #k-grid{pointer-events:none}
-body:not(.pode-gerir) :is(#parsave,#parreset,#backup,#acesso,.mfoot .del-membro){display:none!important}
+body:not(.pode-gerir) :is(#parsave,#parreset,#backup,#acesso){display:none!important}
 body:not(.pode-gerir) #parform :is(input,select){pointer-events:none;background:var(--surface-2)}
 .aviso-perm{background:var(--amber-bg);border:1px solid var(--amber);border-radius:4px;padding:8px 12px;font-size:13.5px;margin-bottom:14px}
+
+/* áreas no perfil e em Membros */
+.pareas{border:0;padding:0;margin:0;min-width:0}
+.pf-alist{display:flex;flex-wrap:wrap;gap:8px}
+.pf-alist .cargo-ro{flex-basis:100%}
+.pf-a{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:14px;background:var(--surface)}
+.pf-a:has(input:checked){border-color:var(--fg)}
+.pf-a small{color:var(--muted);font-size:12px}
+.pf-a input{accent-color:var(--brand);margin:0}
+.mpapeis{display:flex;flex-wrap:wrap;gap:4px}
+.mrole{display:grid;gap:6px;margin-bottom:12px}
+.mrole h5{margin:0;font-family:var(--label);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.aviso-bk{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
 /* ---------- menu lateral ---------- */
 header.app nav.tabs{display:none!important}
 header.app #dbstatus{display:none}
@@ -905,7 +921,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 
   <!-- MEU PERFIL (aberto pelo círculo no canto superior direito) -->
   <section id="view-perfil" aria-labelledby="pf-title" hidden>
-    <div class="section-head"><div><h2 id="pf-title">Meu perfil</h2><p class="note">O que você preencher aqui aparece para o resto da equipe de Eventos na página Membros.</p></div></div>
+    <div class="section-head"><div><h2 id="pf-title">Meu perfil</h2><p class="note">O que você preencher aqui aparece para o resto da equipe na página Membros.</p></div></div>
     <p class="note" id="pf-noid" hidden style="margin-bottom:12px">Não consegui identificar sua conta nesta página, então o perfil não pode ser salvo. Abra o Planejador com sua conta conectada.</p>
     <div class="pgrid">
       <div class="panel pcard">
@@ -923,7 +939,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
           <div class="field"><label for="pf-apelido">Como prefere ser chamado(a) <span class="rq opt">opcional</span></label><input id="pf-apelido" maxlength="40"></div>
           <div class="field"><label for="pf-email">E-mail USP <span class="rq">obrigatório</span></label><input id="pf-email" type="email" placeholder="seu.nome@usp.br" maxlength="80"><span class="hint">É com ele que o login vai funcionar na versão final.</span></div>
           <div class="field"><label for="pf-tel">Celular / WhatsApp <span class="rq opt">opcional</span></label><input id="pf-tel" type="tel" placeholder="(11) 91234-5678" maxlength="20"></div>
-          <div class="field"><span class="flabel">Cargo</span><p class="cargo-ro" id="pf-cargo-ro">—</p><span class="hint">O cargo é atribuído pela diretoria, na página Membros.</span></div>
+          <fieldset class="field pareas"><legend class="flabel">Minhas áreas <span class="rq opt">marque uma ou mais</span></legend><div class="pf-alist" id="pf-alist"></div><span class="hint">O cargo em cada área é atribuído pela diretoria dela, na página Membros. Sair de uma área tira o seu cargo nela.</span></fieldset>
           <div class="field"><label for="pf-entrada">Semestre de ingresso na Feashion <span class="rq">obrigatório</span></label><select id="pf-entrada"></select></div>
         </div>
         <div class="btns" style="margin-top:14px"><button class="btn" type="submit" id="pfsave">Salvar perfil</button><span class="msg" id="pfmsg" role="status"></span></div>
@@ -933,8 +949,8 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 
   <!-- MEMBROS (aberto pelo círculo no canto superior direito) -->
   <section id="view-membros" aria-labelledby="mb-title" hidden>
-    <div class="section-head"><div><h2 id="mb-title">Membros</h2><p class="note">A equipe de Eventos que usa o Planejador. Cada pessoa cria o próprio perfil pelo círculo no canto superior direito.</p></div><span class="note" id="mcount"></span></div>
-    <div class="mtools"><label for="msearch" class="sr">Buscar membro</label><input id="msearch" type="search" placeholder="Buscar por nome" style="flex:1;min-width:200px;max-width:380px"><label for="mfilter" class="sr">Cargo</label><select id="mfilter"><option value="">Todos os cargos</option></select></div>
+    <div class="section-head"><div><h2 id="mb-title">Membros</h2><p class="note">Quem usa o Planejador, com as áreas e os cargos de cada um. Cada pessoa cria o próprio perfil e escolhe as áreas pelo círculo no canto superior direito.</p></div><span class="note" id="mcount"></span></div>
+    <div class="mtools"><label for="msearch" class="sr">Buscar membro</label><input id="msearch" type="search" placeholder="Buscar por nome" style="flex:1;min-width:200px;max-width:380px"><label for="mfilter" class="sr">Área</label><select id="mfilter"><option value="">Todas as áreas</option></select></div>
     <div class="mgrid" id="mlist"></div>
   </section>
 
@@ -1988,7 +2004,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var ft=$('dform').querySelector('.btns:last-child'),del=el('<button type="button" class="btn small ghost tdanger" id="d-del" hidden>Excluir</button>');ft.appendChild(del);
   segmentar('d-tipo');
   /* quando o painel abre para editar, mostra o Excluir */
-  var obs=new MutationObserver(function(){var ed=!!docEdit;if(!$('dform-gav').hidden){var dx=ed?docs.filter(function(d){return d.id===docEdit;})[0]:null;opcoesMembros($('d-resp'),dx?dx.resp:'');}del.hidden=!ed||!pode('excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
+  var obs=new MutationObserver(function(){var ed=!!docEdit;if(!$('dform-gav').hidden){var dx=ed?docs.filter(function(d){return d.id===docEdit;})[0]:null;opcoesMembros($('d-resp'),dx?dx.resp:'');}del.hidden=!ed||!pode('docs-excluir');if(!ed){delete del.dataset.sure;del.textContent='Excluir';}pintar('d-tipo');});
   obs.observe($('dform-gav'),{attributes:true,attributeFilter:['hidden']});
   del.addEventListener('click',function(){confirma(del,'Confirmar exclusão',function(){var id=docEdit;db.doc('documentos/'+id).delete().then(function(){fecharGav('dform','Documento excluído.');}).catch(function(){$('dmsg').textContent='Não foi possível excluir.';});});});
   renderDocs=function(){
@@ -2459,31 +2475,79 @@ function $(id){return document.getElementById(id);}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function cmp(a,b){return String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base'});}
 var THEMEKEY='feashion-tema';
-var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee']; /* os que a diretoria pode atribuir */
-var ORDEM=['DEV'].concat(CARGOS);
+/* ---------- áreas, hierarquia e permissões (iguais às regras do Firestore: firestore.rules) ----------
+   Cada pessoa escolhe as áreas no perfil; a diretoria da área atribui o cargo nela. A presidência fica fora das áreas.
+   Hierarquia: DEV > Presidente > Vice-presidente > Diretor(a) > Coordenador(a) > Membro(a) > Trainee > Sem cargo.
+   Só quem está acima muda o cargo de quem está abaixo. */
+var AREAS=['Eventos','Financeiro','RH','C&D','Marketing'];
+var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee'];
+var PRES=['Presidente','Vice-presidente'];
+var NIVEL={'DEV':0,'Presidente':1,'Vice-presidente':2,'Diretor(a)':3,'Coordenador(a)':4,'Membro(a)':5,'Trainee':6};
+function nv(c){return Object.prototype.hasOwnProperty.call(NIVEL,c)?NIVEL[c]:7;}
+function tem(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
 function souDev(){return !!window.__souDev;}
-function gestor(){return souDev()||cargoOf(myDoc)==='Diretor(a)';}
-/* o que cada cargo pode fazer (igual às regras do Firestore) */
-var PODE={
-  'DEV':{editar:1,excluir:1,gerir:1},'Diretor(a)':{editar:1,excluir:1,gerir:1},
-  'Coordenador(a)':{editar:1,excluir:1,gerir:0},'Membro(a)':{editar:1,excluir:1,gerir:0},
-  'Trainee':{editar:1,excluir:0,gerir:0},'':{editar:0,excluir:0,gerir:0}
-};
-function permissoes(){var c=souDev()?'DEV':cargoOf(myDoc);return PODE[c]||PODE[''];}
+function ehDevM(m){return !!m&&m.cargo==='DEV';}
+function presOf(m){var p=m&&m.presidencia;return PRES.indexOf(p)>=0?p:'';}
+/* áreas do perfil ({Eventos:'Diretor(a)', RH:''}); perfis antigos, sem áreas, são de Eventos com o cargo que tinham */
+function areasOf(m){
+  var out={};if(!m)return out;
+  if(m.areas&&typeof m.areas==='object'){AREAS.forEach(function(a){if(tem(m.areas,a))out[a]=CARGOS.indexOf(m.areas[a])>=0?m.areas[a]:'';});return out;}
+  var c=cargoOf(m);if(c==='DEV')return out;
+  out.Eventos=CARGOS.indexOf(c)>=0?c:'';return out;
+}
+function valores(o){return Object.keys(o).map(function(k){return o[k];});}
+function topo(m){if(ehDevM(m))return 0;return Math.min.apply(null,[nv(presOf(m))].concat(valores(areasOf(m)).map(nv)));}
+function meuG(){return souDev()?0:nv(presOf(myDoc));}
+function meuCargoEm(a){var ar=areasOf(myDoc);return tem(ar,a)?ar[a]:null;}
+function diretorAlgum(){return meuG()<=2||valores(areasOf(myDoc)).indexOf('Diretor(a)')>=0;}
+/* o que eu posso fazer numa área ('Comum' = Documentos: vale o melhor cargo em qualquer área) */
+function podeEm(a){
+  if(meuG()<=2)return {ver:1,editar:1,excluir:1,gerir:1};
+  var n;
+  if(a==='Comum'){n=Math.min.apply(null,[7].concat(valores(areasOf(myDoc)).map(nv)));return {ver:1,editar:n<=6?1:0,excluir:n<=5?1:0,gerir:0};}
+  var c=meuCargoEm(a);
+  if(c==null)return {ver:diretorAlgum()?1:0,editar:0,excluir:0,gerir:0}; /* diretoria de outra área só lê */
+  n=nv(c);return {ver:1,editar:n<=6?1:0,excluir:n<=5?1:0,gerir:n<=3?1:0};
+}
+/* estou acima do cargo c na área a? (presidência vale em todas; diretoria só na própria área) */
+function souAcima(a,c){return meuG()<nv(c)||(meuCargoEm(a)==='Diretor(a)'&&3<nv(c));}
+function opcoesArea(m,a){
+  var ar=areasOf(m);if(m.id===meId||ehDevM(m)||!tem(ar,a)||!souAcima(a,ar[a])||!souAcima(a,presOf(m)))return null;
+  return [''].concat(CARGOS).filter(function(c){return souAcima(a,c);});
+}
+function opcoesPres(m){
+  if(m.id===meId||ehDevM(m)||meuG()>1||!(meuG()<nv(presOf(m))))return null;
+  return [''].concat(PRES).filter(function(c){return !c||meuG()<nv(c);});
+}
+function podeRemover(m){
+  if(!m||m.id===meId||ehDevM(m)||!diretorAlgum())return false;
+  if(presOf(m)&&!(meuG()<nv(presOf(m))))return false;
+  var ar=areasOf(m);return Object.keys(ar).every(function(a){return souAcima(a,ar[a]);});
+}
+var carregado=false;
 function aplicarPermissoes(){
-  var p=permissoes(),b=document.body;
-  b.classList.toggle('pode-editar',!!p.editar);b.classList.toggle('pode-excluir',!!p.excluir);b.classList.toggle('pode-gerir',!!p.gerir);
-  var av=document.getElementById('aviso-perm');
-  var msg=!meId?'':!myDoc&&!souDev()?'Crie seu perfil (círculo no canto superior direito). Depois que a diretoria atribuir seu cargo, você poderá editar.':!p.editar?'Você ainda não tem cargo: por enquanto só pode visualizar. A diretoria atribui o cargo na página Membros.':'';
+  var pe=podeEm('Eventos'),pc=podeEm('Comum'),b=document.body;
+  b.classList.toggle('pode-editar',!!pe.editar);b.classList.toggle('pode-excluir',!!pe.excluir);b.classList.toggle('pode-gerir',!!pe.gerir);
+  b.classList.toggle('pode-docs-editar',!!pc.editar);b.classList.toggle('pode-docs-excluir',!!pc.excluir);b.classList.toggle('pode-governo',diretorAlgum());
+  var av=document.getElementById('aviso-perm'),ar=areasOf(myDoc),ks=Object.keys(ar);
+  var msg=!meId||!carregado||meuG()<=2?'':!myDoc?'Crie seu perfil (círculo no canto superior direito) e escolha sua área. Depois a diretoria da área atribui seu cargo.':
+    !ks.length?'Escolha sua área em Meu perfil. Depois a diretoria da área atribui seu cargo.':
+    ks.every(function(a){return !ar[a];})?'Você ainda não tem cargo: por enquanto só pode visualizar. A diretoria da sua área atribui o cargo na página Membros.':'';
   if(msg){if(!av){av=el('div','aviso-perm');av.id='aviso-perm';av.setAttribute('role','status');var mn=document.querySelector('main');mn.insertBefore(av,mn.firstChild);}av.textContent=msg;}
   else if(av)av.remove();
   var pn=document.getElementById('par-aviso');
-  if(!p.gerir){if(!pn){pn=el('p','aviso-perm','Só a diretoria altera os parâmetros. Você pode consultar os valores atuais.');pn.id='par-aviso';var v=document.getElementById('view-par');if(v){var h=v.querySelector('.section-head');v.insertBefore(pn,h?h.nextSibling:v.firstChild);}}}
+  if(!pe.gerir){if(!pn){pn=el('p','aviso-perm','Só a diretoria de Eventos e a presidência alteram os parâmetros. Você pode consultar os valores atuais.');pn.id='par-aviso';var v=document.getElementById('view-par');if(v){var h=v.querySelector('.section-head');v.insertBefore(pn,h?h.nextSibling:v.firstChild);}}}
   else if(pn)pn.remove();
+  if(carregado)document.dispatchEvent(new CustomEvent('permissoes'));
 }
+window.__perm={
+  carregado:function(){return carregado;},podeEm:podeEm,diretorAlgum:diretorAlgum,
+  /* lixeira: presidência e DEV restauram tudo; a diretoria só o que é da própria área */
+  podeRestaurar:function(area){return meuG()<=2||(area!=='Comum'&&meuCargoEm(area)==='Diretor(a)')||(area==='Comum'&&valores(areasOf(myDoc)).indexOf('Diretor(a)')>=0);}
+};
 var TONES=['#8a0d10','#2b2424','#5e1a1d','#7a5c52','#a8483f'];
 var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/></svg>';
-var db=null,meInfo=null,meId=null,members=[],myDoc=null,pendingFoto,pfDirty=false;
+var db=null,meInfo=null,meId=null,members=[],myDoc=null,pendingFoto,pfDirty=false,migrou=false;
 
 function tone(k){var h=0;k=String(k||'');for(var i=0;i<k.length;i++)h=(h*31+k.charCodeAt(i))>>>0;return TONES[h%TONES.length];}
 function initials(n){var p=String(n||'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '';return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
@@ -2539,7 +2603,7 @@ function renderMe(){
   var fb=meInfo&&meInfo.id?meInfo.avatarUrl:null;
   fillAvatar($('avbtn'),myDoc,fb);fillAvatar($('m-av'),myDoc,fb);
   $('m-nome').textContent=myName();
-  $('m-sub').textContent=myDoc?(cargoOf(myDoc)||'Sem cargo'):'Perfil ainda não preenchido';
+  $('m-sub').textContent=myDoc?resumo(myDoc):'Perfil ainda não preenchido';
   var nVis=membrosVisiveis().length;$('m-count').textContent=nVis?String(nVis):'';
   $('avbtn').setAttribute('aria-label','Conta de '+myName()+': perfil, membros e aparência');
   aplicarPermissoes();
@@ -2570,7 +2634,9 @@ function cargoOf(m){
   }
   return '';
 }
-function rank(c){var i=ORDEM.indexOf(c);return i<0?9:i;}
+/* "Presidente", "Eventos · Diretor(a)" */
+function papeis(m){if(ehDevM(m))return ['DEV'];var out=[],p=presOf(m),ar=areasOf(m);if(p)out.push(p);AREAS.forEach(function(a){if(tem(ar,a))out.push(a+' · '+(ar[a]||'Sem cargo'));});return out;}
+function resumo(m){return papeis(m).join(', ')||'Sem área';}
 function semestres(){var d=new Date(),y=d.getFullYear(),s=d.getMonth()>=6?2:1,out=[];while(y>=2019){out.push(y+'.'+s);if(s===2)s=1;else{s=2;y--;}}return out;}
 function fillSelect(sel,first,list,val){
   sel.textContent='';sel.appendChild(new Option(first,''));
@@ -2578,6 +2644,17 @@ function fillSelect(sel,first,list,val){
   if(val&&list.indexOf(val)<0)sel.appendChild(new Option(val,val));
   sel.value=val||'';
 }
+function renderAreasPerfil(){
+  var box=$('pf-alist'),ar=areasOf(myDoc),p=presOf(myDoc);box.textContent='';
+  if(ehDevM(myDoc)||p)box.appendChild(el('p','cargo-ro',ehDevM(myDoc)?'DEV':p));
+  AREAS.forEach(function(a){
+    var lb=el('label','pf-a'),ck=el('input');ck.type='checkbox';ck.value=a;ck.checked=tem(ar,a);
+    lb.appendChild(ck);lb.appendChild(el('span',null,a));
+    if(tem(ar,a))lb.appendChild(el('small',null,ar[a]||'sem cargo ainda'));
+    box.appendChild(lb);
+  });
+}
+$('pf-alist').addEventListener('change',function(){pfDirty=true;});
 function pmsg(t,err){var m=$('pfmsg');m.textContent=t;m.classList.toggle('err',!!err);}
 function renderPerfil(){
   $('pf-noid').hidden=!!meId||!db;$('pfsave').disabled=!meId||!db;
@@ -2585,7 +2662,7 @@ function renderPerfil(){
   $('pfsave').textContent=myDoc?'Salvar perfil':'Criar perfil';
   if(!pfDirty){
     Object.keys(FIELDS).forEach(function(k){var i=$(FIELDS[k]);i.value=(myDoc&&myDoc[k])||'';if(k==='telefone')i.value=telMostrar(i.value);i.removeAttribute('aria-invalid');});
-    $('pf-cargo-ro').textContent=cargoOf(myDoc)||'Ainda sem cargo';
+    renderAreasPerfil();
     fillSelect($('pf-entrada'),'Escolha o semestre',semestres(),myDoc&&myDoc.entrada);
     $('pf-entrada').removeAttribute('aria-invalid');
     pendingFoto=undefined;
@@ -2629,6 +2706,11 @@ $('pfform').addEventListener('submit',function(e){
   Object.keys(FIELDS).forEach(function(k){data[k]=v(FIELDS[k]);});
   data.telefone=fmtTel(data.telefone);
   data.email=data.email.toLowerCase();data.cargo=(myDoc&&myDoc.cargo)||(souDev()?'DEV':'');data.entrada=v('pf-entrada');
+  /* áreas: quem entra numa área entra sem cargo; quem sai perde o cargo nela. Presidência e cargos não mudam aqui. */
+  var antes=areasOf(myDoc);data.areas={};
+  [].forEach.call($('pf-alist').querySelectorAll('input:checked'),function(ck){data.areas[ck.value]=tem(antes,ck.value)?antes[ck.value]:'';});
+  data.presidencia=presOf(myDoc);
+  if(myDoc&&myDoc.cargoPor){data.cargoPor=myDoc.cargoPor;data.cargoEm=myDoc.cargoEm||'';}
   var dup=members.filter(function(m){return m.id!==meId&&String(m.email||'').toLowerCase()===data.email;})[0];
   if(dup){$('pf-email').setAttribute('aria-invalid','true');pmsg('Esse e-mail já está no perfil de '+(dup.nome||'outro membro')+'.',1);return;}
   data.foto=pendingFoto!==undefined?pendingFoto:((myDoc&&okFoto(myDoc.foto))?myDoc.foto:'');
@@ -2641,68 +2723,40 @@ $('pfform').addEventListener('submit',function(e){
 });
 
 /* Membros */
-function card(m){
-  var c=el('article','mcard'+(m.id===meId?' me':''));
-  var top=el('div','mtop'),av=el('span','av md');fillAvatar(av,m,null);top.appendChild(av);
-  var t=el('div','mt');t.appendChild(el('b',null,m.nome||'Sem nome'));
-  var cg=cargoOf(m);t.appendChild(cg==='DEV'?el('span','chip dev','DEV'):el('small',null,cg||'Sem cargo'));
-  if(m.id===meId)t.appendChild(el('span','chip neutral you','você'));
-  top.appendChild(t);c.appendChild(top);
-  var meta=[];if(m.apelido&&m.apelido!==m.nome)meta.push('Prefere “'+m.apelido+'”');if(m.entrada)meta.push('Na Feashion desde '+m.entrada);
-  if(meta.length)c.appendChild(el('p','mmeta',meta.join(' · ')));
-  var lk=el('div','dlinks');
-  if(m.email&&/^[^\s@"<>]+@[^\s@"<>]+$/.test(m.email)){var a=el('a',null,'E-mail');a.href='mailto:'+m.email;a.title=m.email;lk.appendChild(a);}
-  var ph=String(m.telefone||'').replace(/\D/g,'');
-  if(ph.length>=10&&ph.length<=13){if(ph.length<=11)ph='55'+ph;var w=el('a',null,'WhatsApp');w.href='https://wa.me/'+ph;w.target='_blank';w.rel='noopener';lk.appendChild(w);}
-  if(lk.childNodes.length)c.appendChild(lk);
-  /* cargo: só a diretoria (e o DEV) atribui; o DEV não aparece como opção e só o próprio DEV mexe no cargo dele */
-  var protegido=cg==='DEV'&&!souDev();
-  if(m.id!==meId&&!protegido){
-    var foot=el('div','mfoot');
-    if(gestor()){
-      var at=el('button','btn small','Atribuir cargo');at.type='button';
-      at.addEventListener('click',function(){
-        var box=el('div','mcargo'),s=el('select');s.setAttribute('aria-label','Cargo de '+(m.nome||'membro'));
-        s.appendChild(new Option('Sem cargo',''));CARGOS.forEach(function(x){s.appendChild(new Option(x,x));});s.value=CARGOS.indexOf(cg)>=0?cg:'';
-        var ok=el('button','btn small','Salvar');ok.type='button';var no=el('button','btn small ghost','Cancelar');no.type='button';var ms=el('span','msg');
-        ok.addEventListener('click',function(){ok.disabled=true;db.doc('membros/'+m.id).update({cargo:s.value,cargoPor:meId,cargoEm:new Date().toISOString()}).catch(function(){ms.textContent='Não foi possível salvar.';ok.disabled=false;});});
-        no.addEventListener('click',function(){renderMembros();});
-        box.appendChild(s);box.appendChild(ok);box.appendChild(no);box.appendChild(ms);foot.replaceChild(box,at);s.focus();
-      });
-      foot.appendChild(at);
-    }
-    var del=el('button','btn small ghost del-membro','Excluir');del.type='button';
-    del.addEventListener('click',function(){
-      if(!del.dataset.sure){del.dataset.sure='1';del.textContent='Confirmar exclusão';clearTimeout(del._t);del._t=setTimeout(function(){delete del.dataset.sure;del.textContent='Excluir';},5000);return;}
-      db.doc('membros/'+m.id).delete().catch(function(){});
-    });
-    foot.appendChild(del);c.appendChild(foot);
-  }
-  return c;
-}
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var CCH={'DEV':'neutral','Diretor(a)':'wine','Coordenador(a)':'ok','Membro(a)':'ok','Trainee':'warn','':'neutral'};
 function zap(m){var ph=String(m.telefone||'').replace(/\D/g,'');if(ph.length<10||ph.length>13)return '';if(ph.length<=11)ph='55'+ph;return 'https://wa.me/'+ph;}
-var mCargoSel=null;
+var mSel={};
+function segCargo(k,opts,cur,rot){return '<div class="seg tseg" role="group" aria-label="'+esc(rot)+'" data-mk="'+esc(k)+'">'+opts.map(function(c){return '<button type="button" data-cg="'+esc(c)+'" aria-pressed="'+(c===cur)+'"'+(c===cur?' class="on"':'')+'>'+esc(c||(k==='__p'?'Nenhuma':'Sem cargo'))+'</button>';}).join('')+'</div>';}
 function mPainel(id){var m=members.filter(function(x){return x.id===id;})[0];if(!m)return null;
-  var cg=cargoOf(m),protegido=cg==='DEV'&&!souDev(),pode=gestor()&&m.id!==meId&&!protegido&&cg!=='DEV';
-  var em=m.email&&/^[^\s@"<>]+@[^\s@"<>]+$/.test(m.email)?m.email:'',z=zap(m);
+  var em=m.email&&/^[^\s@"<>]+@[^\s@"<>]+$/.test(m.email)?m.email:'',z=zap(m),eu=m.id===meId;
   var info='<div class="tmem"><span class="av md tp-av"></span><dl class="kv">'+
     '<dt>Como prefere ser chamado(a)</dt><dd>'+esc(m.apelido||'—')+'</dd><dt>Na Feashion desde</dt><dd>'+esc(m.entrada||'—')+'</dd>'+
     '<dt>E-mail</dt><dd>'+(em?'<a href="mailto:'+esc(em)+'">'+esc(em)+'</a>':'—')+'</dd><dt>Celular</dt><dd>'+(m.telefone?esc(telMostrar(m.telefone))+(z?' · <a href="'+esc(z)+'" target="_blank" rel="noopener">WhatsApp</a>':''):'—')+'</dd></dl></div>';
-  var cargo;
-  if(cg==='DEV')cargo='<p class="note" style="margin:0">Cargo técnico, só do Pedro. Ninguém altera.</p>';
-  else if(pode){var v=mCargoSel==null?cg:mCargoSel;cargo='<div class="seg tseg" role="group" id="m-seg">'+[''].concat(CARGOS).map(function(c){return '<button type="button" data-cg="'+esc(c)+'" aria-pressed="'+(c===v)+'"'+(c===v?' class="on"':'')+'>'+(c||'Sem cargo')+'</button>';}).join('')+'</div><p class="note" style="margin:8px 0 0">Sem cargo = só visualiza. Diretor(a) mexe em tudo; Coordenador(a) e Membro(a) não mexem em Parâmetros e Membros; Trainee não exclui.</p>';}
-  else cargo='<p style="margin:0"><span class="chip '+(CCH[cg]||'neutral')+'">'+esc(cg||'Sem cargo')+'</span></p>'+(m.id===meId?'<p class="note" style="margin:8px 0 0">Quem muda o cargo é a diretoria.</p>':'');
-  var corpo='<div class="tp-blk">'+info+'</div><div class="tp-blk"><h4>Cargo</h4>'+cargo+'</div>';
-  var rod='<div class="btns">'+(pode?'<button type="button" class="btn" id="m-salvar">Salvar cargo</button>':'')+(m.id===meId?'<button type="button" class="btn ghost" id="m-perfil">Editar meu perfil</button>':'')+'<button type="button" class="btn ghost" data-tclose>Fechar</button><span class="msg" id="m-msg"></span></div>'+
-    (gestor()&&m.id!==meId&&!protegido&&cg!=='DEV'?'<button type="button" class="btn small ghost tdanger" id="m-del">Tirar do app</button>':'');
+  var cargo='',edita=false;
+  if(ehDevM(m))cargo='<p class="note" style="margin:0">Cargo técnico, só do Pedro. Ninguém altera.</p>';
+  else{
+    var p=presOf(m),po=opcoesPres(m),ar=areasOf(m);
+    if(po){edita=true;cargo+='<div class="mrole"><h5>Presidência</h5>'+segCargo('__p',po,tem(mSel,'__p')?mSel.__p:p,'Presidência de '+(m.nome||'membro'))+'</div>';}
+    else if(p)cargo+='<div class="mrole"><h5>Presidência</h5><span class="chip wine">'+esc(p)+'</span></div>';
+    AREAS.forEach(function(a){if(!tem(ar,a))return;var op=opcoesArea(m,a);
+      cargo+='<div class="mrole"><h5>'+esc(a)+'</h5>'+(op?segCargo(a,op,tem(mSel,a)?mSel[a]:ar[a],'Cargo em '+a):'<span class="chip '+(CCH[ar[a]]||'neutral')+'">'+esc(ar[a]||'Sem cargo')+'</span>')+'</div>';
+      if(op)edita=true;});
+    if(!p&&!Object.keys(ar).length)cargo+='<p class="note" style="margin:0">'+(eu?'Você ainda não escolheu nenhuma área. Escolha em Meu perfil.':'Ainda não escolheu nenhuma área no perfil.')+'</p>';
+    if(edita)cargo+='<p class="note" style="margin:8px 0 0">Sem cargo = só vê a área. Diretor(a) faz tudo na área e atribui cargos; Coordenador(a) e Membro(a) editam e excluem; Trainee edita sem excluir. Você só atribui cargos abaixo do seu.</p>';
+    else if(eu)cargo+='<p class="note" style="margin:8px 0 0">Quem muda o seu cargo é a diretoria da área ou a presidência.</p>';
+  }
+  var corpo='<div class="tp-blk">'+info+'</div><div class="tp-blk"><h4>Áreas e cargos</h4>'+cargo+'</div>';
+  var rod='<div class="btns">'+(edita?'<button type="button" class="btn" id="m-salvar">Salvar cargos</button>':'')+(eu?'<button type="button" class="btn ghost" id="m-perfil">Editar meu perfil</button>':'')+'<button type="button" class="btn ghost" data-tclose>Fechar</button><span class="msg" id="m-msg"></span></div>'+
+    (podeRemover(m)?'<button type="button" class="btn small ghost tdanger" id="m-del">Tirar do app</button>':'');
   return {titulo:m.nome||'Sem nome',sub:esc(em),corpo:corpo,rodape:rod};}
-function mAbrir(id){mCargoSel=null;window.painelAbrir({sec:'view-membros',montar:function(){return mPainel(id);},aoFechar:function(){mCargoSel=null;},depois:function(dr){
+function mAbrir(id){mSel={};window.painelAbrir({sec:'view-membros',montar:function(){return mPainel(id);},aoFechar:function(){mSel={};},depois:function(dr){
   var m=members.filter(function(x){return x.id===id;})[0];var av=dr.querySelector('.tp-av');if(av&&m)fillAvatar(av,m,null);
-  var sg=dr.querySelector('#m-seg');if(sg)sg.addEventListener('click',function(e){var b=e.target.closest('[data-cg]');if(!b)return;mCargoSel=b.dataset.cg;[].forEach.call(sg.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});});
-  var sv=dr.querySelector('#m-salvar');if(sv)sv.addEventListener('click',function(){var c=mCargoSel==null?cargoOf(m):mCargoSel;sv.disabled=true;
-    db.doc('membros/'+id).update({cargo:c,cargoPor:meId,cargoEm:new Date().toISOString()}).then(function(){mCargoSel=null;var ms=document.getElementById('m-msg');if(ms)ms.textContent='Cargo salvo.';}).catch(function(){sv.disabled=false;var ms=document.getElementById('m-msg');if(ms)ms.textContent='Não foi possível salvar.';});});
+  [].forEach.call(dr.querySelectorAll('[data-mk]'),function(sg){sg.addEventListener('click',function(e){var b=e.target.closest('[data-cg]');if(!b)return;mSel[sg.dataset.mk]=b.dataset.cg;[].forEach.call(sg.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});});});
+  var sv=dr.querySelector('#m-salvar');if(sv)sv.addEventListener('click',function(){if(!m)return;sv.disabled=true;
+    var ar=areasOf(m),up={cargoPor:meId,cargoEm:new Date().toISOString()};
+    Object.keys(mSel).forEach(function(k){if(k==='__p')up.presidencia=mSel.__p;else ar[k]=mSel[k];});up.areas=ar;
+    db.doc('membros/'+id).update(up).then(function(){mSel={};var ms=document.getElementById('m-msg');if(ms)ms.textContent='Cargos salvos.';}).catch(function(){sv.disabled=false;var ms=document.getElementById('m-msg');if(ms)ms.textContent='Não foi possível salvar.';});});
   var pf=dr.querySelector('#m-perfil');if(pf)pf.addEventListener('click',function(){window.painelFechar();showView('perfil');});
   var dl=dr.querySelector('#m-del');if(dl)dl.addEventListener('click',function(){if(!dl.dataset.sure){dl.dataset.sure='1';dl.textContent='Confirmar: tirar do app';setTimeout(function(){delete dl.dataset.sure;dl.textContent='Tirar do app';},5000);return;}
     db.doc('membros/'+id).delete().then(function(){window.painelFechar();}).catch(function(){});});
@@ -2711,31 +2765,37 @@ function mAbrir(id){mCargoSel=null;window.painelAbrir({sec:'view-membros',montar
 function membrosVisiveis(){return window.OCULTAR_DEV_EM_MEMBROS?members.filter(function(m){return cargoOf(m)!=='DEV';}):members;}
 function renderMembros(){
   var members=membrosVisiveis();
-  var sel=$('mfilter'),cur=sel.value,extra={};
-  members.forEach(function(m){var c=cargoOf(m);if(c&&CARGOS.indexOf(c)<0)extra[c]=1;});
-  var opts=CARGOS.concat(Object.keys(extra).sort(function(a,b){return rank(a)-rank(b);}));
-  if(members.some(function(m){return !cargoOf(m);}))opts.push('Sem cargo');
-  sel.textContent='';sel.appendChild(new Option('Todos os cargos',''));
+  var sel=$('mfilter'),cur=sel.value,opts=['Presidência'].concat(AREAS,['Sem área']);
+  sel.textContent='';sel.appendChild(new Option('Todas as áreas',''));
   opts.forEach(function(c){sel.appendChild(new Option(c,c));});
   sel.value=opts.indexOf(cur)>=0?cur:'';
   var fc=sel.value,q=$('msearch').value.toLowerCase().trim();
   var rows=members.filter(function(m){
-    if(fc&&(cargoOf(m)||'Sem cargo')!==fc)return false;if(!q)return true;
-    return [m.nome,m.apelido,m.email,cargoOf(m)].join(' ').toLowerCase().indexOf(q)>=0;
-  }).sort(function(a,b){return rank(cargoOf(a))-rank(cargoOf(b))||cmp(a.nome,b.nome);});
-  var sem=members.filter(function(m){return !cargoOf(m);}).length;
-  $('mcount').textContent=members.length?(rows.length===members.length?members.length+(members.length===1?' membro':' membros'):rows.length+' de '+members.length)+(sem&&gestor()?' · '+sem+' sem cargo':''):'';
+    var ar=areasOf(m);
+    if(fc==='Presidência'&&!presOf(m))return false;
+    if(fc==='Sem área'&&(ehDevM(m)||presOf(m)||Object.keys(ar).length))return false;
+    if(AREAS.indexOf(fc)>=0&&!tem(ar,fc))return false;
+    if(!q)return true;
+    return [m.nome,m.apelido,m.email,resumo(m)].join(' ').toLowerCase().indexOf(q)>=0;
+  }).sort(function(a,b){return topo(a)-topo(b)||cmp(a.nome,b.nome);});
+  var sem=members.filter(function(m){return topo(m)===7;}).length;
+  $('mcount').textContent=members.length?(rows.length===members.length?members.length+(members.length===1?' membro':' membros'):rows.length+' de '+members.length)+(sem&&diretorAlgum()?' · '+sem+' sem cargo':''):'';
   var list=$('mlist');list.textContent='';list.className='';
   if(!db){list.appendChild(el('p','empty','Sem base conectada.'));return;}
   if(!members.length){list.appendChild(el('p','empty','Ninguém criou perfil ainda. Comece pelo seu: clique no círculo no canto superior direito e em Meu perfil.'));return;}
-  var tw=el('div','tablewrap'),t=el('table','tlist'),hd=el('thead'),tr0=el('tr');['Pessoa','Cargo','Ingresso','Contato'].forEach(function(x){tr0.appendChild(el('th',null,x));});hd.appendChild(tr0);t.appendChild(hd);
+  var tw=el('div','tablewrap'),t=el('table','tlist'),hd=el('thead'),tr0=el('tr');['Pessoa','Áreas e cargos','Ingresso','Contato'].forEach(function(x){tr0.appendChild(el('th',null,x));});hd.appendChild(tr0);t.appendChild(hd);
   var tb=el('tbody');
   if(!rows.length){var tr=el('tr'),td=el('td','empty','Nenhum membro encontrado.');td.colSpan=4;tr.appendChild(td);tb.appendChild(tr);}
   rows.forEach(function(m){var tr=el('tr');tr.dataset.mopen=m.id;tr.tabIndex=0;
     var c1=el('td'),w=el('div','twho'),av=el('span','av sm');fillAvatar(av,m,null);w.appendChild(av);var tx=el('span');tx.appendChild(el('span','tn',m.nome||'Sem nome'));
     var sb=[];if(m.apelido&&m.apelido!==m.nome)sb.push('“'+m.apelido+'”');if(m.email)sb.push(m.email);tx.appendChild(el('span','tsub',sb.join(' · ')));
     if(m.id===meId)tx.firstChild.appendChild(el('span','chip neutral you',' você'));w.appendChild(tx);c1.appendChild(w);tr.appendChild(c1);
-    var cg=cargoOf(m),c2=el('td');c2.appendChild(el('span','chip '+(CCH[cg]||'neutral'),cg||'Sem cargo'));tr.appendChild(c2);
+    var c2=el('div','mpapeis'),ar=areasOf(m),p=presOf(m);
+    if(ehDevM(m))c2.appendChild(el('span','chip neutral','DEV'));
+    if(p)c2.appendChild(el('span','chip wine',p));
+    AREAS.forEach(function(a){if(tem(ar,a))c2.appendChild(el('span','chip '+(CCH[ar[a]]||'neutral'),a+' · '+(ar[a]||'Sem cargo')));});
+    if(!c2.childNodes.length)c2.appendChild(el('span','chip neutral','Sem área'));
+    var td2=el('td');td2.appendChild(c2);tr.appendChild(td2);
     tr.appendChild(el('td',null,m.entrada||'—'));tr.appendChild(el('td',null,m.telefone?telMostrar(m.telefone):'—'));tb.appendChild(tr);});
   t.appendChild(tb);tw.appendChild(t);list.appendChild(tw);
   if(window.painelAtualizar)window.painelAtualizar('view-membros');
@@ -2756,9 +2816,12 @@ if(window.claude&&window.claude.use){
     db.collection('membros').onSnapshot(function(s){
       members=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});
       myDoc=members.filter(function(m){return m.id===meId;})[0]||null;
+      carregado=true;
+      /* perfis antigos (só cargo) ganham a área Eventos com o mesmo cargo; quem grava é o DEV, sem entrar no histórico */
+      if(souDev()&&!migrou){migrou=true;members.forEach(function(m){if(m.areas||ehDevM(m))return;window.__semRegistro=true;db.doc('membros/'+m.id).update({areas:areasOf(m)}).catch(function(){});window.__semRegistro=false;});}
       if(myDoc&&!getTheme()&&(myDoc.tema==='light'||myDoc.tema==='dark'))applyTheme(myDoc.tema);
       renderMe();
-      window.__membros=members.map(function(m){return {id:m.id,nome:m.nome||m.email||'Sem nome',apelido:m.apelido||''};}).sort(function(a,b){return cmp(a.nome,b.nome);});
+      window.__membros=members.map(function(m){return {id:m.id,nome:m.nome||m.email||'Sem nome',apelido:m.apelido||'',areas:areasOf(m)};}).sort(function(a,b){return cmp(a.nome,b.nome);});
       window.__euId=meId;window.__meuNome=(myDoc&&myDoc.nome)||(meInfo&&meInfo.name)||'';
       document.dispatchEvent(new CustomEvent('membros'));
       if(!$('view-membros').hidden)renderMembros();
@@ -2897,12 +2960,16 @@ var I={
   docs:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
   par:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
   membros:'<circle cx="9" cy="9" r="3"/><path d="M3 20c.9-3 3.2-4.6 6-4.6s5.1 1.6 6 4.6"/><path d="M16 6.5a3 3 0 0 1 0 5.6M18 15.6c1.4.6 2.4 2 3 4.4"/>',
-  perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>'
+  perfil:'<circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.4-4 4.4-6 8-6s6.6 2 8 6"/>',
+  lixeira:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'
 };
+/* área dona de cada tela: some do menu de quem não tem acesso (Documentos e Membros são de todos; Lixeira e Histórico, da diretoria para cima) */
+var AREA={ia:'Eventos',plan:'Eventos',base:'Eventos',ana:'Eventos',mail:'Eventos',conv:'Eventos',salas:'Eventos',cal:'Eventos',par:'Eventos',lixeira:'gov',hist:'gov'};
 var GRUPOS=[
   ['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
   ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['cal','Calendário','tab'],['docs','Documentos','tab']]],
-  ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go']]]
+  ['Ajustes',[['par','Parâmetros','tab'],['membros','Membros','go'],['lixeira','Lixeira','view'],['hist','Histórico','view']]]
 ];
 function icone(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+I[k]+'</svg>';}
 var main=document.querySelector('main'),hdr=document.querySelector('header.app');
@@ -2946,7 +3013,7 @@ back.addEventListener('click',fechar);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('open')){fechar();hb.focus();}});
 
 /* navegação */
-function esconderAna(){['view-ana','view-mail','view-ia'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
+function esconderAna(){['view-ana','view-mail','view-ia','view-lixeira','view-hist'].forEach(function(k){var a=$(k);if(a&&!a.hidden)a.hidden=true;});}
 function ir(alvo,modo){
   fechar();
   if(modo==='tab'){esconderAna();var t=$('tab-'+alvo);if(t)t.click();}
@@ -2968,6 +3035,17 @@ function marcar(){
   var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});
   side.querySelectorAll('.sitem').forEach(function(b){if(b.dataset.alvo===vis)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
 }
+function aplicarAreas(){
+  var P=window.__perm;if(!P||!P.carregado())return;
+  side.querySelectorAll('.sgroup').forEach(function(g){var algum=false;
+    g.querySelectorAll('.sitem').forEach(function(b){var a=AREA[b.dataset.alvo];var ok=!a||(a==='gov'?P.diretorAlgum():!!P.podeEm(a).ver);b.hidden=!ok;if(ok)algum=true;});
+    g.hidden=!algum;});
+  /* a tela aberta ficou fora do alcance: vai para a primeira permitida */
+  var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});
+  var bt=vis&&side.querySelector('.sitem[data-alvo="'+vis+'"]');
+  if(bt&&bt.hidden){var f=side.querySelector('.sitem:not([hidden])');if(f)ir(f.dataset.alvo,f.dataset.modo);}
+}
+document.addEventListener('permissoes',aplicarAreas);
 new MutationObserver(marcar).observe(main,{attributes:true,attributeFilter:['hidden'],subtree:true});
 marcar();
 /* altura do cabeçalho para o menu grudar logo abaixo dele */
@@ -3152,6 +3230,130 @@ if(window.claude&&window.claude.use)window.claude.use('db').then(function(db){
   db.collection('convidados').onSnapshot(function(s){convidados=s.docs.map(function(d){return d.data();});if(!f.c){f.c=1;ok();}else render();},function(){});
   db.collection('parametros').onSnapshot(function(s){par={};s.docs.forEach(function(d){if(d.id==='geral')par=d.data()||{};});if(!f.p){f.p=1;ok();}else render();},function(){});
 });
+})();
+</script>
+
+<script>
+/* ---------- governança: Lixeira, Histórico (registro de alterações) e lembrete de backup ----------
+   Quem grava a lixeira e o registro é o plataforma.js (em toda exclusão e gravação). Aqui ficam só as telas.
+   Lixeira e Histórico: diretoria para cima. Presidência e DEV restauram tudo; a diretoria, só o que é da própria área. */
+(function(){
+"use strict";
+function $(i){return document.getElementById(i);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var DIAS_LIXEIRA=30,DIAS_BACKUP=30,PASSO=200;
+var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro'};
+var ACAO={criou:'criou',editou:'editou',excluiu:'excluiu',restaurou:'restaurou',exportou:'exportou',importou:'importou'};
+var CAMPO={areas:'cargos',presidencia:'presidência',responsavel:'responsável',responsavelId:'',hora:'horário',duracao:'duração',obs:'observações',inicio:'início',fim:'fim',penalidade:'penalidade',ativa:'ativa',potencial:'potencial'};
+function tipo(c){return TIPO[c]||c;}
+function quando(s){var d=new Date(s);return isNaN(d)?'—':d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function campos(l){var out=[];(l||[]).forEach(function(k){k=String(k).split('.')[0];var n=k in CAMPO?CAMPO[k]:k;if(n&&out.indexOf(n)<0)out.push(n);});return out.join(', ');}
+var AREAS=['Eventos','Financeiro','RH','C&D','Marketing','Comum'];
+function opcoesArea(sel){var cur=sel.value;sel.textContent='';sel.appendChild(new Option('Todas as áreas',''));AREAS.forEach(function(a){sel.appendChild(new Option(a==='Comum'?'Comum (Documentos, Membros, acesso)':a,a));});sel.value=cur;}
+
+/* telas */
+var main=document.querySelector('main');
+function secao(id,titulo,nota,ferr){
+  var s=document.createElement('section');s.id='view-'+id;s.hidden=true;s.setAttribute('aria-labelledby',id+'-title');
+  s.innerHTML='<div class="section-head"><div><h2 id="'+id+'-title">'+titulo+'</h2><p class="note">'+nota+'</p></div><span class="note" id="'+id+'-count"></span></div><div class="mtools">'+ferr+'</div><div id="'+id+'-list"></div>';
+  main.appendChild(s);return s;
+}
+secao('lixeira','Lixeira','O que foi excluído de eventos, salas, calendário, convidados e documentos fica aqui por '+DIAS_LIXEIRA+' dias. A presidência restaura qualquer coisa; a diretoria, só o que é da própria área.',
+  '<label for="lx-area" class="sr">Área</label><select id="lx-area"></select><span class="msg" id="lx-msg" role="status"></span>');
+secao('hist','Histórico','Quem criou, editou ou excluiu o quê, e quando. Atualizações automáticas (como a nota do clima) não entram.',
+  '<label for="hs-busca" class="sr">Buscar</label><input id="hs-busca" type="search" placeholder="Buscar por pessoa ou item" style="flex:1;min-width:200px;max-width:380px"><label for="hs-area" class="sr">Área</label><select id="hs-area"></select><label for="hs-acao" class="sr">Ação</label><select id="hs-acao"><option value="">Todas as ações</option><option value="criou">Criou</option><option value="editou">Editou</option><option value="excluiu">Excluiu</option><option value="restaurou">Restaurou</option><option value="exportou">Backup</option></select><button type="button" class="btn small ghost" id="hs-atual">Atualizar</button>');
+opcoesArea($('lx-area'));opcoesArea($('hs-area'));
+
+var db=null,P=function(){return window.__perm;};
+var lixo=[],lxOn=false,limpou=false,hist=[],hsLim=PASSO,hsFim=false,hsCarregando=false;
+
+/* ---- Lixeira ---- */
+function lxRender(){
+  var box=$('lixeira-list'),fa=$('lx-area').value,p=P();
+  var rows=lixo.filter(function(x){return !fa||x.area===fa;}).sort(function(a,b){return String(b.em).localeCompare(String(a.em));});
+  $('lixeira-count').textContent=lixo.length?(rows.length===lixo.length?lixo.length+(lixo.length===1?' item':' itens'):rows.length+' de '+lixo.length):'';
+  if(!lixo.length){box.innerHTML='<p class="empty">A lixeira está vazia.</p>';return;}
+  var h='<div class="tablewrap"><table class="tlist"><thead><tr><th>Item</th><th>Área</th><th>Excluído por</th><th>Quando</th><th></th></tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="5" class="empty">Nada nesta área.</td></tr>';
+  rows.forEach(function(x){var pode=p&&p.podeRestaurar(x.area),dias=Math.max(0,DIAS_LIXEIRA-Math.floor((Date.now()-new Date(x.em))/864e5));
+    h+='<tr><td><span class="tn">'+esc(x.nome||'Sem nome')+'</span><span class="tsub">'+esc(tipo(x.colecao))+' · some em '+dias+(dias===1?' dia':' dias')+'</span></td><td>'+esc(x.area==='Comum'?'Comum':x.area)+'</td><td>'+esc(x.porNome||'—')+'</td><td>'+esc(quando(x.em))+'</td><td class="r">'+
+      (pode?'<div class="btns" style="justify-content:flex-end"><button type="button" class="btn small" data-lxres="'+esc(x.id)+'">Restaurar</button><button type="button" class="btn small ghost tdanger" data-lxdel="'+esc(x.id)+'">Excluir de vez</button></div>':'<span class="note">Só a diretoria da área</span>')+'</td></tr>';});
+  box.innerHTML=h+'</tbody></table></div>';
+}
+function lxLimpar(){
+  if(limpou||!db)return;limpou=true;var p=P(),lim=Date.now()-DIAS_LIXEIRA*864e5;
+  lixo.forEach(function(x){if(new Date(x.em)<lim&&p&&p.podeRestaurar(x.area))db.doc('lixeira/'+x.id).delete().catch(function(){});});
+}
+function lxLigar(){
+  if(lxOn||!db)return;lxOn=true;
+  db.collection('lixeira').onSnapshot(function(s){lixo=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});lxLimpar();lxRender();},function(){lxOn=false;});
+}
+$('lx-area').addEventListener('change',lxRender);
+$('lixeira-list').addEventListener('click',function(e){
+  var b=e.target.closest('[data-lxres],[data-lxdel]');if(!b||!db)return;
+  var id=b.dataset.lxres||b.dataset.lxdel,x=lixo.filter(function(y){return y.id===id;})[0];if(!x)return;var msg=$('lx-msg');
+  if(b.dataset.lxdel){
+    if(!b.dataset.sure){b.dataset.sure='1';b.textContent='Confirmar: não dá para desfazer';setTimeout(function(){delete b.dataset.sure;b.textContent='Excluir de vez';},5000);return;}
+    db.doc('lixeira/'+id).delete().then(function(){msg.textContent='Excluído de vez.';},function(){msg.textContent='Não foi possível excluir.';});return;
+  }
+  b.disabled=true;
+  var bt=db.batch();bt.set(db.doc(x.colecao+'/'+x.docId),x.dados||{});bt.delete(db.doc('lixeira/'+id));
+  bt.commit().then(function(){msg.textContent=tipo(x.colecao)+' “'+(x.nome||'sem nome')+'” restaurado.';if(window.__registrar)window.__registrar('restaurou',x.colecao,x.docId,x.nome);},
+    function(){b.disabled=false;msg.textContent='Não foi possível restaurar.';});
+});
+
+/* ---- Histórico ---- */
+function hsCarregar(){
+  if(!db||hsCarregando)return;hsCarregando=true;$('hist-count').textContent='Carregando…';
+  db.collection('registro').orderBy('em','desc').limit(hsLim).get().then(function(s){
+    hist=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});hsFim=s.docs.length<hsLim;hsCarregando=false;hsRender();
+  },function(){hsCarregando=false;$('hist-count').textContent='';$('hist-list').innerHTML='<p class="empty">Não foi possível carregar o histórico.</p>';});
+}
+function hsRender(){
+  var fa=$('hs-area').value,fc=$('hs-acao').value,q=$('hs-busca').value.toLowerCase().trim();
+  var rows=hist.filter(function(x){if(fa&&x.area!==fa)return false;if(fc&&x.acao!==fc&&!(fc==='exportou'&&x.acao==='importou'))return false;
+    return !q||[x.porNome,x.nome,tipo(x.colecao)].join(' ').toLowerCase().indexOf(q)>=0;});
+  $('hist-count').textContent=hist.length?rows.length+(rows.length===1?' registro':' registros')+(hsFim?'':' (os mais recentes)'):'';
+  var box=$('hist-list');
+  if(!hist.length){box.innerHTML='<p class="empty">Nada registrado ainda.</p>';return;}
+  var h='<div class="tablewrap"><table class="tlist"><thead><tr><th>Quando</th><th>Quem</th><th>O quê</th><th>Área</th></tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="4" class="empty">Nenhum registro com esses filtros.</td></tr>';
+  rows.forEach(function(x){
+    var o=x.acao==='exportou'?'<b>exportou o backup</b>':x.acao==='importou'?'<b>importou um backup</b> · '+esc(x.nome):'<b>'+esc(ACAO[x.acao]||x.acao)+'</b> '+esc(tipo(x.colecao).toLowerCase())+' “'+esc(x.nome||x.docId)+'”';
+    var c=x.acao==='editou'?campos(x.campos):'';
+    h+='<tr><td>'+esc(quando(x.em))+'</td><td>'+esc(x.porNome||'—')+'</td><td>'+o+(c?'<span class="tsub">Mudou: '+esc(c)+'</span>':'')+'</td><td>'+esc(x.area||'—')+'</td></tr>';});
+  h+='</tbody></table></div>';
+  if(!hsFim)h+='<div class="btns" style="margin-top:12px"><button type="button" class="btn small ghost" id="hs-mais">Carregar mais</button></div>';
+  box.innerHTML=h;
+}
+$('hs-busca').addEventListener('input',hsRender);$('hs-area').addEventListener('change',hsRender);$('hs-acao').addEventListener('change',hsRender);
+$('hs-atual').addEventListener('click',hsCarregar);
+$('hist-list').addEventListener('click',function(e){if(e.target.id==='hs-mais'){hsLim+=PASSO;hsCarregar();}});
+document.addEventListener('tela',function(e){if(e.detail==='lixeira'){lxLigar();lxRender();}if(e.detail==='hist')hsCarregar();});
+
+/* ---- lembrete de backup (para quem pode exportar: diretoria de Eventos, presidência e DEV) ---- */
+var CH='feashion-backup-adiado',bkVisto=false;
+function bkAviso(dias){
+  var av=$('aviso-backup');
+  if(dias!=null&&dias<DIAS_BACKUP){if(av)av.remove();return;}
+  try{if(sessionStorage.getItem(CH))return;}catch(e){}
+  if(!av){av=document.createElement('div');av.className='aviso-perm aviso-bk';av.id='aviso-backup';av.setAttribute('role','status');main.insertBefore(av,main.firstChild);}
+  av.innerHTML='<span>'+(dias==null?'Ainda não há registro de backup.':'O último backup foi há '+dias+' dias.')+' Baixe um em Parâmetros → Backup (Exportar tudo) e guarde no Drive da diretoria.</span><span class="btns"><button type="button" class="btn small" id="bk-ir">Ir para o backup</button><button type="button" class="btn small ghost" id="bk-depois">Agora não</button></span>';
+  $('bk-ir').addEventListener('click',function(){var b=document.querySelector('.side .sitem[data-alvo="par"]');if(b)b.click();setTimeout(function(){var k=$('backup');if(k)k.scrollIntoView({behavior:'smooth',block:'center'});},60);});
+  $('bk-depois').addEventListener('click',function(){try{sessionStorage.setItem(CH,'1');}catch(e){}av.remove();});
+}
+function bkChecar(){
+  if(bkVisto||!db||!document.body.classList.contains('pode-gerir'))return;bkVisto=true;
+  db.doc('parametros/backup').get().then(function(d){var em=d.exists&&d.data().em;bkAviso(em?Math.floor((Date.now()-new Date(em))/864e5):null);},function(){bkVisto=false;});
+}
+document.addEventListener('backup-feito',function(){var av=$('aviso-backup');if(av)av.remove();});
+
+document.addEventListener('permissoes',function(){
+  var p=P();if(p&&p.diretorAlgum()&&!$('view-lixeira').hidden){lxLigar();}
+  bkChecar();
+  if(!$('view-lixeira').hidden)lxRender();
+});
+if(window.claude&&window.claude.use)window.claude.use('db').then(function(d){db=d;bkChecar();});
 })();
 </script>
 

@@ -18,34 +18,37 @@ Como ele chega nessa resposta, sem jargão:
 - **Compras.** O coffee é calculado para cobrir a grande maioria dos cenários, porque faltar é pior que sobrar.
 - **Aprende com o uso.** Depois do evento, registramos o resultado real. Cada evento registrado deixa a próxima previsão melhor.
 
-Ele funciona no computador e no celular (dá para instalar como app) e todos da equipe veem os mesmos dados ao mesmo tempo.
+Ele funciona no computador e no celular (dá para instalar como app) e todos da equipe veem os mesmos dados ao mesmo tempo. O app já está pronto para receber as outras áreas da Feashion: cada pessoa entra com as suas áreas e vê o que é delas.
 
 ## Como entrar e quem pode fazer o quê
 
-Só entra quem está na lista de acesso, com a conta Google do e-mail USP, e o que cada pessoa pode fazer depende do cargo.
+Só entra quem está na lista de acesso, com a conta Google do e-mail USP. O que cada pessoa vê e pode fazer depende das áreas dela e do cargo em cada uma.
 
 **Endereço:** [maritroppmair-rgb.github.io/planejador-eventos](https://maritroppmair-rgb.github.io/planejador-eventos/)
 
 **Esse link é temporário.** O app está hoje na conta do GitHub da Marília e numa conta de teste do Firebase. Com a ideia aprovada, criamos as duas contas no nome da Feashion e passamos o app para elas, com um endereço definitivo e com o nome da Feashion. Os dados vão junto (o app tem backup completo), então nada se perde na troca.
 
 1. Abra o link e clique em **Entrar com Google**, usando o e-mail @usp.br.
-2. Se o e-mail não estiver na lista, aparece uma tela de acesso negado. A diretoria libera em **Membros → Quem pode entrar**.
-3. No primeiro acesso, preencha o perfil: nome, como prefere ser chamado(a), celular, semestre de ingresso e foto.
-4. O perfil nasce **sem cargo**. Quem atribui é a diretoria, pelo botão **Atribuir cargo** no cartão da pessoa em Membros.
+2. Se o e-mail não estiver na lista, aparece uma tela de acesso negado. A diretoria de Eventos ou a presidência libera em **Membros → Quem pode entrar**.
+3. No primeiro acesso, preencha o perfil: nome, como prefere ser chamado(a), celular, semestre de ingresso, foto e **as suas áreas** (Eventos, Financeiro, RH, C&D, Marketing). Dá para marcar mais de uma.
+4. Em cada área, a pessoa entra **sem cargo**. Quem atribui é a diretoria daquela área ou a presidência, clicando na pessoa em **Membros**. Quem já usava o app continua em Eventos, com o cargo que tinha.
 
-| Cargo | O que pode |
-| --- | --- |
-| Diretor(a) | Tudo: eventos, recursos, Parâmetros, Membros, lista de acesso e cargos |
-| Coordenador(a) | Cria, edita e exclui eventos, convidados, salas, calendário e documentos. Não mexe em Parâmetros, Membros e acesso |
-| Membro(a) | O mesmo que Coordenador(a) |
-| Trainee | O mesmo que Coordenador(a), mas não exclui nada |
-| Sem cargo | Só visualiza, até a diretoria atribuir um cargo |
+**A ordem dos cargos, de cima para baixo:** DEV, Presidente, Vice-presidente, Diretor(a), Coordenador(a), Membro(a), Trainee e Sem cargo. Só quem está acima muda o cargo de quem está abaixo, e ninguém muda o próprio cargo. A presidência fica fora das áreas: só o DEV nomeia Presidente, e o Presidente nomeia Vice-presidente.
 
-As permissões valem nas telas e também no banco de dados: mesmo quem tentasse burlar a tela não conseguiria gravar o que o cargo não permite. Existe ainda o cargo DEV, só do Pedro, para manutenção técnica; ele não aparece como opção para ninguém e, durante a apresentação, o perfil dele fica oculto na tela de Membros.
+| Cargo | Na própria área | Nas outras áreas |
+| --- | --- | --- |
+| Presidente e Vice-presidente | Tudo, em todas as áreas, inclusive Lixeira e Histórico | Tudo |
+| Diretor(a) | Tudo, inclusive atribuir cargos abaixo do dele(a) e ver Lixeira e Histórico | Só visualiza |
+| Coordenador(a) | Cria, edita e exclui | Não vê as telas |
+| Membro(a) | O mesmo que Coordenador(a) | Não vê as telas |
+| Trainee | Cria e edita, mas não exclui | Não vê as telas |
+| Sem cargo | Só visualiza | Não vê as telas |
+
+Quem tem mais de uma área soma as permissões. Documentos, Membros e Meu perfil aparecem para todos. Parâmetros e a lista de acesso só são alterados pela diretoria de Eventos, pela presidência e pelo DEV. As permissões de edição valem nas telas e também no banco de dados: mesmo quem tentasse burlar a tela não conseguiria gravar o que o cargo não permite. O cargo DEV é só do Pedro, para manutenção técnica, e hoje tem as mesmas permissões da presidência; durante a apresentação, o perfil dele fica oculto na tela de Membros.
 
 ## Tour pelas telas
 
-O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: Eventos, Recursos e Ajustes. O círculo com a foto, no canto superior direito, leva a Meu perfil, Membros, Aparência (claro/escuro) e Sair.
+O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: Eventos, Recursos e Ajustes. Cada pessoa só vê no menu as telas das áreas dela; as telas de Eventos são as que aparecem abaixo. O círculo com a foto, no canto superior direito, leva a Meu perfil, Membros, Aparência (claro/escuro) e Sair.
 
 | Tela | Para que serve | O que vale mostrar |
 | --- | --- | --- |
@@ -58,8 +61,10 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: E
 | **Salas** | Cadastro das salas da FEA com capacidade, recursos (inclusive ar-condicionado) e se o espaço ou o coffee é ao ar livre (o padrão é sala coberta, com coffee na própria sala) | A busca e os ícones de recursos; clicar numa sala abre o painel com todos os detalhes. A sugestão do Planejar vem daqui |
 | **Calendário** | Datas importantes do semestre (provas, feriados, outros eventos) e a previsão do tempo dos próximos 16 dias | Que isso alimenta a nota da data (feriados e férias aparecem com o dia inteiro hachurado), e o ícone discreto de tempo em cada dia (máxima e chance de chuva), atualizado sempre que o site abre |
 | **Documentos** | Manual, relatórios e links da diretoria | O PDF abre dentro do próprio app |
-| **Parâmetros** | As regras do cálculo: metas de custo, margens, limites e quanto a chuva pesa na nota da data | Só a diretoria altera, com dupla confirmação |
-| **Membros** | Equipe, cargos e lista de quem pode entrar | O botão Atribuir cargo (só a diretoria vê) |
+| **Parâmetros** | As regras do cálculo: metas de custo, margens, limites e quanto a chuva pesa na nota da data; também o backup | Só a diretoria de Eventos e a presidência alteram, com dupla confirmação. Se o último backup tiver mais de 30 dias, aparece um aviso no topo para elas |
+| **Membros** | Equipe, com as áreas e o cargo de cada um, e a lista de quem pode entrar | O filtro por área e, ao clicar numa pessoa, os cargos de cada área (só aparecem para mudar os cargos abaixo do seu) |
+| **Lixeira** | O que foi excluído de eventos, salas, calendário, convidados e documentos, por 30 dias | Restaurar com um clique. Só a diretoria para cima vê; a diretoria restaura o que é da própria área, a presidência restaura tudo |
+| **Histórico** | Quem criou, editou ou excluiu o quê, e quando | O filtro por área, pessoa e ação. Só a diretoria para cima vê |
 
 Na **Base**, o comparecimento é calculado como (presentes − quem veio sem se inscrever) ÷ inscritos, para medir quantos inscritos de fato apareceram. Eventos marcados como \[teste\] ficam fora dos indicadores.
 
@@ -73,7 +78,7 @@ A demonstração conta uma história só: planejar um evento, ver o resultado e 
 3. **Mudar a data (30 s).** Troque para uma data em semana de provas e mostre que a nota da data e a previsão mudam. Se houver chuva prevista para os próximos dias, mostre a linha da previsão do tempo na nota.
 4. **Salvar e ir para a Base (1 min).** Salve o evento. Na Base, abra um evento já realizado e mostre o resultado registrado e o semáforo de comparecimento e custo.
 5. **Analytics (1 min).** Mostre o gráfico previsto × real e o custo por presente contra a meta. Frase-chave: "Cada evento registrado melhora a próxima previsão."
-6. **Fechamento (30 s).** Mostre o app no celular, a tela de Membros com os cargos e diga que roda de graça e é de quem estiver na diretoria.
+6. **Fechamento (30 s).** Mostre o app no celular, a tela de Membros com as áreas e cargos e diga que roda de graça e é de quem estiver na diretoria.
 
 Antes da apresentação: entre no app pelo notebook que vai usar, deixe o evento de exemplo pronto e confira a internet da sala. Se a internet cair, o app continua abrindo com os dados já carregados.
 
@@ -91,9 +96,11 @@ As respostas curtas abaixo cobrem custo, confiabilidade da previsão, segurança
 
 **"De onde vem a previsão do tempo?"** Do Open-Meteo, um serviço gratuito. Para datas até 16 dias à frente o app usa a previsão do tempo de verdade, no horário do evento. Para datas mais distantes usa o histórico de 20 anos da região da FEA: em janeiro chove em cerca de um terço dos fins de tarde, no inverno em quase nenhum. A nota de cada evento salvo é atualizada sozinha 16 e 7 dias antes da data, e o app avisa se a sala não tem ar-condicionado num dia quente ou se o espaço é aberto com chuva prevista.
 
-**"Os dados estão seguros?"** Só entra quem está na lista, com login Google do e-mail USP. As permissões por cargo são checadas no próprio banco de dados, não só na tela. Tem backup completo em Parâmetros.
+**"Os dados estão seguros?"** Só entra quem está na lista, com login Google do e-mail USP. As permissões por área e cargo são checadas no próprio banco de dados, não só na tela. Tem backup completo em Parâmetros, com aviso quando o último tiver mais de 30 dias.
 
-**"E na passagem de gestão?"** Tudo fica no app, não na cabeça de alguém. A nova diretoria recebe acesso, ganha o cargo de Diretor(a) e continua de onde parou, com o histórico inteiro.
+**"E se alguém apagar algo sem querer?"** O que é excluído vai para a Lixeira e fica lá por 30 dias; a diretoria da área restaura com um clique. E o Histórico mostra quem criou, editou ou excluiu cada coisa, e quando.
+
+**"E na passagem de gestão?"** Tudo fica no app, não na cabeça de alguém. A nova diretoria recebe acesso, ganha da presidência o cargo de Diretor(a) na sua área e continua de onde parou, com o histórico inteiro.
 
 **"Quem mantém o app?"** O uso do dia a dia não exige programar: salas, convidados, datas e parâmetros são editados pelas telas. Ajustes técnicos têm suporte de quem desenvolveu.
 
@@ -106,6 +113,9 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 **Limites atuais (vale ser honesta se perguntarem):**
 
 - Arquivos anexados têm até 10 MB cada.
+- Por enquanto só Eventos tem telas próprias. Quem é só de outra área vê Documentos, Membros e o próprio perfil até as telas da área ficarem prontas.
+- Esconder as telas de outras áreas é feito no app; quem tem acesso ainda consegue ler os dados das outras áreas no banco. Editar e excluir, não.
+- A Lixeira guarda eventos, salas, calendário, convidados e documentos. Perfis, lista de acesso e mailing ficam no Histórico, mas não vão para a Lixeira.
 - A previsão ainda tem poucos eventos de base; ela melhora a cada resultado registrado.
 - A previsão do tempo de verdade só existe para os próximos 16 dias; antes disso, a nota da data usa o histórico de chuva e temperatura da época. A atualização automática acontece na primeira vez que alguém da equipe abre o app depois de cada marco.
 - A Ideia de evento faz até 30 propostas por pessoa por dia e fica marcada como BETA até a Base ter pelo menos 8 eventos realizados de cada tipo principal, em 2 semestres, com erro médio da previsão abaixo de 15%. A própria tela mostra quanto falta.
@@ -117,4 +127,5 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 2. **Inscrições entrando sozinhas no app:** as respostas do Forms aparecem no evento, sem copiar planilha.
 3. **E-mails e mailing (já no app, em fase de testes):** confirmação, lembrete, aviso de mudança e agradecimento para os inscritos, e o convite do mailing para quem quer saber dos próximos eventos, tudo de graça.
 4. **Planejamento com IA (já no app, em BETA):** a pessoa descreve em texto corrido o evento que quer, e a IA propõe nome, formato, convidados da nossa lista, datas e, para séries, cada evento da série, usando o histórico de eventos como base. Público, sala e compras saem do cálculo do Planejar, e a diretoria revisa e aprova antes de salvar. O selo BETA sai sozinho quando a Base tiver eventos suficientes.
-5. **Depois:** presença no evento, séries agrupadas na Base e domínio próprio para o site.
+5. **Telas das outras áreas:** Financeiro (custo de cada evento), Marketing (cronograma de posts e métricas), C&D e RH, já com as permissões por área prontas.
+6. **Depois:** presença no evento, séries agrupadas na Base e domínio próprio para o site.
