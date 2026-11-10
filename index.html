@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261110085417"></script>
-<script src="plataforma.js?v=20261110085417"></script>
+<script src="config.js?v=20261110085617"></script>
+<script src="plataforma.js?v=20261110085617"></script>
 </head>
 <body>
 
@@ -1041,8 +1041,9 @@ var ANT0={aula:5,email:10,oficio:20,parceiro:10};
 var COFFEE={'no-local':'coffee na sala','ao-lado':'espaço de coffee ao lado','perto':'coffee a até 5 min a pé','longe':'espaço de coffee longe','?':'coffee: sem informação'};
 /* coffee: o padrão é servir na própria sala; nesse caso o coffee não é ao ar livre, a não ser que alguém marque */
 function cofProx(x){return x&&x.coffeeProx&&x.coffeeProx!=='?'?x.coffeeProx:'no-local';}
+function salaAberta(x){return x&&x.aberto&&x.aberto!=='?'?x.aberto:'nao';}
 function cofAberto(x){return x&&x.coffeeAberto&&x.coffeeAberto!=='?'?x.coffeeAberto:(cofProx(x)==='no-local'?'nao':'?');}
-function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,c:r.c,k:r.k,ant:ANT0[r.k],coffee:'no-local',coffeeAberto:'nao',coffeeLocal:'',custo:0};});return salas.filter(function(x){return x.ativa!==false&&+x.capacidade>0;}).map(function(x){var k=x.reserva||'aula';return {id:x.id,n:x.nome||'Sala',c:+x.capacidade,k:k,ant:(x.antecedencia===''||x.antecedencia==null)?ANT0[k]:+x.antecedencia,coffee:cofProx(x),coffeeLocal:x.coffeeLocal||'',mesas:x.mesas||'?',proj:x.projetor||'?',som:x.som||'?',tomadas:x.tomadas||'?',acess:x.acessibilidade||'?',ar:x.arCondicionado||'?',aberto:x.aberto||'?',coffeeAberto:cofAberto(x),custo:+x.custo||0};});}
+function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,c:r.c,k:r.k,ant:ANT0[r.k],aberto:'nao',coffee:'no-local',coffeeAberto:'nao',coffeeLocal:'',custo:0};});return salas.filter(function(x){return x.ativa!==false&&+x.capacidade>0;}).map(function(x){var k=x.reserva||'aula';return {id:x.id,n:x.nome||'Sala',c:+x.capacidade,k:k,ant:(x.antecedencia===''||x.antecedencia==null)?ANT0[k]:+x.antecedencia,coffee:cofProx(x),coffeeLocal:x.coffeeLocal||'',mesas:x.mesas||'?',proj:x.projetor||'?',som:x.som||'?',tomadas:x.tomadas||'?',acess:x.acessibilidade||'?',ar:x.arCondicionado||'?',aberto:salaAberta(x),coffeeAberto:cofAberto(x),custo:+x.custo||0};});}
 function resTxt(r,dl){return (r.k==='oficio'?'ofício':r.k==='email'?'reserva por e-mail':r.k==='parceiro'?'espaço parceiro'+(r.custo?' (R$ '+r.custo.toFixed(2).replace('.',',')+')':''):'sala de aula')+' até '+fmt(dl)+' ('+r.ant+' dias úteis antes)';}
 var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['divulgacao','Divulgação'],['inscricoes','Inscrições e avaliação'],['dia','Dia do evento'],['pos','Pós-evento'],['referencia','Referência']];
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
@@ -1635,7 +1636,7 @@ function sAbrir(id){
   $('s-res').value=x?x.reserva||'aula':'aula';$('s-ant').placeholder=ANT0[$('s-res').value];
   $('s-ant').value=x&&x.antecedencia!=null&&x.antecedencia!==''?x.antecedencia:'';
   $('s-custo').value=x&&x.custo!=null?x.custo:'';
-  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});sSeg('aberto',x?x.aberto:'?');sSeg('coffeeAberto',cofAberto(x||{}));
+  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});sSeg('aberto',salaAberta(x));sSeg('coffeeAberto',cofAberto(x||{}));
   $('s-cprox').value=cofProx(x);$('s-clocal').value=x?x.coffeeLocal||'':'';$('s-obs').value=x?x.obs||'':'';
   ['s-nome','s-cap','s-ant','s-custo'].forEach(function(k){$(k).removeAttribute('aria-invalid');});
   $('sd-msg').textContent=pode?'':'Seu cargo permite só visualizar.';$('sd-msg').style.color='';
