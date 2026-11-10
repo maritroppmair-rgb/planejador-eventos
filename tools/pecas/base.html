@@ -452,7 +452,7 @@ body.sd-aberto{overflow:hidden}
           </div>
           <h4>Coffee</h4>
           <div class="sd-grp sd-two">
-            <div class="field"><label for="s-cprox">Onde servir</label><select id="s-cprox"><option value="?">Não sei</option><option value="no-local">Na própria sala</option><option value="ao-lado">Espaço ao lado</option><option value="perto">Até 5 min a pé</option><option value="longe">Longe</option></select></div>
+            <div class="field"><label for="s-cprox">Onde servir</label><select id="s-cprox"><option value="no-local">Na própria sala</option><option value="ao-lado">Espaço ao lado</option><option value="perto">Até 5 min a pé</option><option value="longe">Longe</option></select></div>
             <div class="field"><label for="s-clocal">Espaço de coffee</label><input id="s-clocal" placeholder="ex.: Vão da FEA"></div>
           </div>
           <div class="sd-grp"><div class="sd-res"><span class="sd-rl">Coffee ao ar livre</span><div class="seg" role="radiogroup" aria-label="Coffee ao ar livre"><label><input type="radio" name="sd-coffeeAberto" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-coffeeAberto" value="nao"><span>Não</span></label><label><input type="radio" name="sd-coffeeAberto" value="?"><span>?</span></label></div></div></div>
@@ -601,7 +601,10 @@ function hmin(x){var q=String(x||'').split(':');return (+q[0]||0)*60+(+q[1]||0);
 var events=[], guests=[], docs=[], salas=[], db=null, mode='connecting';
 var ANT0={aula:5,email:10,oficio:20,parceiro:10};
 var COFFEE={'no-local':'coffee na sala','ao-lado':'espaço de coffee ao lado','perto':'coffee a até 5 min a pé','longe':'espaço de coffee longe','?':'coffee: sem informação'};
-function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,c:r.c,k:r.k,ant:ANT0[r.k],coffeeLocal:'',custo:0};});return salas.filter(function(x){return x.ativa!==false&&+x.capacidade>0;}).map(function(x){var k=x.reserva||'aula';return {id:x.id,n:x.nome||'Sala',c:+x.capacidade,k:k,ant:(x.antecedencia===''||x.antecedencia==null)?ANT0[k]:+x.antecedencia,coffee:x.coffeeProx||'?',coffeeLocal:x.coffeeLocal||'',mesas:x.mesas||'?',proj:x.projetor||'?',som:x.som||'?',tomadas:x.tomadas||'?',acess:x.acessibilidade||'?',ar:x.arCondicionado||'?',aberto:x.aberto||'?',coffeeAberto:x.coffeeAberto||'?',custo:+x.custo||0};});}
+/* coffee: o padrão é servir na própria sala; nesse caso o coffee não é ao ar livre, a não ser que alguém marque */
+function cofProx(x){return x&&x.coffeeProx&&x.coffeeProx!=='?'?x.coffeeProx:'no-local';}
+function cofAberto(x){return x&&x.coffeeAberto&&x.coffeeAberto!=='?'?x.coffeeAberto:(cofProx(x)==='no-local'?'nao':'?');}
+function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,c:r.c,k:r.k,ant:ANT0[r.k],coffee:'no-local',coffeeAberto:'nao',coffeeLocal:'',custo:0};});return salas.filter(function(x){return x.ativa!==false&&+x.capacidade>0;}).map(function(x){var k=x.reserva||'aula';return {id:x.id,n:x.nome||'Sala',c:+x.capacidade,k:k,ant:(x.antecedencia===''||x.antecedencia==null)?ANT0[k]:+x.antecedencia,coffee:cofProx(x),coffeeLocal:x.coffeeLocal||'',mesas:x.mesas||'?',proj:x.projetor||'?',som:x.som||'?',tomadas:x.tomadas||'?',acess:x.acessibilidade||'?',ar:x.arCondicionado||'?',aberto:x.aberto||'?',coffeeAberto:cofAberto(x),custo:+x.custo||0};});}
 function resTxt(r,dl){return (r.k==='oficio'?'ofício':r.k==='email'?'reserva por e-mail':r.k==='parceiro'?'espaço parceiro'+(r.custo?' (R$ '+r.custo.toFixed(2).replace('.',',')+')':''):'sala de aula')+' até '+fmt(dl)+' ('+r.ant+' dias úteis antes)';}
 var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['divulgacao','Divulgação'],['inscricoes','Inscrições e avaliação'],['dia','Dia do evento'],['pos','Pós-evento'],['referencia','Referência']];
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
@@ -1171,7 +1174,7 @@ function renderSalas(){
   var h='<thead><tr>'+th('nome','Sala')+th('capacidade','Lugares','r')+'<th>Reserva</th>'+th('custo','Custo','r c-custo')+'<th>Coffee</th><th>Recursos</th></tr></thead><tbody>';
   if(!lst.length)h+='<tr><td colspan="6" class="empty">Nenhuma sala com esses filtros.</td></tr>';
   lst.forEach(function(x){var id=esc(x.id),r=x.reserva||'aula',ant=(x.antecedencia===''||x.antecedencia==null)?ANT0[r]:+x.antecedencia;
-    var cof=SCOF[x.coffeeProx]||'Não sei';
+    var cof=SCOF[cofProx(x)]||'Na sala';
     h+='<tr data-sopen="'+id+'" tabindex="0"'+(x.ativa===false?' class="off"':'')+'>'+
       '<td><span class="sn">'+esc(x.nome||'Sala sem nome')+'</span>'+(x.ativa===false?'<span class="tg">inativa</span>':'')+(x.obs?'<span class="sub" title="'+esc(x.obs)+'">'+esc(x.obs)+'</span>':'')+'</td>'+
       '<td class="r"><span class="cap">'+esc(x.capacidade==null?'–':x.capacidade)+'</span></td>'+
@@ -1194,8 +1197,8 @@ function sAbrir(id){
   $('s-res').value=x?x.reserva||'aula':'aula';$('s-ant').placeholder=ANT0[$('s-res').value];
   $('s-ant').value=x&&x.antecedencia!=null&&x.antecedencia!==''?x.antecedencia:'';
   $('s-custo').value=x&&x.custo!=null?x.custo:'';
-  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});sSeg('aberto',x?x.aberto:'?');sSeg('coffeeAberto',x?x.coffeeAberto:'?');
-  $('s-cprox').value=x?x.coffeeProx||'?':'?';$('s-clocal').value=x?x.coffeeLocal||'':'';$('s-obs').value=x?x.obs||'':'';
+  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});sSeg('aberto',x?x.aberto:'?');sSeg('coffeeAberto',cofAberto(x||{}));
+  $('s-cprox').value=cofProx(x);$('s-clocal').value=x?x.coffeeLocal||'':'';$('s-obs').value=x?x.obs||'':'';
   ['s-nome','s-cap','s-ant','s-custo'].forEach(function(k){$(k).removeAttribute('aria-invalid');});
   $('sd-msg').textContent=pode?'':'Seu cargo permite só visualizar.';$('sd-msg').style.color='';
   $('sd-fs').disabled=!pode;$('s-salvar').hidden=!pode;
@@ -1210,6 +1213,7 @@ $('stable').addEventListener('keydown',function(e){var tr=e.target.closest('[dat
 $('sdrawer').addEventListener('click',function(e){if(e.target.closest('[data-sclose]'))sFechar();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('sdrawer').hidden){e.preventDefault();sFechar();}});
 $('s-res').addEventListener('change',function(){$('s-ant').placeholder=ANT0[$('s-res').value];});
+$('s-cprox').addEventListener('change',function(){if($('s-cprox').value==='no-local')sSeg('coffeeAberto','nao');});
 $('sd-del').addEventListener('click',function(e){
   var dv=e.target.closest('[data-sdeact]');if(dv&&db){db.doc('salas/'+dv.dataset.sdeact).update({ativa:false}).then(function(){$('smsg').textContent='Sala desativada.';sFechar();}).catch(function(){alertMsg('Não foi possível desativar.');});return;}
   var b=e.target.closest('[data-sdel]');if(!b||!db)return;var sid=b.dataset.sdel;var sx=salas.filter(function(x){return x.id===sid;})[0];var today=iso(new Date());
