@@ -19,8 +19,8 @@ var I={
   lixeira:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
   hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   'fin-custos':'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
-  'fin-caixa':'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M15.5 14.5h2"/>',
-  'fin-orc':'<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>',
+  'fin-coffee':'<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/>',
+  'fin-ana':'<path d="M5 20V11M12 20V5M19 20v-6"/>',
   'mkt-posts':'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5-9 9"/>',
   'mkt-met':'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   'cd-cap':'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2.5 2 9.5 2 12 0v-5"/>',
@@ -34,7 +34,7 @@ var MENU={
   'Eventos':[['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
              ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab']]],
              ['Ajustes',[['par','Parâmetros','tab']]]],
-  'Financeiro':[['Financeiro',[['fin-custos','Custos por evento','view'],['fin-caixa','Caixa','view'],['fin-orc','Orçamento','view']]]],
+  'Financeiro':[['Financeiro',[['fin-custos','Custos por evento','view'],['fin-coffee','Contatos de coffee','view'],['fin-ana','Analytics','view']]]],
   'Marketing':[['Marketing',[['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
@@ -43,8 +43,7 @@ var GERAL=['Geral',[['cal','Calendário','tab'],['docs','Documentos','tab'],['me
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Custos por evento','Financeiro','Previsto e real de cada evento, com os comprovantes.'],
-  'fin-caixa':['Caixa','Financeiro','Entradas e saídas da Feashion, com o saldo do mês e do semestre.'],
-  'fin-orc':['Orçamento','Financeiro','Quanto cada área pode gastar no semestre e quanto já gastou.'],
+  'fin-ana':['Analytics','Financeiro','Visão dos gastos dos eventos.'],
   'mkt-posts':['Posts','Marketing','Do rascunho à publicação: ideia, produção, aprovação e publicado.'],
   'mkt-met':['Métricas','Marketing','Seguidores, alcance e engajamento, mês a mês.'],
   'cd-cap':['Capacitações','C&D','Treinamentos e aulas, com data, tema, quem dá e presença.'],
@@ -54,6 +53,7 @@ var NOVAS={
 var main=document.querySelector('main');
 var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist'];
 Object.keys(NOVAS).forEach(function(k){
+  if(document.getElementById('view-'+k)){SOLTAS.push('view-'+k);return;} /* telas já prontas (ex.: Financeiro, no fin.js) */
   var n=NOVAS[k],sec=document.createElement('section');sec.id='view-'+k;sec.hidden=true;sec.setAttribute('aria-labelledby',k+'-title');
   sec.innerHTML='<div class="section-head"><div><h2 id="'+k+'-title"></h2><p class="note"></p></div></div><div class="embreve"><b>Tela em construção</b><span>Vamos desenhar esta tela juntos.</span></div>';
   sec.querySelector('h2').textContent=n[0];sec.querySelector('.note').textContent=n[2];

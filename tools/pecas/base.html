@@ -1371,6 +1371,7 @@ function connect(){
   window.claude.use('db').then(function(d){
     if(!d){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>. Nada é salvo.';return;}
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
+    if(typeof finLigar==='function')finLigar();
     db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
     db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}});},function(){});
     db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});

@@ -198,3 +198,21 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 .dcrumb h3{display:flex;align-items:center;gap:8px;margin:0;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fg)}
 .dcrumb h3 svg{width:22px;height:22px;color:var(--wine)}
 .dbusca{margin:0 0 8px}
+/* Financeiro */
+body:not(.fin-editar) .fin-ed{display:none!important}
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.fin-grid .ffull{grid-column:1/-1}
+.fin-grid textarea,.tp-body textarea{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:8px 10px;width:100%;font:inherit;resize:vertical}
+.cf-itens{width:100%;min-width:0!important;border-collapse:collapse;table-layout:fixed}
+.cf-itens th{background:transparent!important;border:0!important}
+.cf-itens td{border:0!important;background:transparent!important}
+.cf-itens th:nth-child(2){width:96px}.cf-itens th:nth-child(3){width:118px}.cf-itens th:nth-child(4){width:34px}
+.cf-itens th{text-align:left;font-family:var(--label);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:0 4px 6px;font-weight:700}
+.cf-itens td{padding:3px 4px;vertical-align:middle}
+.cf-itens input,.cf-itens select{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:7px 8px;width:100%;min-width:0;font:inherit;font-size:14px}
+.cf-x{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:4px 6px;border-radius:4px}
+.cf-x:hover{color:var(--red);background:var(--surface-2)}
+.fin-ro{display:flex;justify-content:space-between;gap:12px;margin:0 0 6px}
+.fin-ro span{color:var(--muted)}
+.cf-wa{color:var(--wine);font-weight:700}
+@media (max-width:520px){.fin-grid{grid-template-columns:1fr}}

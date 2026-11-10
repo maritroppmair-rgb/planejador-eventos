@@ -72,10 +72,16 @@ As telas das outras áreas já estão no menu, ainda em branco, para serem desen
 
 | Área | Telas |
 | --- | --- |
-| **Financeiro** | Custos por evento, Caixa e Orçamento |
+| **Financeiro** | Custos por evento e Analytics (em construção); Contatos de coffee (pronta, veja abaixo) |
 | **Marketing** | Posts e Métricas |
 | **C&D** | Capacitações e Trilha do trainee |
 | **RH** | Visão geral (o conteúdo ainda será definido com a área) |
+
+**Telas do Financeiro já prontas:**
+
+| Tela | Para que serve | O que vale mostrar |
+| --- | --- | --- |
+| **Contatos de coffee** | Fornecedores de coffee e lanches: local, pessoa de contato, telefone, endereço e os itens com preço e unidade | O menor preço por pessoa de cada local, o botão de WhatsApp e em quantos eventos cada local já foi usado |
 
 Na **Base**, o comparecimento é calculado como (presentes − quem veio sem se inscrever) ÷ inscritos, para medir quantos inscritos de fato apareceram. Eventos marcados como \[teste\] ficam fora dos indicadores.
 
@@ -139,5 +145,5 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 2. **Inscrições entrando sozinhas no app:** as respostas do Forms aparecem no evento, sem copiar planilha.
 3. **E-mails e mailing (já no app, em fase de testes):** confirmação, lembrete, aviso de mudança e agradecimento para os inscritos, e o convite do mailing para quem quer saber dos próximos eventos, tudo de graça.
 4. **Planejamento com IA (já no app, em BETA):** a pessoa descreve em texto corrido o evento que quer, e a IA propõe nome, formato, convidados da nossa lista, datas e, para séries, cada evento da série, usando o histórico de eventos como base. Público, sala e compras saem do cálculo do Planejar, e a diretoria revisa e aprova antes de salvar. O selo BETA sai sozinho quando a Base tiver eventos suficientes.
-5. **Telas das outras áreas (já no menu, em branco):** Financeiro (custos por evento, caixa e orçamento), Marketing (posts e métricas), C&D (capacitações e trilha do trainee) e RH, desenhadas uma a uma com cada área, já com as permissões por área prontas.
+5. **Telas das outras áreas (já no menu, em branco):** Financeiro (custos por evento, contatos de coffee e analytics de gastos), Marketing (posts e métricas), C&D (capacitações e trilha do trainee) e RH, desenhadas uma a uma com cada área, já com as permissões por área prontas.
 6. **Depois:** presença no evento, séries agrupadas na Base e domínio próprio para o site.
