@@ -447,6 +447,7 @@ body.sd-aberto{overflow:hidden}
             <div class="sd-res"><span class="sd-rl">Ar-condicionado</span><div class="seg" role="radiogroup" aria-label="Ar-condicionado"><label><input type="radio" name="sd-arCondicionado" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-arCondicionado" value="nao"><span>Não</span></label><label><input type="radio" name="sd-arCondicionado" value="?"><span>?</span></label></div></div>
             <div class="sd-res"><span class="sd-rl">Tomadas</span><div class="seg" role="radiogroup" aria-label="Tomadas"><label><input type="radio" name="sd-tomadas" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-tomadas" value="nao"><span>Não</span></label><label><input type="radio" name="sd-tomadas" value="?"><span>?</span></label></div></div>
             <div class="sd-res"><span class="sd-rl">Mesas móveis</span><div class="seg" role="radiogroup" aria-label="Mesas móveis"><label><input type="radio" name="sd-mesas" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-mesas" value="nao"><span>Não</span></label><label><input type="radio" name="sd-mesas" value="?"><span>?</span></label></div></div>
+            <div class="sd-res"><span class="sd-rl">Espaço aberto (sem cobertura)</span><div class="seg" role="radiogroup" aria-label="Espaço aberto (sem cobertura)"><label><input type="radio" name="sd-aberto" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-aberto" value="nao"><span>Não</span></label><label><input type="radio" name="sd-aberto" value="?"><span>?</span></label></div></div>
             <div class="sd-res"><span class="sd-rl">Acessível</span><div class="seg" role="radiogroup" aria-label="Acessível"><label><input type="radio" name="sd-acessibilidade" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-acessibilidade" value="nao"><span>Não</span></label><label><input type="radio" name="sd-acessibilidade" value="?"><span>?</span></label></div></div>
           </div>
           <h4>Coffee</h4>
@@ -454,6 +455,7 @@ body.sd-aberto{overflow:hidden}
             <div class="field"><label for="s-cprox">Onde servir</label><select id="s-cprox"><option value="?">Não sei</option><option value="no-local">Na própria sala</option><option value="ao-lado">Espaço ao lado</option><option value="perto">Até 5 min a pé</option><option value="longe">Longe</option></select></div>
             <div class="field"><label for="s-clocal">Espaço de coffee</label><input id="s-clocal" placeholder="ex.: Vão da FEA"></div>
           </div>
+          <div class="sd-grp"><div class="sd-res"><span class="sd-rl">Coffee ao ar livre</span><div class="seg" role="radiogroup" aria-label="Coffee ao ar livre"><label><input type="radio" name="sd-coffeeAberto" value="sim"><span>Sim</span></label><label><input type="radio" name="sd-coffeeAberto" value="nao"><span>Não</span></label><label><input type="radio" name="sd-coffeeAberto" value="?"><span>?</span></label></div></div></div>
           <div class="field"><label for="s-obs">Observações</label><textarea id="s-obs" rows="3"></textarea></div>
         </fieldset>
         <div class="sd-foot">
@@ -599,7 +601,7 @@ function hmin(x){var q=String(x||'').split(':');return (+q[0]||0)*60+(+q[1]||0);
 var events=[], guests=[], docs=[], salas=[], db=null, mode='connecting';
 var ANT0={aula:5,email:10,oficio:20,parceiro:10};
 var COFFEE={'no-local':'coffee na sala','ao-lado':'espaço de coffee ao lado','perto':'coffee a até 5 min a pé','longe':'espaço de coffee longe','?':'coffee: sem informação'};
-function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,c:r.c,k:r.k,ant:ANT0[r.k],coffeeLocal:'',custo:0};});return salas.filter(function(x){return x.ativa!==false&&+x.capacidade>0;}).map(function(x){var k=x.reserva||'aula';return {id:x.id,n:x.nome||'Sala',c:+x.capacidade,k:k,ant:(x.antecedencia===''||x.antecedencia==null)?ANT0[k]:+x.antecedencia,coffee:x.coffeeProx||'?',coffeeLocal:x.coffeeLocal||'',mesas:x.mesas||'?',proj:x.projetor||'?',som:x.som||'?',tomadas:x.tomadas||'?',acess:x.acessibilidade||'?',ar:x.arCondicionado||'?',custo:+x.custo||0};});}
+function roomList(){if(!salas.length)return ROOMS.map(function(r){return {n:r.n,c:r.c,k:r.k,ant:ANT0[r.k],coffeeLocal:'',custo:0};});return salas.filter(function(x){return x.ativa!==false&&+x.capacidade>0;}).map(function(x){var k=x.reserva||'aula';return {id:x.id,n:x.nome||'Sala',c:+x.capacidade,k:k,ant:(x.antecedencia===''||x.antecedencia==null)?ANT0[k]:+x.antecedencia,coffee:x.coffeeProx||'?',coffeeLocal:x.coffeeLocal||'',mesas:x.mesas||'?',proj:x.projetor||'?',som:x.som||'?',tomadas:x.tomadas||'?',acess:x.acessibilidade||'?',ar:x.arCondicionado||'?',aberto:x.aberto||'?',coffeeAberto:x.coffeeAberto||'?',custo:+x.custo||0};});}
 function resTxt(r,dl){return (r.k==='oficio'?'ofício':r.k==='email'?'reserva por e-mail':r.k==='parceiro'?'espaço parceiro'+(r.custo?' (R$ '+r.custo.toFixed(2).replace('.',',')+')':''):'sala de aula')+' até '+fmt(dl)+' ('+r.ant+' dias úteis antes)';}
 var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['divulgacao','Divulgação'],['inscricoes','Inscrições e avaliação'],['dia','Dia do evento'],['pos','Pós-evento'],['referencia','Referência']];
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
@@ -672,9 +674,17 @@ function clima(d,tipo,hora,dur){
   var H=CLIMA_HIST[w.k],i=climaIdx(d);
   return {fonte:'historico',k:w.k,p:H.c[i]/100,max:H.t[i],pq:H.q[i],pf:H.f[i],quente:H.q[i]>=25,frio:H.f[i]>=25};
 }
-function climaAvisos(cl){var a=[];
-  if(cl.quente)a.push(cl.fonte==='previsao'?'Calor: previsão de até '+cl.max+' °C no horário do evento. Prefira sala com ar-condicionado e tenha água para o público.':'Calor: nesta época, '+cl.pq+'% dos dias passam de '+CLIMA_QUENTE+' °C no horário do evento. Prefira sala com ar-condicionado.');
+/* calor sem ar-condicionado ("não sabemos" conta como sem ar): a partir de 27 °C, 2 pontos por grau, até 10 (31 °C ou mais) */
+function calorPts(cl){var t=Math.round(cl.max);return t>=27?Math.min(10,2*(t-26)):0;}
+function semAr(sala){return !!sala&&sala.ar!=='sim';}
+function chuvaAlta(cl){return cl.p>=0.5;}
+function climaResumo(cl){return {fonte:cl.fonte,chuva:Math.round(cl.p*100),max:cl.max==null?null:cl.max,min:cl.min==null?null:cl.min};}
+function climaAvisos(cl,sala,coffee){var a=[];
+  if(semAr(sala)&&calorPts(cl))a.push('Calor: '+(cl.fonte==='previsao'?'previsão de ':'nesta época, máxima típica de ')+cl.max+' °C no horário do evento e a '+sala.n+(sala.ar==='nao'?' não tem ar-condicionado':' pode não ter ar-condicionado (não sabemos)')+'. Prefira uma sala com ar.');
   if(cl.frio)a.push(cl.fonte==='previsao'?'Frio: previsão de '+cl.min+' °C no horário do evento. Avise o público para vir agasalhado.':'Frio: nesta época, '+cl.pf+'% dos dias ficam abaixo de '+CLIMA_FRIO+' °C no horário do evento.');
+  var ruim=chuvaAlta(cl)?Math.round(cl.p*100)+'% de chance de chuva':cl.frio?'frio':'';
+  if(ruim&&sala&&sala.aberto==='sim')a.push('Espaço aberto: a '+sala.n+' não é coberta e há '+ruim+'. Prefira um espaço coberto.');
+  if(ruim&&coffee&&sala&&sala.coffeeAberto==='sim')a.push('Coffee ao ar livre'+(sala.coffeeLocal?' ('+sala.coffeeLocal+')':'')+' com '+ruim+': combine um espaço coberto para servir.');
   return a;}
 function climaCarregar(){
   try{var c=JSON.parse(localStorage.getItem('feashion-clima')||'null');if(c&&c.p&&Date.now()-c.em<3*36e5){climaPrev=c;return;}}catch(e){}
@@ -685,12 +695,47 @@ function climaCarregar(){
     hh.time.forEach(function(t,i){o.p[t]=hh.precipitation_probability[i];o.t[t]=hh.temperature_2m[i];});
     climaPrev=o;try{localStorage.setItem('feashion-clima',JSON.stringify(o));}catch(e){}
     if(calcDone&&!stale)plan();
+    climaAgendar();
   }).catch(function(){});
 }
 climaCarregar();
 
+/* ---------- nota da data atualizada pela previsão: 16 e 7 dias antes do evento ----------
+   Roda no navegador de quem pode editar, na primeira abertura do app depois de cada marco. Cada marco vale uma vez por evento. */
+var CARR={},climaFeitos={},climaT=null;
+function diasAte(s){var h=new Date();h.setHours(0,0,0,0);return s?Math.round((D(s)-h)/MS):null;}
+function climaAgendar(){clearTimeout(climaT);climaT=setTimeout(climaAtualizarEventos,3000);}
+function climaAtualizarEventos(){
+  if(!db||!climaPrev||!CARR.ev||!CARR.cal||!CARR.sal||!CARR.par)return;
+  if(!document.body.classList.contains('pode-editar'))return;
+  events.forEach(function(e){
+    if(e.status==='realizado'||!e.data||!e.tipo||climaFeitos[e.id])return;
+    var dias=diasAte(e.data);if(dias==null||dias<0||dias>16)return;
+    var marco=dias<=7?7:16,hist=(e.notaHist||[]).slice(),ult=hist[hist.length-1];
+    if(ult&&ult.dias!=null&&ult.dias<=marco)return;
+    var sala=tcfg(e.tipo).externo?null:(roomList().filter(function(r){return r.n===e.sala;})[0]||null);
+    var sc=scoreDate(D(e.data),e.tipo,e.id,e.hora,e.duracao,sala);if(sc.clima.fonte!=='previsao')return;
+    if(!hist.length&&e.notaData!=null)hist.push({marco:'salvo',em:e.criadoEm||null,dias:null,nota:e.notaData});
+    hist.push(Object.assign({marco:'d'+marco,em:new Date().toISOString(),dias:dias,nota:sc.s},climaResumo(sc.clima)));
+    climaFeitos[e.id]=1;
+    db.doc('eventos/'+e.id).update({notaData:sc.s,notaHist:hist.slice(-12),notaClima:climaResumo(sc.clima),climaAvisos:climaAvisos(sc.clima,sala,!!(e.form&&e.form['f-coffee']))}).catch(function(){delete climaFeitos[e.id];});
+  });
+}
+document.addEventListener('membros',climaAgendar);
+var MARCO={salvo:'ao salvar',editado:'ao editar',d16:'16 dias antes',d7:'7 dias antes'};
+function notaHistHtml(e){var h=e.notaHist||[],ult=h[h.length-1],av=e.climaAvisos||[];if(!ult&&!av.length)return '';
+  function cl(x){return x.fonte==='previsao'?'previsão do tempo: '+x.chuva+'% de chuva'+(x.max!=null?', até '+x.max+' °C':''):x.fonte==='historico'?'histórico do clima':'';}
+  var o='';
+  if(ult){var lb=label(ult.nota);o+='<b>'+ult.nota+'</b> <span class="chip '+lb[1]+'">'+lb[0]+'</span> · atualizada '+esc(MARCO[ult.marco]||'')+(ult.em?' ('+fmt(new Date(ult.em))+')':'')+(cl(ult)?', com '+esc(cl(ult)):'');
+    var ant=h.slice(0,-1).reverse();if(ant.length)o+='<br><span class="note">Antes: '+ant.map(function(x){return x.nota+' '+esc(MARCO[x.marco]||'')+(x.em?' ('+fmt(new Date(x.em))+')':'')+(x.fonte==='historico'?' pelo histórico':'');}).join(' · ')+'</span>';}
+  if(av.length)o+=av.map(function(t){return '<br><span class="chip warn" style="white-space:normal;margin-top:4px">'+esc(t)+'</span>';}).join('');
+  return o;}
+function climaSelo(e){if(e.status==='realizado'||!e.data||diasAte(e.data)<0)return '';var h=e.notaHist||[],ult=h[h.length-1],av=e.climaAvisos||[];
+  var caiu=ult&&/^d/.test(ult.marco)&&ult.nota<60;if(!av.length&&!caiu)return '';
+  var t=(caiu?'Nota da data caiu para '+ult.nota+' com a previsão do tempo. ':'')+av.join(' ');
+  return ' <span class="chip warn" title="'+esc(t)+'">⚠ clima</span>';}
 /* ---------- nota da data ---------- */
-function scoreDate(d,tipo,selfId,hora,dur){
+function scoreDate(d,tipo,selfId,hora,dur,sala){
   var s=100,f=[],key=iso(d),w=d.getDay(),cfg=tcfg(tipo),wk=(w===0||w===6);
   calList().forEach(function(x){var fim=x.fim||x.inicio;if(key>=x.inicio&&key<=fim){var t=CALTIPO[x.tipo]||CALTIPO.outro;var pen=(x.penalidade===''||x.penalidade==null)?t[1]:+x.penalidade;s-=pen;f.push([t[0]+': '+x.nome,-pen]);}});
   if(cfg.fds==='proibido'&&wk){s-=100;f.push(['Fim de semana: '+tipo+' não pode ser no fim de semana',-100]);}
@@ -704,7 +749,9 @@ function scoreDate(d,tipo,selfId,hora,dur){
   var conflitos=f.length,cl=clima(d,tipo,hora,dur),pc=Math.round((+P.pesoChuva||0)*cl.p);
   f.push([cl.fonte==='previsao'?'Previsão do tempo: '+Math.round(cl.p*100)+'% de chance de chuva '+cl.faixa+' · '+cl.min+' a '+cl.max+' °C':
     'Clima da época: chove em '+Math.round(cl.p*100)+'% '+(cl.k==='dia'?'dos dias (9h às 18h)':'dos fins de tarde')+' · máxima típica de '+cl.max+' °C (histórico de 20 anos)',-pc]);
-  s-=pc;s=Math.max(0,s);
+  s-=pc;var cp=semAr(sala)?calorPts(cl):0;
+  if(cp){f.push(['Calor sem ar-condicionado na '+sala.n+(sala.ar==='nao'?'':' (não sabemos se tem)')+': '+(cl.fonte==='previsao'?'previsão de ':'máxima típica de ')+cl.max+' °C',-cp]);s-=cp;}
+  s=Math.max(0,s);
   if(!conflitos)f.unshift(['Sem conflitos encontrados',0]);
   return {s:s,f:f,clima:cl};
 }
@@ -728,13 +775,10 @@ function plan(){
   /* nota da data */
   var LD=learned(tipo);$('durhint').textContent=LD.dur?tipo+' na base: média de '+(LD.dur.m>=60?Math.floor(LD.dur.m/60)+'h'+(Math.round(LD.dur.m%60)?('0'+Math.round(LD.dur.m%60)).slice(-2):''):Math.round(LD.dur.m)+' min')+' ('+LD.dur.n+' evento'+(LD.dur.n>1?'s':'')+')':'';
   var dur=+$('f-dur').value||90, fimMin=hmin(hora)+dur, fimTxt=Math.floor(fimMin/60)%24+':'+('0'+fimMin%60).slice(-2);
-  var sc=scoreDate(d,tipo,savedId,hora,dur), lab=label(sc.s), cfgT=tcfg(tipo), foraJ=cfgT.janela&&(hmin(hora)<hmin(JANELA[0])||fimMin>hmin(JANELA[1]));
-  var hoje0=new Date();hoje0.setHours(0,0,0,0);
-  var alts=[];for(var i=-10;i<=10;i++){if(!i)continue;var dd=add(d,i);if(dd<hoje0)continue;var x=scoreDate(dd,tipo,savedId,hora,dur);if(x.s>sc.s)alts.push({d:dd,s:x.s});}
-  alts.sort(function(a,b){return b.s-a.s||Math.abs(a.d-d)-Math.abs(b.d-d);});alts=alts.slice(0,3);
-  $('r-score').innerHTML='<div class="btns"><span class="big num">'+sc.s+'<small>/100</small></span><span class="chip '+lab[1]+'">'+lab[0]+'</span></div>'+
-   '<p class="note">'+fmtLong(d)+', das '+hora+' às '+fimTxt+'</p>'+(foraJ?'<p class="chip warn" style="margin:4px 0">Fora da janela padrão de '+tipo+': o evento precisa caber entre '+hfmt(JANELA[0])+' e '+hfmt(JANELA[1])+'</p>':'')+climaAvisos(sc.clima).map(function(t){return '<p class="chip warn" style="margin:4px 0;white-space:normal">'+esc(t)+'</p>';}).join('')+'<ul class="factors">'+sc.f.map(function(x){return '<li><span>'+esc(x[0])+'</span><span class="d '+(x[1]<0?'neg':'pos')+'">'+(x[1]?x[1]:'0')+'</span></li>';}).join('')+'</ul>'+
-   (alts.length?'<p class="note">Datas melhores perto desta:</p><div class="alts">'+alts.map(function(a){return '<button type="button" data-d="'+iso(a.d)+'">'+fmtLong(a.d)+' · '+a.s+'</button>';}).join('')+'</div>':'');
+  var cl0=clima(d,tipo,hora,dur), cfgT=tcfg(tipo), foraJ=cfgT.janela&&(hmin(hora)<hmin(JANELA[0])||fimMin>hmin(JANELA[1]));
+  var rScoreTpl=function(){return '<div class="btns"><span class="big num">'+sc.s+'<small>/100</small></span><span class="chip '+lab[1]+'">'+lab[0]+'</span></div>'+
+   '<p class="note">'+fmtLong(d)+', das '+hora+' às '+fimTxt+'</p>'+(foraJ?'<p class="chip warn" style="margin:4px 0">Fora da janela padrão de '+tipo+': o evento precisa caber entre '+hfmt(JANELA[0])+' e '+hfmt(JANELA[1])+'</p>':'')+avisosClima.map(function(t){return '<p class="chip warn" style="margin:4px 0;white-space:normal">'+esc(t)+'</p>';}).join('')+'<ul class="factors">'+sc.f.map(function(x){return '<li><span>'+esc(x[0])+'</span><span class="d '+(x[1]<0?'neg':'pos')+'">'+(x[1]?x[1]:'0')+'</span></li>';}).join('')+'</ul>'+
+   (alts.length?'<p class="note">Datas melhores perto desta:</p><div class="alts">'+alts.map(function(a){return '<button type="button" data-d="'+iso(a.d)+'">'+fmtLong(a.d)+' · '+a.s+'</button>';}).join('')+'</div>':'');};
 
   /* sala */
   var aud=$('f-aud').checked, lab2=tipo==='Lab / oficina'||tipo==='Masterclass'||tipo==='Resolução de case';
@@ -748,7 +792,7 @@ function plan(){
     var bk=booked.filter(function(e){return e.sala===r.n;});
     if(bk.length){discarded.push({r:r,why:'já reservada para '+bk.map(function(e){return e.nome;}).join(', ')+' no mesmo horário'});return false;}
     return true;});
-  function scoreRoom(r){var rc=roomCost(r.c,p);r.rc=rc;var pen=rc.custo/Math.max(1,m);var inf=0,det=[];NEEDS.forEach(function(nd){if(!$(nd[0]).checked)return;var v=r[nd[1]]||'?';var pt=v==='sim'?1:v==='nao'?-1:0;inf+=pt;det.push(nd[2]+(v==='sim'?' ✓':v==='nao'?' ✗':' ?'));});r.inf=inf;r.infDet=det;pen-=(+P.wInfra||0)*inf;if(r.custo)pen+=r.custo/(Math.max(1,+P.metaPresente)*Math.max(1,m));if(aud&&r.k==='aula')pen+=.5;if(!aud&&r.k==='oficio')pen+=.25;if(lab2&&r.k==='oficio')pen+=.3;return pen;}
+  function scoreRoom(r){var rc=roomCost(r.c,p);r.rc=rc;var pen=rc.custo/Math.max(1,m);var inf=0,det=[];NEEDS.forEach(function(nd){if(!$(nd[0]).checked)return;var v=r[nd[1]]||'?';var pt=v==='sim'?1:v==='nao'?-1:0;inf+=pt;det.push(nd[2]+(v==='sim'?' ✓':v==='nao'?' ✗':' ?'));});r.inf=inf;r.infDet=det;pen-=(+P.wInfra||0)*inf;if(r.custo)pen+=r.custo/(Math.max(1,+P.metaPresente)*Math.max(1,m));if(semAr(r))pen+=0.1*calorPts(cl0);if(r.aberto==='sim'&&chuvaAlta(cl0))pen+=1;if(aud&&r.k==='aula')pen+=.5;if(!aud&&r.k==='oficio')pen+=.25;if(lab2&&r.k==='oficio')pen+=.3;return pen;}
   function pick(c){var sc=quant(p,c);var f=pool.filter(function(r){return capEff(r.c)>=sc;}).map(function(r){return {r:r,pen:scoreRoom(r),seats:sc};});f.sort(function(x,y){return (x.pen-y.pen)||(tie(x.r)-tie(y.r));});return f[0]||null;}
   var CR={'no-local':0,'ao-lado':1,'perto':2,'?':3,'longe':4};
   function tie(r){var t=0;if($('f-coffee').checked)t+=CR[r.coffee]==null?3:CR[r.coffee];return t;}
@@ -767,12 +811,19 @@ function plan(){
     var MG={'0.9':'margem muito alta','0.8':'margem alta','0.7':'margem normal'};var lab=isC0(r)?'sugerida':'alternativa · '+MG[String(o.cs[0])];var isC=chosen&&chosen.r===r;
     var bt=isC?(isC0(r)?'':'<span class="chip ok">escolhida</span> <button type="button" class="btn small ghost" data-usesala="">Voltar para a sugerida</button>'):'<button type="button" class="btn small ghost" data-usesala="'+esc(r.n)+'">Usar esta sala</button>';
     var falta=(r.infDet||[]).filter(function(t){return / ✗$/.test(t);}).map(function(t){return t.replace(' ✗','');});
-    return '<div class="room'+(isC?' best':'')+'"><span class="chip'+(isC?' ok':'')+'">'+lab+'</span><b>'+esc(r.n)+'</b><span class="num">'+r.c+' lugares</span><small>'+Math.min(99,Math.round(pfit*100))+'% de chance de caber todo mundo · ocupação prevista '+occ+'% · aceita até '+maxN+' inscrições</small><small>'+resTxt(r,r.dl)+' · '+(COFFEE[r.coffee]||COFFEE['?'])+(r.coffeeLocal?' ('+esc(r.coffeeLocal)+')':'')+(falta.length?' · <span style="color:var(--red)">sem '+esc(falta.join(', '))+'</span>':'')+'</small>'+(bt?'<div class="rpick">'+bt+'</div>':'')+'</div>';};
+    return '<div class="room'+(isC?' best':'')+'"><span class="chip'+(isC?' ok':'')+'">'+lab+'</span><b>'+esc(r.n)+'</b><span class="num">'+r.c+' lugares</span><small>'+Math.min(99,Math.round(pfit*100))+'% de chance de caber todo mundo · ocupação prevista '+occ+'% · aceita até '+maxN+' inscrições</small><small>'+resTxt(r,r.dl)+' · '+(COFFEE[r.coffee]||COFFEE['?'])+(r.coffeeLocal?' ('+esc(r.coffeeLocal)+')':'')+(falta.length?' · <span style="color:var(--red)">sem '+esc(falta.join(', '))+'</span>':'')+(semAr(r)&&calorPts(cl0)?' · <span style="color:var(--amber)">'+(r.ar==='nao'?'sem ar-condicionado':'ar-condicionado: não sabemos')+' · −'+calorPts(cl0)+' na nota com '+cl0.max+' °C</span>':'')+(r.aberto==='sim'&&chuvaAlta(cl0)?' · <span style="color:var(--amber)">espaço aberto com '+Math.round(cl0.p*100)+'% de chance de chuva</span>':'')+'</small>'+(bt?'<div class="rpick">'+bt+'</div>':'')+'</div>';};
   var topo=cards.slice(0,3),resto=cards.slice(3);
   roomHtml=(avisoSala?'<p class="chip warn" style="white-space:normal">'+esc(avisoSala)+'</p>':'')+'<p class="note" style="margin:4px 0 6px">A sala sugerida e duas alternativas, da que melhor equilibra cadeira sobrando e falta de lugar. Para usar outra, clique em "Usar esta sala".</p><div class="rooms">'+topo.map(card).join('')+'</div>'+(resto.length?'<details class="note" style="margin-top:8px"><summary>Ver as outras '+resto.length+' salas possíveis</summary><div class="rooms" style="margin-top:8px">'+resto.map(function(o,i){return card(o,i+3);}).join('')+'</div></details>':'');}
   var nPrazo=discarded.filter(function(x){return x.r.c>=sMin&&/prazo/.test(x.why);}).length;
   if(cfgT.externo){roomHtml='<p class="note">'+tipo+' acontece fora da FEA: sem sugestão de sala.</p>';discarded=[];best=[];chosen=null;}
   if(discarded.length)roomHtml+='<details class="note" style="margin-top:8px"><summary>Salas descartadas ('+discarded.length+(nPrazo?', '+nPrazo+' por prazo':'')+')</summary><ul class="factors" style="margin-top:6px">'+discarded.sort(function(a,b){return b.r.c-a.r.c;}).map(function(x){return '<li><span>'+esc(x.r.n)+' ('+x.r.c+')</span><span class="d neg">'+esc(x.why)+'</span></li>';}).join('')+'</ul></details>';
+  /* nota da data: depois da sala, porque o calor pesa quando a sala não tem ar */
+  var salaN=chosen&&!cfgT.externo?chosen.r:null;
+  var sc=scoreDate(d,tipo,savedId,hora,dur,salaN), lab=label(sc.s), avisosClima=climaAvisos(sc.clima,salaN,$('f-coffee').checked);
+  var hoje0=new Date();hoje0.setHours(0,0,0,0);
+  var alts=[];for(var i=-10;i<=10;i++){if(!i)continue;var dd=add(d,i);if(dd<hoje0)continue;var x=scoreDate(dd,tipo,savedId,hora,dur,salaN);if(x.s>sc.s)alts.push({d:dd,s:x.s});}
+  alts.sort(function(a,b){return b.s-a.s||Math.abs(a.d-d)-Math.abs(b.d-d);});alts=alts.slice(0,3);
+  $('r-score').innerHTML=rScoreTpl();
   $('r-room').innerHTML='<div class="btns"><span class="big num">'+Math.round(m)+'<small>presentes previstos</small></span></div>'+
    '<dl class="kv"><dt>Na maioria dos cenários, entre</dt><dd class="num">'+p10+' e '+p90+' pessoas</dd><dt>Lugares a garantir</dt><dd class="num">'+seats+'</dd><dt>Comparecimento estimado</dt><dd class="num">'+Math.round(rate*100)+'%</dd></dl>'+roomHtml+'<p class="note">'+h.src+'</p>'+(h.missing?'<p class="note" style="color:var(--amber)">'+h.missing+' evento(s) deste tipo sem registro de "sem inscrição": a taxa pode estar superestimada.</p>':'')+'<details class="note"><summary>Detalhes técnicos do cálculo</summary><dl class="kv" style="margin-top:6px"><dt>Média geral da base</dt><dd class="num">'+Math.round(h.muG*100)+'%</dd><dt>Média do tipo (puxada com M = '+M_POOL+')</dt><dd class="num">'+Math.round(h.mu*100)+'%</dd><dt>Concentração κ ('+h.kSrc+')</dt><dd class="num">'+h.kappa.toFixed(1)+'</dd><dt>Sem inscrição, média da Poisson ('+h.lSrc+')</dt><dd class="num">'+walk.toFixed(1)+'</dd></dl></details>';
 
@@ -803,7 +854,7 @@ function plan(){
   else if(label(sc.s)[0]==='Arriscada')alertas.push('Data arriscada (nota '+sc.s+'/100): '+sc.f.filter(function(x){return x[1]<0;}).map(function(x){return x[0];}).join('; ')+'.');
   if(!cfgT.externo&&!cards.length)alertas.push('Nenhuma sala viável para este público nesta data.');
   if(foraJ)alertas.push('Fora da janela padrão de '+tipo+': das '+hora+' às '+fimTxt+' (padrão: '+hfmt(JANELA[0])+' às '+hfmt(JANELA[1])+').');
-  current={nome:nome,tipo:tipo,data:dStr,hora:hora,duracao:dur,inscritosMeta:n,semInscricaoPrev:Math.round(walk*10)/10,sala:best.length?best[0].r.n:'',capacidade:best.length?best[0].r.c:null,presentesPrev:Math.round(m),notaData:sc.s,convidado:$('f-conv').value.trim(),equipeConvidado:Math.max(0,Math.round(+$('f-eq').value||0)),custoPrev:Math.round(total*100)/100,custoPorPresentePrev:Math.round(perP*100)/100,form:formSnap()};
+  current={nome:nome,tipo:tipo,data:dStr,hora:hora,duracao:dur,inscritosMeta:n,semInscricaoPrev:Math.round(walk*10)/10,sala:best.length?best[0].r.n:'',capacidade:best.length?best[0].r.c:null,presentesPrev:Math.round(m),notaData:sc.s,notaClima:climaResumo(sc.clima),climaAvisos:avisosClima,convidado:$('f-conv').value.trim(),equipeConvidado:Math.max(0,Math.round(+$('f-eq').value||0)),custoPrev:Math.round(total*100)/100,custoPorPresentePrev:Math.round(perP*100)/100,form:formSnap()};
 }
 var LR={}, editingId=null, alertas=[], current=null, calcDone=false, stale=false, savedId=null;
 function maxInsc(cap,h,conf,lam){if(cap<=0)return 0;if(quant(totalPmf(1,h,lam),conf)>cap)return 0;var lo=1,hi=1500;while(lo<hi){var mid=Math.ceil((lo+hi)/2);if(quant(totalPmf(mid,h,lam),conf)<=cap)lo=mid;else hi=mid-1;}return lo;}
@@ -856,6 +907,7 @@ function detail(e){
     if(e.custo!=null)out.push(['Financeiro',e.custoBasico!=null||e.custoNaoPrev!=null?'básico '+brl2(e.custoBasico||0)+' + não previsto '+brl2(e.custoNaoPrev||0)+' = <b>'+brl2(e.custo)+'</b>'+(e.custo?' · não previsto = <b>'+Math.round((e.custoNaoPrev||0)/e.custo*100)+'%</b> do total':''):'total '+brl2(e.custo)+' (sem separação entre básico e não previsto)']);
   }else{
     out.push(['Previsão','presentes '+(e.presentesPrev!=null?e.presentesPrev:'—')+' · custo '+(e.custoPrev!=null?brl2(e.custoPrev):'—')+' · nota da data '+(e.notaData!=null?e.notaData:'—')]);
+    var nh=notaHistHtml(e);if(nh)out.push(['Nota da data',nh]);
   }
   out.push(['Horário',(e.hora||'—')+(e.duracao?' · '+(e.duracao>=60?Math.floor(e.duracao/60)+'h'+(e.duracao%60?('0'+e.duracao%60).slice(-2):''):e.duracao+' min'):'')]);
   if(window.ROBO_URL||e.inscricao)out.push(['Inscrições',inscHtml(e)]);
@@ -937,6 +989,8 @@ function doSave(exc){
   var data=Object.assign({status:'planejado',criadoEm:new Date().toISOString()},current);
   if(!editingId){data.responsavel=window.__meuNome||'';data.responsavelId=window.__euId||'';data.criadoPor=window.__euId||'';}
   if(exc)data.excecao=exc;
+  var antes=editingId?(events.filter(function(x){return x.id===editingId;})[0]||{}).notaHist:null;
+  data.notaHist=(antes||[]).concat(Object.assign({marco:editingId?'editado':'salvo',em:new Date().toISOString(),dias:diasAte(data.data),nota:data.notaData},data.notaClima||{})).slice(-12);
   if(editingId){delete data.criadoEm;data.editadoEm=new Date().toISOString();if(!exc)data.excecao=null;$('saveplan').disabled=true;$('excbox').hidden=true;db.doc('eventos/'+editingId).update(data).then(function(){$('savemsg').textContent='Evento atualizado'+(exc?' (exceção registrada).':'.');}).catch(function(){$('savemsg').textContent='Não foi possível atualizar.';}).then(function(){$('saveplan').disabled=false;});return;}
   $('saveplan').disabled=true;$('excbox').hidden=true;
   db.collection('eventos').add(data).then(function(ref){savedId=ref&&ref.id;editingId=savedId;showEditBar();$('savemsg').textContent='Salvo na base de eventos'+(exc?' como exceção.':'.');}).catch(function(err){$('savemsg').textContent=err&&err.code==='quota_exceeded'?'A base está cheia: exclua eventos antigos.':'Não foi possível salvar. Tente de novo.';}).then(function(){$('saveplan').disabled=false;});
@@ -1140,7 +1194,7 @@ function sAbrir(id){
   $('s-res').value=x?x.reserva||'aula':'aula';$('s-ant').placeholder=ANT0[$('s-res').value];
   $('s-ant').value=x&&x.antecedencia!=null&&x.antecedencia!==''?x.antecedencia:'';
   $('s-custo').value=x&&x.custo!=null?x.custo:'';
-  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});
+  SRECS.forEach(function(r){sSeg(r[0],x?x[r[0]]:'?');});sSeg('aberto',x?x.aberto:'?');sSeg('coffeeAberto',x?x.coffeeAberto:'?');
   $('s-cprox').value=x?x.coffeeProx||'?':'?';$('s-clocal').value=x?x.coffeeLocal||'':'';$('s-obs').value=x?x.obs||'':'';
   ['s-nome','s-cap','s-ant','s-custo'].forEach(function(k){$(k).removeAttribute('aria-invalid');});
   $('sd-msg').textContent=pode?'':'Seu cargo permite só visualizar.';$('sd-msg').style.color='';
@@ -1173,7 +1227,7 @@ $('sdform').addEventListener('submit',function(e){e.preventDefault();if(!sPode()
   if(cus!==''&&!(+cus>=0)){erros.push('custo não pode ser negativo');$('s-custo').setAttribute('aria-invalid','true');}
   if(erros.length){$('sd-msg').textContent='Confira: '+erros.join('; ')+'.';$('sd-msg').style.color='var(--red)';return;}
   var r=$('s-res').value,dados={nome:nome,capacidade:+cap,reserva:r,antecedencia:ant===''?(sAberta?null:ANT0[r]):+ant,custo:cus===''?null:+cus,coffeeProx:$('s-cprox').value,coffeeLocal:$('s-clocal').value.trim(),obs:$('s-obs').value.trim(),ativa:$('s-ativa').checked};
-  SRECS.forEach(function(x){dados[x[0]]=sSegV(x[0]);});
+  SRECS.forEach(function(x){dados[x[0]]=sSegV(x[0]);});dados.aberto=sSegV('aberto');dados.coffeeAberto=sSegV('coffeeAberto');
   var bt=$('s-salvar');bt.disabled=true;$('sd-msg').style.color='';$('sd-msg').textContent='Salvando…';
   var op=sAberta?db.doc('salas/'+sAberta).update(dados):db.collection('salas').add(dados);
   op.then(function(){$('smsg').textContent=sAberta?'Sala atualizada.':'Sala adicionada.';bt.disabled=false;sFechar();}).catch(function(){bt.disabled=false;$('sd-msg').textContent='Não foi possível salvar.';$('sd-msg').style.color='var(--red)';});});
@@ -1287,10 +1341,10 @@ function connect(){
   window.claude.use('db').then(function(d){
     if(!d){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>. Nada é salvo.';return;}
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
-    db.collection('eventos').onSnapshot(function(s){events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
-    db.collection('parametros').onSnapshot(function(s){s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}});},function(){});
-    db.collection('calendario').onSnapshot(function(s){calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
-    db.collection('salas').onSnapshot(function(s){salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
+    db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
+    db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}});},function(){});
+    db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
+    db.collection('salas').onSnapshot(function(s){CARR.sal=1;climaAgendar();salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
     db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();refresh();},function(){});
     db.collection('convidados').onSnapshot(function(s){guests=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-conv',renderGuests);renderChks();},function(){});
     db.collection('listas').onSnapshot(function(s){s.docs.forEach(function(x){if(x.id==='convidados'){var d=x.data();listas={temas:d.temas||[],segmentos:d.segmentos||[]};renderChks();renderGuests();}});},function(){});

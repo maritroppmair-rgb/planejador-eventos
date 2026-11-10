@@ -230,8 +230,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function situ(e,today){var dn=e.status==='realizado';
     if(dn){var tc=e.inscritos?Math.max(0,e.presentes-(+e.semInscricao||0))/e.inscritos:null;return tc==null?'<span class="chip neutral">realizado</span>':semaf(tc,'tc').replace('</span>',' vieram</span>');}
     if(e.data&&e.data<today)return '<span class="chip bad">resultado pendente</span>';
-    var i=e.inscricao;if(i&&i.formId)return i.aberto===false?'<span class="chip neutral">inscrições fechadas</span>':'<span class="chip ok">inscrições abertas</span>';
-    return '<span class="chip neutral">'+(window.ROBO_URL?'sem Forms':'planejado')+'</span>';}
+    var i=e.inscricao,cs=climaSelo(e);if(i&&i.formId)return (i.aberto===false?'<span class="chip neutral">inscrições fechadas</span>':'<span class="chip ok">inscrições abertas</span>')+cs;
+    return '<span class="chip neutral">'+(window.ROBO_URL?'sem Forms':'planejado')+'</span>'+cs;}
   function insc(e){var dn=e.status==='realizado',meta=+e.inscritosMeta||0;
     if(dn)return e.inscritos!=null?'<b>'+e.inscritos+'</b> inscritos':'—';
     var n=e.inscricao&&e.inscricao.formId?(+e.inscricao.total||0):null;

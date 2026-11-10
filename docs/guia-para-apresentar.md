@@ -13,7 +13,7 @@ O Planejador é o app da Diretoria de Eventos: ele ajuda a decidir sala, data e 
 Como ele chega nessa resposta, sem jargão:
 
 - **Público provável, não um número único.** Nem todo inscrito aparece. O app olha a taxa de comparecimento dos eventos passados e mostra uma faixa: "na maioria dos cenários, entre X e Y pessoas".
-- **Nota da data.** Cada data recebe uma nota conforme o calendário (provas, feriados, semana de outros eventos) e a chance de chuva no horário do evento, porque tudo isso mexe no comparecimento. O app também avisa quando deve fazer calor (acima de 28 °C) ou frio (abaixo de 10 °C).
+- **Nota da data.** Cada data recebe uma nota conforme o calendário (provas, feriados, semana de outros eventos) e a chance de chuva no horário do evento, porque tudo isso mexe no comparecimento. Se a sala escolhida não tem ar-condicionado, o calor também tira pontos a partir de 27 °C. A nota de cada evento salvo é atualizada sozinha 16 e 7 dias antes, com a previsão do tempo mais recente.
 - **Sala sugerida.** Ele mostra a melhor sala e mais duas alternativas, com a chance de caber todo mundo e a ocupação esperada.
 - **Compras.** O coffee é calculado para cobrir a grande maioria dos cenários, porque faltar é pior que sobrar.
 - **Aprende com o uso.** Depois do evento, registramos o resultado real. Cada evento registrado deixa a próxima previsão melhor.
@@ -51,11 +51,11 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) tem três grupos: E
 | --- | --- | --- |
 | **Ideia de evento** (BETA) | Descrever em texto corrido o evento ou a série que se quer; a IA propõe nome, formato, datas e convidados da nossa lista | Que público, sala e coffee da proposta são calculados pelo próprio Planejar, que dá para pedir ajustes ou trocar um evento da série, e o medidor "Para sair do BETA" |
 | **Planejar** | Montar um evento novo: tipo, data, inscrições esperadas e necessidades da sala | A faixa de público provável, a sala sugerida com 2 alternativas, as compras calculadas e a previsão do tempo na nota da data |
-| **Base** | Histórico de todos os eventos salvos, com o resultado real de cada um | Registrar resultado (inscritos, presentes, compras) e os indicadores com semáforo |
+| **Base** | Histórico de todos os eventos salvos, com o resultado real de cada um | Registrar resultado (inscritos, presentes, compras), os indicadores com semáforo e o selo ⚠ clima quando a previsão do tempo piora a data de um evento |
 | **Analytics** | Visão geral em gráficos, com filtro por semestre e tipo | Comparecimento por tipo, previsto × real e custo por presente contra a meta |
 | **Mailing** | Lista de quem pediu para receber os próximos eventos (marcado no Forms), sem e-mail repetido, e os convites programados | Que cada evento novo vira um convite automático no dia útil seguinte, e que o Analytics mostra quantas inscrições vieram do mailing e em que horário |
 | **Convidados** | Lista de palestrantes e contatos, com nota e status | A cobertura por tema, que mostra onde faltam nomes |
-| **Salas** | Cadastro das salas da FEA com capacidade e recursos | A busca e os ícones de recursos; clicar numa sala abre o painel com todos os detalhes. A sugestão do Planejar vem daqui |
+| **Salas** | Cadastro das salas da FEA com capacidade, recursos (inclusive ar-condicionado) e se o espaço ou o coffee é ao ar livre | A busca e os ícones de recursos; clicar numa sala abre o painel com todos os detalhes. A sugestão do Planejar vem daqui |
 | **Calendário** | Datas importantes do semestre (provas, feriados, outros eventos) | Que isso alimenta a nota da data |
 | **Documentos** | Manual, relatórios e links da diretoria | O PDF abre dentro do próprio app |
 | **Parâmetros** | As regras do cálculo: metas de custo, margens, limites e quanto a chuva pesa na nota da data | Só a diretoria altera, com dupla confirmação |
@@ -89,7 +89,7 @@ As respostas curtas abaixo cobrem custo, confiabilidade da previsão, segurança
 
 **"A IA decide sozinha?"** Não. Ela só propõe. Os números de público, sala e compras são recalculados pelo próprio Planejar, convidados fora da nossa lista e datas que já passaram são descartados, e a diretoria revisa antes de salvar. A IA não recebe os contatos dos convidados.
 
-**"De onde vem a previsão do tempo?"** Do Open-Meteo, um serviço gratuito. Para datas até 16 dias à frente o app usa a previsão do tempo de verdade, no horário do evento. Para datas mais distantes usa o histórico de 20 anos da região da FEA: em janeiro chove em cerca de um terço dos fins de tarde, no inverno em quase nenhum.
+**"De onde vem a previsão do tempo?"** Do Open-Meteo, um serviço gratuito. Para datas até 16 dias à frente o app usa a previsão do tempo de verdade, no horário do evento. Para datas mais distantes usa o histórico de 20 anos da região da FEA: em janeiro chove em cerca de um terço dos fins de tarde, no inverno em quase nenhum. A nota de cada evento salvo é atualizada sozinha 16 e 7 dias antes da data, e o app avisa se a sala não tem ar-condicionado num dia quente ou se o espaço é aberto com chuva prevista.
 
 **"Os dados estão seguros?"** Só entra quem está na lista, com login Google do e-mail USP. As permissões por cargo são checadas no próprio banco de dados, não só na tela. Tem backup completo em Parâmetros.
 
@@ -107,7 +107,7 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 
 - Arquivos anexados têm até 10 MB cada.
 - A previsão ainda tem poucos eventos de base; ela melhora a cada resultado registrado.
-- A previsão do tempo de verdade só existe para os próximos 16 dias; antes disso, a nota da data usa o histórico de chuva e temperatura da época.
+- A previsão do tempo de verdade só existe para os próximos 16 dias; antes disso, a nota da data usa o histórico de chuva e temperatura da época. A atualização automática acontece na primeira vez que alguém da equipe abre o app depois de cada marco.
 - A Ideia de evento faz até 30 propostas por pessoa por dia e fica marcada como BETA até a Base ter pelo menos 8 eventos realizados de cada tipo principal, em 2 semestres, com erro médio da previsão abaixo de 15%. A própria tela mostra quanto falta.
 - O link do site é temporário: o app ainda está numa conta de teste. Com a ideia aprovada, ele passa para contas do GitHub e do Firebase da Feashion, com um link definitivo.
 
