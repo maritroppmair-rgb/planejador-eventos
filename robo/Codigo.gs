@@ -24,7 +24,8 @@ var CFG = {
   HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes
   FECHAR_HORAS_ANTES: 36,   // inscrições fecham X horas antes do início
   CARGOS_QUE_EDITAM: ['DEV', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'],
-  IA_MODELO: 'gemini-3.8-flash', // troque aqui se o AI Studio mostrar outro modelo gratuito
+  IA_MODELO: 'gemini-3.5-flash-lite', // rápido e com pouca fila; troque se o AI Studio tirar do ar
+  IA_RESERVA: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'], // tentados na hora, sem espera, se o principal falhar
   IA_LIMITE_DIA: 30              // pedidos de proposta por pessoa por dia
 };
 // ==========================================================
@@ -784,7 +785,7 @@ function ideia(b, u) {
   return { proposta: prop, restantes: CFG.IA_LIMITE_DIA - usados - 1 };
 }
 
-/* Modelos "flash" que a chave pode usar, os mais leves (lite) primeiro. Guardado por 6 h. */
+/* Modelos "flash" que a chave pode usar, os mais leves (lite) primeiro. Só para o testarIA mostrar a lista. */
 function modelosReserva(key) {
   var cache = CacheService.getScriptCache(), c = cache.get('ia_modelos');
   if (c) return JSON.parse(c);
@@ -800,16 +801,14 @@ function modelosReserva(key) {
   cache.put('ia_modelos', JSON.stringify(l), 21600);
   return l;
 }
-/* Tenta o modelo principal; se estiver sobrecarregado ou fora do ar, passa para os de reserva. */
+/* Tenta o modelo principal; se estiver sobrecarregado ou fora do ar, passa na hora para os de reserva. */
 function chamarModelos(key, corpo) {
-  var tentados = {}, fila = [CFG.IA_MODELO], r = null, i = 0, reservaPega = false;
-  while (i < fila.length && i < 4) {
-    var m = fila[i++]; if (tentados[m]) continue; tentados[m] = 1;
+  var fila = [CFG.IA_MODELO].concat(CFG.IA_RESERVA || []), r = null;
+  for (var i = 0; i < fila.length; i++) {
+    var m = fila[i];
     r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent', { method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, payload: JSON.stringify(corpo), muteHttpExceptions: true });
     var c = r.getResponseCode();
     if (c === 200 || c === 400 || c === 403) return { r: r, modelo: m };
-    if (!reservaPega) { reservaPega = true; fila = fila.concat(modelosReserva(key)); }
-    Utilities.sleep(1500);
   }
   return { r: r, modelo: '' };
 }
