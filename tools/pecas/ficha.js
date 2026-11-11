@@ -1,7 +1,8 @@
 /* ============ FICHA DO EVENTO (seções 01 e 02 da Ficha de Evento Feashion) ============
    Fica no painel do evento (Base). O que o Planejar já calcula entra sozinho; o resto se preenche aqui.
    eventos/{id}.ficha = {equipe:[nomes], objetivo, metaSatisfacao, publico:[...], semConvidado, salaReservada:'sim'|'nao'|'',
-                         reservaNum, levar:[{item, quem}], brindes, planoB, fotos}
+                         reservaNum, levar:[{item, quem}], brindes:[{item, quem, gasto}], planoB, fotos}
+   (fichas antigas guardavam brindes como texto: vira o primeiro item da lista)
    No Planejar: o convidado é escolhido por segmento (mesma lista da tela Convidados), ordenado pela nota. */
 (function(){
 "use strict";
@@ -19,7 +20,7 @@ function dias(e){if(!e.data)return null;return Math.round((D(e.data)-D(iso(new D
 var RASC={},SUJO={},MSG={};
 function base(e){var f=e.ficha||{};return {equipe:(f.equipe||(e.responsavel?[e.responsavel]:[])).slice(),objetivo:f.objetivo||'',metaSatisfacao:f.metaSatisfacao!=null?f.metaSatisfacao:80,
   publico:(f.publico||[]).slice(),semConvidado:!!f.semConvidado,salaReservada:f.salaReservada||'',reservaNum:f.reservaNum||'',levar:(f.levar||[]).map(function(x){return {item:x.item||'',quem:x.quem||''};}),
-  brindes:f.brindes||'',planoB:f.planoB||'',fotos:f.fotos||''};}
+  brindes:(Array.isArray(f.brindes)?f.brindes:String(f.brindes||'').trim()?[{item:String(f.brindes).trim()}]:[]).map(function(x){return {item:x.item||'',quem:x.quem||'',gasto:!!x.gasto};}),planoB:f.planoB||'',fotos:f.fotos||''};}
 function rasc(e){if(!RASC[e.id]||!SUJO[e.id])RASC[e.id]=base(e);return RASC[e.id];}
 
 /* ----- o que conta para a ficha estar completa ----- */
@@ -43,7 +44,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   /* 01 identificação */
   var q=e.data?D(e.data).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'sem data';
   var a=ro('Evento',esc(e.nome||'—')+' <span class="note">· '+esc(e.tipo||'')+'</span>')+ro('Data e horário',esc(q)+(e.hora?' · '+esc(e.hora):''))+ro('Local',e.sala?esc(e.sala)+(e.capacidade?' ('+e.capacidade+' lugares)':''):'—');
-  a+='<p class="note fi-pl">Nome, tipo, data e local vêm do Planejar; para mudar, use “Abrir no Planejar”.</p>';
+  a='<div class="fi-grp">'+a+'<p class="note fi-pl">Nome, tipo, data e local vêm do Planejar; para mudar, use “Abrir no Planejar”.</p></div>';
   a+=ed?'<label class="tresp"><span>Responsável</span><select data-tresp="'+id+'"></select></label>':ro('Responsável',esc(e.responsavel||'—'));
   var eq=r.equipe.map(function(n,k){return '<span class="fi-chip">'+esc(n)+(ed?'<button type="button" data-fi-eqx="'+k+'" aria-label="Tirar '+esc(n)+'">&times;</button>':'')+'</span>';}).join('');
   a+='<div class="field"><label>Equipe envolvida</label><div class="fi-chips">'+(eq||'<span class="note">ninguém ainda</span>')+(ed?'<select data-fi-eqadd aria-label="Adicionar pessoa à equipe"><option value="">+ adicionar pessoa</option>'+(window.__membros||[]).filter(function(m){return r.equipe.indexOf(m.nome)<0;}).map(function(m){return '<option>'+esc(m.nome)+'</option>';}).join('')+'</select>':'')+'</div></div>';
@@ -74,8 +75,14 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   b+='<div class="field"><label>Levar para o evento <span class="rq opt">o que não é da sala</span></label>'+(lv?'<table class="g-tab fi-levar"><tbody>'+lv+'</tbody></table>':'<p class="note" style="margin:0">Nada a levar.</p>')+
     (ed?'<div class="fi-add"><input id="fi-litem" placeholder="ex.: passador, extensão, banner" aria-label="Item a levar"><input id="fi-lquem" placeholder="quem leva" aria-label="Quem leva"><button type="button" class="btn small ghost" data-fi-ladd>Adicionar</button></div>':'')+'</div>';
   /* alimentação, plano B, fotos */
-  var cof=fm['f-coffee']===false?'sem coffee':(e.custoPrevItens&&e.custoPrevItens.porcoes?e.custoPrevItens.porcoes+' porções de coffee':'coffee');
-  b+=ed?'<div class="field"><label for="fi-brindes">Alimentação e brindes</label><div class="fi-val">'+esc(cof)+' <span class="note">do Planejar</span></div><input id="fi-brindes" data-fi="brindes" maxlength="200" value="'+v(r.brindes)+'" placeholder="brindes (ex.: ecobags do patrocinador)"></div>':ro('Alimentação e brindes',esc(cof)+(r.brindes?' · '+esc(r.brindes):''));
+  var cf=fm['f-coffee'],por=e.custoPrevItens&&e.custoPrevItens.porcoes;
+  var cof=cf===true?'<span class="fi-yn sim" aria-hidden="true">✓</span> Coffee'+(por?' · '+por+' porções':''):cf===false?'<span class="fi-yn nao" aria-hidden="true">✗</span> Sem coffee':'<span class="fi-yn ns" aria-hidden="true">?</span> Coffee não definido';
+  b+='<div class="field"><label>Alimentação</label><div class="fi-val">'+cof+' <span class="note">do Planejar</span></div></div>';
+  var bl=r.brindes.map(function(x,k){return '<tr><td>'+esc(x.item)+'</td><td>'+(ed?'<input data-fi-bquem="'+k+'" value="'+v(x.quem)+'" placeholder="responsável" aria-label="Responsável por '+esc(x.item)+'">':esc(x.quem||'—'))+'</td>'+
+    '<td class="fi-bg">'+(ed?'<label class="check"><input type="checkbox" data-fi-bg="'+k+'"'+(x.gasto?' checked':'')+'>gasto registrado</label>':(x.gasto?'<span class="chip ok">gasto registrado</span>':'<span class="chip warn">gasto não registrado</span>'))+'</td>'+
+    '<td class="r">'+(ed?'<button type="button" class="cf-x" data-fi-bx="'+k+'" aria-label="Tirar '+esc(x.item)+'">&times;</button>':'')+'</td></tr>';}).join('');
+  b+='<div class="field"><label>Brindes</label>'+(bl?'<table class="g-tab fi-levar fi-brindes"><tbody>'+bl+'</tbody></table>':'<p class="note" style="margin:0">Nenhum brinde.</p>')+
+    (ed?'<div class="fi-add"><input id="fi-bitem" placeholder="ex.: ecobags do patrocinador" aria-label="Brinde"><input id="fi-bquem" placeholder="responsável" aria-label="Responsável pelo brinde"><button type="button" class="btn small ghost" data-fi-badd>Adicionar</button></div>':'')+'</div>';
   var risco=(e.climaAvisos&&e.climaAvisos.length)||(e.notaData!=null&&e.notaData<60);
   b+=ed?'<div class="field"><label for="fi-pb">Plano B</label>'+(risco&&!r.planoB?'<p class="note fi-alerta">A nota de clima desta data está baixa: vale pensar no plano B.</p>':'')+'<textarea id="fi-pb" data-fi="planoB" rows="3" maxlength="800" placeholder="ex.: se o convidado cancelar, quem substitui; se chover, outra sala">'+v(r.planoB)+'</textarea></div>':ro('Plano B',esc(r.planoB||'—'));
   var fu=safeUrl(r.fotos);
@@ -91,25 +98,30 @@ function atual(){var dr=document.querySelector('#view-base .tpanel');var b=dr&&!
 var sec=$('view-base');
 sec.addEventListener('input',function(ev){var t=ev.target,id;if(!t.dataset)return;
   if(t.dataset.fi!=null&&(id=atual())){var e=evDe(id),r=rasc(e),k=t.dataset.fi;r[k]=k==='metaSatisfacao'?(t.value===''?'':Math.max(0,Math.min(100,+t.value))):t.value;sujar(id);}
-  else if(t.dataset.fiLquem!=null&&(id=atual())){rasc(evDe(id)).levar[+t.dataset.fiLquem].quem=t.value;sujar(id);}});
+  else if(t.dataset.fiLquem!=null&&(id=atual())){rasc(evDe(id)).levar[+t.dataset.fiLquem].quem=t.value;sujar(id);}
+  else if(t.dataset.fiBquem!=null&&(id=atual())){rasc(evDe(id)).brindes[+t.dataset.fiBquem].quem=t.value;sujar(id);}});
 sec.addEventListener('change',function(ev){var t=ev.target,id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
   if(t.dataset.fi==='salaReservada'){r.salaReservada=t.value;sujar(id);}
   else if(t.dataset.fiPub){var p=t.dataset.fiPub;r.publico=r.publico.filter(function(x){return x!==p;});if(t.checked)r.publico.push(p);r.publico.sort(function(a,b){return PUBLICOS.indexOf(a)-PUBLICOS.indexOf(b);});sujar(id);}
+  else if(t.dataset.fiBg!=null){r.brindes[+t.dataset.fiBg].gasto=t.checked;sujar(id);}
   else if(t.hasAttribute('data-fi-semconv')){r.semConvidado=t.checked;sujar(id);redesenha();}
   else if(t.hasAttribute('data-fi-eqadd')&&t.value){r.equipe.push(t.value);sujar(id);redesenha();}
   else if(t.dataset.fiGst&&db){var gid=t.dataset.fiGst;db.doc('convidados/'+gid).update({status:t.value}).catch(function(){alertMsg('Não foi possível mudar o status do convidado.');});}});
-sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-fi-eqx],[data-fi-lx],[data-fi-ladd],[data-fi-lauto],[data-fi-salvar]');if(!b)return;var id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
+sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-fi-eqx],[data-fi-lx],[data-fi-ladd],[data-fi-lauto],[data-fi-bx],[data-fi-badd],[data-fi-salvar]');if(!b)return;var id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
   if(b.dataset.fiEqx!=null){r.equipe.splice(+b.dataset.fiEqx,1);sujar(id);redesenha();}
   else if(b.dataset.fiLx!=null){r.levar.splice(+b.dataset.fiLx,1);sujar(id);redesenha();}
   else if(b.dataset.fiLauto){r.levar.push({item:b.dataset.fiLauto,quem:''});sujar(id);redesenha();var q=document.querySelector('#view-base .tpanel [data-fi-lquem="'+(r.levar.length-1)+'"]');if(q)q.focus();}
   else if(b.hasAttribute('data-fi-ladd')){var it=$('fi-litem'),qm=$('fi-lquem');if(!it.value.trim()){it.focus();return;}r.levar.push({item:it.value.trim().slice(0,80),quem:qm.value.trim().slice(0,80)});sujar(id);redesenha();var n=$('fi-litem');if(n)n.focus();}
+  else if(b.dataset.fiBx!=null){r.brindes.splice(+b.dataset.fiBx,1);sujar(id);redesenha();}
+  else if(b.hasAttribute('data-fi-badd')){var bi=$('fi-bitem'),bq=$('fi-bquem');if(!bi.value.trim()){bi.focus();return;}r.brindes.push({item:bi.value.trim().slice(0,80),quem:bq.value.trim().slice(0,80),gasto:false});sujar(id);redesenha();var nb=$('fi-bitem');if(nb)nb.focus();}
   else if(b.dataset.fiSalvar){if(!db)return;var fu=String(r.fotos||'').trim();if(fu&&!safeUrl(fu)){var m0=b.parentNode.querySelector('.msg');if(m0)m0.textContent='O link das fotos precisa começar com https://';return;}
     var f={equipe:r.equipe,objetivo:String(r.objetivo).trim().slice(0,200),metaSatisfacao:r.metaSatisfacao===''?null:+r.metaSatisfacao,publico:r.publico,semConvidado:!!r.semConvidado,salaReservada:r.salaReservada,reservaNum:String(r.reservaNum).trim().slice(0,60),
-      levar:r.levar.filter(function(x){return x.item;}),brindes:String(r.brindes).trim().slice(0,200),planoB:String(r.planoB).trim().slice(0,800),fotos:fu};
+      levar:r.levar.filter(function(x){return x.item;}),brindes:r.brindes.filter(function(x){return x.item;}),planoB:String(r.planoB).trim().slice(0,800),fotos:fu};
     b.disabled=true;var m=b.parentNode.querySelector('.msg');if(m)m.textContent='Salvando…';
     db.doc('eventos/'+id).update({ficha:f}).then(function(){delete SUJO[id];delete RASC[id];MSG[id]='Ficha salva.';redesenha();},function(){b.disabled=false;if(m)m.textContent='Não foi possível salvar a ficha.';});}});
 /* Enter num campo de texto da ficha não fecha nada nem envia */
-sec.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&ev.target.id==='fi-litem'){ev.preventDefault();var b=sec.querySelector('[data-fi-ladd]');if(b)b.click();}});
+sec.addEventListener('keydown',function(ev){if(ev.key!=='Enter')return;var k=ev.target.id;
+  if(k==='fi-litem'||k==='fi-lquem'||k==='fi-bitem'||k==='fi-bquem'){ev.preventDefault();var b=sec.querySelector(k.charAt(3)==='l'?'[data-fi-ladd]':'[data-fi-badd]');if(b)b.click();}});
 window.__fichaFechou=function(id){if(id&&!SUJO[id])delete MSG[id];};
 
 /* ============ PLANEJAR: convidado escolhido por segmento ============ */

@@ -530,7 +530,7 @@ body.sd-aberto{overflow:hidden}
         <div class="field"><label for="d-nome">Nome <span class="rq">obrigatório</span></label><input id="d-nome"></div>
         <div class="field"><label for="d-url">Link <span class="rq opt">ou envie um arquivo</span></label><input id="d-url" type="url" placeholder="https://drive.google.com/..."></div>
         <div class="field" id="d-filebox"><label for="d-file">Arquivo <span class="rq opt">até 20 MB</span></label><input id="d-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.md"><label class="dcur" id="d-filecur" hidden><input type="checkbox" id="d-filerm"> Remover o arquivo já enviado</label></div>
-        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option><option>Nota fiscal</option></select></div>
+        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option><option>Nota fiscal</option><option>Comprovante</option></select></div>
         <div class="field"><label for="d-versao">Versão / ano <span class="rq opt">opcional</span></label><input id="d-versao" placeholder="ex.: 2026"></div>
         <div class="field"><label for="d-resp">Responsável <span class="rq opt">opcional</span></label><select id="d-resp"><option value="">Sem responsável</option></select></div>
         <div class="field" style="grid-column:1/-1"><label for="d-resumo">Para que serve <span class="rq opt">opcional</span></label><input id="d-resumo"></div>
@@ -621,7 +621,7 @@ var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['di
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
 /* documento pode ter um link externo (Drive etc.) e um arquivo enviado; o Tipo decide qual abre primeiro */
 function dFontes(x){var u=String(x.url||''),bl=/^\/_blob\//.test(u);var link=x.link!=null?x.link:(bl?'':u),arq=x.arquivo!=null?x.arquivo:(bl?u:'');return {link:safeUrl(link),arquivo:safeUrl(arq)};}
-function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem'||tipo==='Nota fiscal';return arqPrimeiro?(arq||link):(link||arq);}
+function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem'||tipo==='Nota fiscal'||tipo==='Comprovante';return arqPrimeiro?(arq||link):(link||arq);}
 function docLinks(et){var l=docs.filter(function(x){return x.etapa===et&&safeUrl(x.url);});if(!l.length)return '';return '<div class="dlinks">'+l.map(function(x){return '<a href="'+esc(safeUrl(x.url))+'" target="_blank" rel="noopener">'+esc(x.nome)+'</a>';}).join('')+'</div>';}
 var $=function(id){return document.getElementById(id);};
 
@@ -1164,7 +1164,7 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
     pr.then(function(){var m=docEdit?'Alterações salvas.':'Documento adicionado.';resetDocForm();fecharGav('dform',m);}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
   if(file){if(file.size>20*1024*1024){$('dmsg').textContent='Arquivo maior que 20 MB: use um link do Drive.';return;}
     var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',csv:'text/csv',txt:'text/plain',md:'text/markdown'};
-    if(!u){if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';}
+    if(!u&&data.tipo!=='Nota fiscal'&&data.tipo!=='Comprovante'){if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';}
     var go=function(api){if(!api){$('dmsg').textContent='Seu acesso não permite enviar arquivos: use um link.';return;}$('dmsg').textContent='Enviando…';
       api.upload(file,{type:TY[ext]||file.type}).then(function(r){fixar('/_blob/'+r.id);data.assetId=r.id;save();}).catch(function(err){$('dmsg').textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito.':'Não foi possível enviar o arquivo.';});};
     if(assetsApi!==null&&assetsApi!==undefined)go(assetsApi);else window.claude.use('assets').then(function(a){assetsApi=a;go(a);}).catch(function(){go(null);});return;}

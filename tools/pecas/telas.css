@@ -288,6 +288,20 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 .fi-sec{display:grid;gap:12px}
 .fi-sec h4{margin:0!important}
 .fi-sec .field{margin:0}
+/* separador leve entre os grupos da ficha */
+.fi-sec>*{border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);padding-top:12px}
+.fi-sec>h4,.fi-sec>h4+*{border-top:0;padding-top:0}
+.fi-grp{display:grid;gap:6px}.fi-grp .fi-pl{margin:2px 0 0}
+.fi-yn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:700;margin-right:4px;vertical-align:-3px}
+.fi-yn.sim{background:var(--green-bg);color:var(--green)}.fi-yn.nao{background:var(--surface-2);color:var(--red)}.fi-yn.ns{background:var(--surface-2);color:var(--muted)}
+.fi-levar.fi-brindes td:nth-child(1){width:32%}.fi-levar.fi-brindes td:nth-child(3){width:138px}.fi-levar.fi-brindes td:nth-child(4){width:34px}
+.fi-brindes .check{font-size:12.5px;margin:0;white-space:nowrap}
+/* Registrar gasto: ficha única com comprovante */
+.g-ficha .g-grid label .rq{font-weight:400}
+.g-compbox{display:grid;gap:6px;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);padding-top:10px;margin-top:4px}
+.g-compbox input[type=file]{padding:6px;background:var(--surface-2)}
+.g-comp{display:inline-block;font-size:12.5px;margin-top:2px}.g-semc{display:inline-block;margin-top:3px}
+@media (max-width:520px){.fi-levar.fi-brindes td:nth-child(3){width:auto}.fi-brindes .check{white-space:normal}}
 .fi-ro{display:grid;grid-template-columns:150px 1fr;gap:10px;font-size:14px}
 .fi-ro span{color:var(--muted)}.fi-ro b{font-weight:600}
 .fi-pl{margin:-4px 0 0;font-size:12px}

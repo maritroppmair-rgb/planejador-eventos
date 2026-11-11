@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111122654"></script>
-<script src="plataforma.js?v=20261111122654"></script>
+<script src="config.js?v=20261111124303"></script>
+<script src="plataforma.js?v=20261111124303"></script>
 </head>
 <body>
 
@@ -788,6 +788,20 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 .fi-sec{display:grid;gap:12px}
 .fi-sec h4{margin:0!important}
 .fi-sec .field{margin:0}
+/* separador leve entre os grupos da ficha */
+.fi-sec>*{border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);padding-top:12px}
+.fi-sec>h4,.fi-sec>h4+*{border-top:0;padding-top:0}
+.fi-grp{display:grid;gap:6px}.fi-grp .fi-pl{margin:2px 0 0}
+.fi-yn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:700;margin-right:4px;vertical-align:-3px}
+.fi-yn.sim{background:var(--green-bg);color:var(--green)}.fi-yn.nao{background:var(--surface-2);color:var(--red)}.fi-yn.ns{background:var(--surface-2);color:var(--muted)}
+.fi-levar.fi-brindes td:nth-child(1){width:32%}.fi-levar.fi-brindes td:nth-child(3){width:138px}.fi-levar.fi-brindes td:nth-child(4){width:34px}
+.fi-brindes .check{font-size:12.5px;margin:0;white-space:nowrap}
+/* Registrar gasto: ficha única com comprovante */
+.g-ficha .g-grid label .rq{font-weight:400}
+.g-compbox{display:grid;gap:6px;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);padding-top:10px;margin-top:4px}
+.g-compbox input[type=file]{padding:6px;background:var(--surface-2)}
+.g-comp{display:inline-block;font-size:12.5px;margin-top:2px}.g-semc{display:inline-block;margin-top:3px}
+@media (max-width:520px){.fi-levar.fi-brindes td:nth-child(3){width:auto}.fi-brindes .check{white-space:normal}}
 .fi-ro{display:grid;grid-template-columns:150px 1fr;gap:10px;font-size:14px}
 .fi-ro span{color:var(--muted)}.fi-ro b{font-weight:600}
 .fi-pl{margin:-4px 0 0;font-size:12px}
@@ -1079,7 +1093,7 @@ body:not(.fin-editar) .fin-ed{display:none!important}
         <div class="field"><label for="d-nome">Nome <span class="rq">obrigatório</span></label><input id="d-nome"></div>
         <div class="field"><label for="d-url">Link <span class="rq opt">ou envie um arquivo</span></label><input id="d-url" type="url" placeholder="https://drive.google.com/..."></div>
         <div class="field" id="d-filebox"><label for="d-file">Arquivo <span class="rq opt">até 10 MB</span></label><input id="d-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.csv,.txt,.md"><label class="dcur" id="d-filecur" hidden><input type="checkbox" id="d-filerm"> Remover o arquivo já enviado</label></div>
-        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option><option>Nota fiscal</option></select></div>
+        <div class="field"><label for="d-tipo">Tipo <span class="rq opt">decide o que abre</span></label><select id="d-tipo"><option>Drive</option><option>PDF</option><option>Doc</option><option>Planilha</option><option>Forms</option><option>Site</option><option>Imagem</option><option>Nota fiscal</option><option>Comprovante</option></select></div>
         <div class="field"><label for="d-versao">Versão / ano <span class="rq opt">opcional</span></label><input id="d-versao" placeholder="ex.: 2026"></div>
         <div class="field"><label for="d-resp">Responsável <span class="rq opt">opcional</span></label><select id="d-resp"><option value="">Sem responsável</option></select></div>
         <div class="field" style="grid-column:1/-1"><label for="d-resumo">Para que serve <span class="rq opt">opcional</span></label><input id="d-resumo"></div>
@@ -1248,7 +1262,7 @@ var ETAPAS=[['prospeccao','Prospecção'],['espacos','Espaços e reservas'],['di
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)||/^\/_blob\/[A-Za-z0-9]+$/.test(u)?u:'';}
 /* documento pode ter um link externo (Drive etc.) e um arquivo enviado; o Tipo decide qual abre primeiro */
 function dFontes(x){var u=String(x.url||''),bl=/^\/_blob\//.test(u);var link=x.link!=null?x.link:(bl?'':u),arq=x.arquivo!=null?x.arquivo:(bl?u:'');return {link:safeUrl(link),arquivo:safeUrl(arq)};}
-function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem'||tipo==='Nota fiscal';return arqPrimeiro?(arq||link):(link||arq);}
+function dPrincipal(tipo,link,arq){var arqPrimeiro=tipo==='PDF'||tipo==='Imagem'||tipo==='Nota fiscal'||tipo==='Comprovante';return arqPrimeiro?(arq||link):(link||arq);}
 function docLinks(et){var l=docs.filter(function(x){return x.etapa===et&&safeUrl(x.url);});if(!l.length)return '';return '<div class="dlinks">'+l.map(function(x){return '<a href="'+esc(safeUrl(x.url))+'" target="_blank" rel="noopener">'+esc(x.nome)+'</a>';}).join('')+'</div>';}
 var $=function(id){return document.getElementById(id);};
 
@@ -1791,7 +1805,7 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
     pr.then(function(){var m=docEdit?'Alterações salvas.':'Documento adicionado.';resetDocForm();fecharGav('dform',m);}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
   if(file){if(file.size>10*1024*1024){$('dmsg').textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
     var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',csv:'text/csv',txt:'text/plain',md:'text/markdown'};
-    if(!u){if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';}
+    if(!u&&data.tipo!=='Nota fiscal'&&data.tipo!=='Comprovante'){if(ext==='pdf')data.tipo='PDF';else if(['png','jpg','jpeg','webp'].indexOf(ext)>=0)data.tipo='Imagem';}
     var go=function(api){if(!api){$('dmsg').textContent='Seu acesso não permite enviar arquivos: use um link.';return;}$('dmsg').textContent='Enviando…';
       api.upload(file,{type:TY[ext]||file.type}).then(function(r){fixar('/_blob/'+r.id);data.assetId=r.id;save();}).catch(function(err){$('dmsg').textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito.':'Não foi possível enviar o arquivo.';});};
     if(assetsApi!==null&&assetsApi!==undefined)go(assetsApi);else window.claude.use('assets').then(function(a){assetsApi=a;go(a);}).catch(function(){go(null);});return;}
@@ -2694,7 +2708,7 @@ selo();
    Coleções do Financeiro (as regras dão a edição a quem tem cargo no Financeiro):
    - fin_coffee/{id}: contatos de coffee {nome, contato, telefone, endereco, obs, itens:[{item, preco, unidade}]}
    - fin_verbas/{eventoId}: verba liberada para cada evento {valor, obs, historico:[{valor, em, porNome}]}
-   Os gastos e as notas fiscais são lançados pela área de Eventos, no painel do evento (Base de eventos). */
+   Os gastos (cada um com seu comprovante) são registrados pela área de Eventos, no botão Registrar gastos (Base de eventos). */
 var finLigar=null,finMudou=function(){},finAplicar=null,finDocs=null;
 (function(){
 "use strict";
@@ -2797,7 +2811,7 @@ function somaG(l,f){return arred(l.reduce(function(t,g){return t+(!f||f(g)?(+g.v
 /* gasto do evento: a soma dos lançamentos; eventos antigos podem ter só o total (custo) */
 function gastoDe(e){var l=gastosDe(e);if(l.length)return somaG(l);return e&&e.custo!=null&&e.custo!==''?+e.custo:null;}
 function verbaDe(id){var v=fin.verbas[id];return v&&v.valor!=null?+v.valor:null;}
-function nfs(id){return docs.filter(function(d){return d.tipo==='Nota fiscal'&&(d.eventos||[]).indexOf(id)>=0;});}
+function nfs(id){return docs.filter(function(d){return (d.tipo==='Nota fiscal'||d.tipo==='Comprovante')&&(d.eventos||[]).indexOf(id)>=0;});}
 function epode(k){var p=window.__perm;return !!(p&&p.carregado()&&p.podeEm('Eventos')[k]);}
 function dataBR(s){return s?fmt(D(s.slice(0,10)))+'/'+s.slice(2,4):'—';}
 function hojeISO(){return iso(new Date());}
@@ -2806,67 +2820,76 @@ function resumoGasto(e){var g=gastoDe(e),v=verbaDe(e.id),p=e.custoPrev;
     (v!=null?'<div class="'+((g||0)>v+0.005?'g-mais':'g-ok')+'"><span>'+((g||0)>v+0.005?'Passou da verba':'Saldo da verba')+'</span><b>'+reais(Math.abs(v-(g||0)))+'</b></div>':'')+'</div>';
   return h;}
 
-/* ---- bloco "Gastos e notas fiscais" no painel do evento (Base de eventos) ---- */
-function linhaGasto(g,ed){var loc=g.local?fin.coffee.filter(function(x){return x.id===g.local;})[0]:null;
-  return '<tr><td class="num">'+dataBR(g.data)+'</td><td><span class="tn" style="font-weight:600">'+esc(g.desc||tipoNome(g.tipo))+'</span><span class="tsub">'+esc(tipoNome(g.tipo)+(loc?' · '+loc.nome:'')+(g.porNome?' · '+g.porNome:''))+'</span></td><td class="r num"><b>'+reais(g.valor)+'</b></td>'+
+/* ---- "Registrar gastos" (painel próprio, aberto pela lista da Base) ----
+   Cada gasto é uma ficha única: data, tipo, valor, descrição, local do coffee e o comprovante.
+   O comprovante vira um documento (tipo Comprovante) na pasta do evento, com a descrição do gasto como nome. */
+function docDe(id){return id?docs.filter(function(d){return d.id===id;})[0]||null:null;}
+function linkDoc(d){if(!d)return '';var f=dFontes(d);return safeUrl(dPrincipal(d.tipo,f.link,f.arquivo))||'';}
+function linhaGasto(g,ed){var loc=g.local?fin.coffee.filter(function(x){return x.id===g.local;})[0]:null,cd=docDe(g.docId),u=linkDoc(cd);
+  var comp=u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" class="g-comp">comprovante ↗</a>':(g.tipo==='antigo'?'':'<span class="chip warn g-semc">sem comprovante</span>');
+  return '<tr><td class="num">'+dataBR(g.data)+'</td><td><span class="tn" style="font-weight:600">'+esc(g.desc||tipoNome(g.tipo))+'</span><span class="tsub">'+esc(tipoNome(g.tipo)+(loc?' · '+loc.nome:'')+(g.porNome?' · '+g.porNome:''))+'</span>'+comp+'</td><td class="r num"><b>'+reais(g.valor)+'</b></td>'+
     (ed?'<td class="r"><button type="button" class="cf-x" data-gdel="'+esc(g.id)+'" aria-label="Excluir gasto" title="Excluir gasto">&times;</button></td>':'')+'</tr>';}
-function nfLista(id){var l=nfs(id);
-  return l.length?'<ul class="fc-nfs">'+l.map(function(d){var f=dFontes(d),u=dPrincipal(d.tipo,f.link,f.arquivo);return '<li><span>'+esc(d.nome)+(d.criadoEm?' <span class="note">'+dataBR(d.criadoEm)+'</span>':'')+'</span>'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">Abrir ↗</a>':'')+'</li>';}).join('')+'</ul>':'<p class="note" style="margin:0 0 8px">Nenhuma nota fiscal anexada.</p>';}
 window.__gastosBlk=function(e){var ed=epode('editar'),l=gastosDe(e).slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
   var h=resumoGasto(e);
-  if(!l.length&&e.custo!=null)h+='<p class="note" style="margin:8px 0 0">Registrado antes, só com o total: <b>'+reais(e.custo)+'</b>. Ao lançar o primeiro gasto, esse total entra na lista como “Registrado antes”.</p>';
-  h+=l.length?'<table class="g-tab"><tbody>'+l.map(function(g){return linhaGasto(g,ed&&epode('excluir'));}).join('')+'</tbody></table>':'<p class="note" style="margin:10px 0 0">Nenhum gasto lançado ainda.</p>';
+  if(!l.length&&e.custo!=null)h+='<p class="note" style="margin:8px 0 0">Registrado antes, só com o total: <b>'+reais(e.custo)+'</b>. Ao registrar o primeiro gasto, esse total entra na lista como “Registrado antes”.</p>';
+  h+=l.length?'<table class="g-tab"><tbody>'+l.map(function(g){return linhaGasto(g,ed&&epode('excluir'));}).join('')+'</tbody></table>':'<p class="note" style="margin:10px 0 0">Nenhum gasto registrado ainda.</p>';
+  /* comprovantes antigos, anexados soltos antes da ficha única */
+  var usados={};l.forEach(function(g){if(g.docId)usados[g.docId]=1;});
+  var soltos=nfs(e.id).filter(function(d){return !usados[d.id];});
+  if(soltos.length)h+='<p class="note" style="margin:10px 0 4px">Comprovantes anexados sem gasto:</p><ul class="fc-nfs">'+soltos.map(function(d){var u=linkDoc(d);return '<li><span>'+esc(d.nome)+(d.criadoEm?' <span class="note">'+dataBR(d.criadoEm)+'</span>':'')+'</span>'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">Abrir ↗</a>':'')+'</li>';}).join('')+'</ul>';
+  var out='<div class="tp-blk" id="g-blk"><h4>Gastos do evento</h4>'+h+'</div>';
   if(ed){var ops=fin.coffee.slice().sort(function(a,b){return String(a.nome).localeCompare(String(b.nome),'pt-BR');}).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>';}).join('');
-    h+='<div class="g-add" id="g-add"><h5 class="fc-h5">Lançar gasto</h5><div class="g-grid">'+
+    out+='<div class="tp-blk g-ficha" id="g-add"><h4>Registrar gasto</h4><div class="g-grid">'+
       '<div class="field"><label for="g-data">Data</label><input id="g-data" type="date" value="'+hojeISO()+'"></div>'+
       '<div class="field"><label for="g-tipo">Tipo</label><select id="g-tipo">'+TIPOS.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select></div>'+
       '<div class="field"><label for="g-valor">Valor (R$)</label><input id="g-valor" inputmode="decimal" placeholder="0,00"></div>'+
-      '<div class="field g-wide"><label for="g-desc">Descrição</label><input id="g-desc" placeholder="ex.: Coffee para 60 pessoas"></div>'+
+      '<div class="field g-wide"><label for="g-desc">Descrição <span class="rq">vira o nome do comprovante em Documentos</span></label><input id="g-desc" maxlength="120" placeholder="ex.: Coffee para 60 pessoas"></div>'+
       '<div class="field g-wide" id="g-locbox"><label for="g-local">Local do coffee <span class="rq opt">dos Contatos de coffee</span></label><select id="g-local"><option value="">Sem local</option>'+ops+'</select></div>'+
-      '</div><div class="btns" style="margin-top:8px"><button type="button" class="btn small" id="g-salvar">Adicionar gasto</button><span class="msg" id="g-msg" role="status"></span></div></div>';}
-  var nf='<div id="g-nfl">'+nfLista(e.id)+'</div>'+(ed?'<div class="fc-nfadd"><input id="g-nfnome" placeholder="Nome da nota (ex.: NF coffee Padaria)" aria-label="Nome da nota fiscal"><input id="g-nfarq" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" aria-label="Arquivo da nota fiscal"><input id="g-nflink" type="url" placeholder="ou cole um link (https://...)" aria-label="Link da nota fiscal"><button type="button" class="btn small" id="g-nfbt">Anexar nota</button><span class="msg" id="g-nfmsg" role="status"></span></div>':'');
-  return '<div class="tp-blk" id="g-blk"><h4>Gastos</h4>'+h+'</div><div class="tp-blk"><h4>Notas fiscais</h4>'+nf+'</div>';};
+      '<div class="field g-wide g-compbox"><label for="g-arq">Comprovante <span class="rq">obrigatório</span></label><input id="g-arq" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"><input id="g-link" type="url" placeholder="ou cole um link (https://...)" aria-label="Link do comprovante"><span class="note">Nota fiscal, recibo ou print do pagamento (PDF ou imagem, até 10 MB). Vai para a pasta do evento em Documentos.</span></div>'+
+      '</div><div class="btns" style="margin-top:10px"><button type="button" class="btn" id="g-salvar">Registrar gasto</button><span class="msg" id="g-msg" role="status"></span></div></div>';}
+  return out;};
 function gravarGastos(id,lista){var e=events.filter(function(x){return x.id===id;})[0];
   var up={gastos:lista};
   if(lista.length){up.custo=somaG(lista);up.custoNaoPrev=somaG(lista,function(g){return g.tipo==='outro';});up.custoBasico=arred(up.custo-up.custoNaoPrev);}
   else if(e&&gastosDe(e).length){up.custo=null;up.custoBasico=null;up.custoNaoPrev=null;}
   return db.doc('eventos/'+id).update(up);}
+/* sobe o arquivo (se houver) e cria o documento do comprovante; devolve o id do documento */
+function criarComprovante(id,nome,resumo,file,link){
+  var d={nome:nome,tipo:'Comprovante',versao:'',resp:String(window.__meuNome||'').slice(0,80),resumo:resumo,eventos:[id],area:'Eventos',criadoEm:new Date().toISOString(),link:link||'',arquivo:''};
+  function salvar(){d.url=dPrincipal(d.tipo,d.link,d.arquivo);return db.collection('documentos').add(d).then(function(r){return r.id;});}
+  if(!file)return salvar();
+  var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
+  return window.claude.use('assets').then(function(api){if(!api)throw {code:'sem'};return api.upload(file,{type:TY[ext]||file.type});})
+    .then(function(r){d.arquivo='/_blob/'+r.id;d.assetId=r.id;return salvar();});}
 window.__gastosLigar=function(dr,id){
   var tp=dr.querySelector('#g-tipo'),lb=dr.querySelector('#g-locbox');
   function vis(){if(lb)lb.hidden=tp.value!=='coffee';}if(tp){tp.addEventListener('change',vis);vis();}
   var sv=dr.querySelector('#g-salvar');if(sv)sv.addEventListener('click',function(){var msg=dr.querySelector('#g-msg');if(!db){msg.textContent='Sem conexão com a base.';return;}
     var e=events.filter(function(x){return x.id===id;})[0];if(!e)return;
-    var dt=dr.querySelector('#g-data').value,vl=num(dr.querySelector('#g-valor').value),ds=dr.querySelector('#g-desc').value.trim(),t=tp.value;
+    var dt=dr.querySelector('#g-data').value,vl=num(dr.querySelector('#g-valor').value),ds=dr.querySelector('#g-desc').value.trim(),t=tp.value,file=dr.querySelector('#g-arq').files[0],link=dr.querySelector('#g-link').value.trim();
     if(!dt){msg.textContent='Escolha a data do gasto.';return;}
     if(vl==null||vl<=0){msg.textContent='Informe o valor, como 120,50.';dr.querySelector('#g-valor').focus();return;}
-    var g={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:dt,tipo:t,desc:ds||tipoNome(t),valor:arred(vl),local:t==='coffee'?(dr.querySelector('#g-local').value||null):null,porNome:String(window.__meuNome||'').slice(0,80),em:new Date().toISOString()};
-    msg.textContent='Salvando…';sv.disabled=true;
-    gravarGastos(id,legado(e).concat(gastosDe(e),[g])).catch(function(){msg.textContent='Não foi possível salvar.';sv.disabled=false;});});
+    if(!ds){msg.textContent='Escreva a descrição: ela vira o nome do comprovante.';dr.querySelector('#g-desc').focus();return;}
+    if(!file&&!link){msg.textContent='Anexe o comprovante (arquivo ou link).';return;}
+    if(!file&&!safeUrl(link)){msg.textContent='O link precisa começar com https://';return;}
+    if(file&&file.size>10*1024*1024){msg.textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
+    var g={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:dt,tipo:t,desc:ds.slice(0,120),valor:arred(vl),local:t==='coffee'?(dr.querySelector('#g-local').value||null):null,porNome:String(window.__meuNome||'').slice(0,80),em:new Date().toISOString()};
+    msg.textContent=file?'Enviando o comprovante…':'Salvando…';sv.disabled=true;
+    criarComprovante(id,g.desc,tipoNome(t)+' · '+reais(g.valor)+' · '+dataBR(dt),file,file?'':link)
+      .then(function(docId){g.docId=docId;msg.textContent='Salvando…';return gravarGastos(id,legado(e).concat(gastosDe(e),[g]));})
+      .catch(function(err){sv.disabled=false;msg.textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio: use um link do Drive.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito: use PDF ou imagem.':'Não foi possível registrar o gasto.';});});
   var bl=dr.querySelector('#g-blk');if(bl)bl.addEventListener('click',function(ev){var b=ev.target.closest('[data-gdel]');if(!b)return;
     if(!b.dataset.sure){b.dataset.sure='1';b.textContent='Excluir?';b.classList.add('sure');setTimeout(function(){delete b.dataset.sure;b.innerHTML='&times;';b.classList.remove('sure');},4000);return;}
-    var e=events.filter(function(x){return x.id===id;})[0];if(!e)return;b.disabled=true;gravarGastos(id,gastosDe(e).filter(function(g){return g.id!==b.dataset.gdel;})).catch(function(){b.disabled=false;});});
-  var nb=dr.querySelector('#g-nfbt');if(nb)nb.addEventListener('click',function(){anexarNota(id,dr);});
+    var e=events.filter(function(x){return x.id===id;})[0];if(!e)return;b.disabled=true;var g0=gastosDe(e).filter(function(g){return g.id===b.dataset.gdel;})[0];
+    /* o comprovante do gasto vai junto para a Lixeira */
+    gravarGastos(id,gastosDe(e).filter(function(g){return g.id!==b.dataset.gdel;})).then(function(){if(g0&&g0.docId&&docDe(g0.docId))return db.doc('documentos/'+g0.docId).delete();}).catch(function(){b.disabled=false;});});
 };
-function anexarNota(id,dr){var msg=dr.querySelector('#g-nfmsg');if(!db){msg.textContent='Sem conexão com a base.';return;}
-  var nome=dr.querySelector('#g-nfnome').value.trim(),file=dr.querySelector('#g-nfarq').files[0],link=dr.querySelector('#g-nflink').value.trim();
-  if(!file&&!link){msg.textContent='Escolha o arquivo da nota ou cole um link.';return;}
-  if(link&&!safeUrl(link)){msg.textContent='Use um link que comece com https://';return;}
-  var e=events.filter(function(x){return x.id===id;})[0];
-  var d={nome:nome||('Nota fiscal · '+(e&&e.nome||'evento')),tipo:'Nota fiscal',versao:'',resp:'',resumo:'',eventos:[id],area:'Eventos',criadoEm:new Date().toISOString(),link:link,arquivo:''};
-  function salvar(){d.url=dPrincipal(d.tipo,d.link,d.arquivo);db.collection('documentos').add(d).then(function(){msg.textContent='Nota anexada.';['g-nfnome','g-nflink','g-nfarq'].forEach(function(k){var x=dr.querySelector('#'+k);if(x)x.value='';});}).catch(function(){msg.textContent='Não foi possível anexar.';});}
-  if(!file){salvar();return;}
-  if(file.size>10*1024*1024){msg.textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
-  var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
-  msg.textContent='Enviando…';
-  window.claude.use('assets').then(function(api){if(!api)throw {code:'sem'};return api.upload(file,{type:TY[ext]||file.type});})
-    .then(function(r){d.arquivo='/_blob/'+r.id;d.assetId=r.id;salvar();})
-    .catch(function(err){msg.textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito.':'Não foi possível enviar o arquivo.';});}
 
 /* ---------------- Financeiro: Verba por evento ---------------- */
 /* fin_verbas/{eventoId} = {valor, obs, nome, em, porNome, historico:[{valor, em, porNome}]} */
 function situacao(e){var v=verbaDe(e.id),g=gastoDe(e)||0;if(v==null)return 'sem';if(g>v+0.005)return 'passou';return 'ok';}
 var SIT={sem:['Sem verba','warn'],ok:['Verba liberada','ok'],passou:['Gasto passou da verba','bad']};
-var sx=secao('fin-custos','Verba por evento','Cada evento com o custo previsto no Planejar. O Financeiro preenche a verba liberada; os gastos e as notas fiscais são lançados pela área de Eventos e aparecem na linha do tempo de cada evento.');
+var sx=secao('fin-custos','Verba por evento','Cada evento com o custo previsto no Planejar. O Financeiro preenche a verba liberada; os gastos, cada um com seu comprovante, são registrados pela área de Eventos e aparecem na linha do tempo de cada evento.');
 sx.insertAdjacentHTML('beforeend','<div class="kpis fkpis" id="fc-kpis"></div><div class="sbar"><input type="search" id="fc-busca" placeholder="Buscar evento" aria-label="Buscar evento"><select id="fc-sem" aria-label="Semestre"><option value="">Todos os semestres</option></select><select id="fc-sit" aria-label="Situação"><option value="">Todas as situações</option><option value="sem">Sem verba</option><option value="ok">Verba liberada</option><option value="passou">Gasto passou da verba</option></select><label class="check"><input type="checkbox" id="fc-pass"> Mostrar eventos passados</label><span class="note" id="fc-conta" aria-live="polite"></span></div><div class="tablewrap"><table id="fc-tab" class="tlist"></table></div><p class="msg" id="fc-ok" role="status"></p>');
 $('fc-busca').addEventListener('input',function(){renderCustos();});
 ['fc-sem','fc-sit','fc-pass'].forEach(function(k){$(k).addEventListener('change',function(){renderCustos();});});
@@ -2915,7 +2938,7 @@ function timeline(e){var it=[],acum=0;
   var vb=fin.verbas[e.id];(vb&&vb.historico||[]).forEach(function(h,i,arr){var ant=i?arr[i-1].valor:null;
     it.push({d:h.em,k:'verba',t:h.valor==null?'Verba retirada':ant==null?'Verba liberada: '+reais(h.valor):'Verba ajustada para '+reais(h.valor),s:(ant!=null&&h.valor!=null?'antes '+reais(ant):'')+(h.porNome?(ant!=null&&h.valor!=null?' · ':'')+'por '+h.porNome:'')});});
   gastosDe(e).forEach(function(g){it.push({d:g.data,k:'gasto',g:g});});
-  nfs(e.id).forEach(function(n){var f=dFontes(n),u=dPrincipal(n.tipo,f.link,f.arquivo);it.push({d:n.criadoEm||'',k:'nf',t:'Nota fiscal anexada',s:n.nome,u:u});});
+  nfs(e.id).forEach(function(n){var f=dFontes(n),u=dPrincipal(n.tipo,f.link,f.arquivo);it.push({d:n.criadoEm||'',k:'nf',t:n.tipo==='Comprovante'?'Comprovante anexado':'Nota fiscal anexada',s:n.nome,u:u});});
   if(e.data)it.push({d:e.data+'T23:59',k:'dia',t:e.data<hojeISO()?'Dia do evento':'Dia do evento (ainda vai acontecer)',s:e.status==='realizado'&&e.presentes?e.presentes+' presentes':''});
   it=it.filter(function(x){return x.d;}).sort(function(a,b){return String(a.d)<String(b.d)?-1:String(a.d)>String(b.d)?1:0;});
   if(!it.length)return '<p class="note">Nada registrado ainda.</p>';
@@ -3037,7 +3060,8 @@ document.addEventListener('permissoes',function(){document.body.classList.toggle
 /* ============ FICHA DO EVENTO (seções 01 e 02 da Ficha de Evento Feashion) ============
    Fica no painel do evento (Base). O que o Planejar já calcula entra sozinho; o resto se preenche aqui.
    eventos/{id}.ficha = {equipe:[nomes], objetivo, metaSatisfacao, publico:[...], semConvidado, salaReservada:'sim'|'nao'|'',
-                         reservaNum, levar:[{item, quem}], brindes, planoB, fotos}
+                         reservaNum, levar:[{item, quem}], brindes:[{item, quem, gasto}], planoB, fotos}
+   (fichas antigas guardavam brindes como texto: vira o primeiro item da lista)
    No Planejar: o convidado é escolhido por segmento (mesma lista da tela Convidados), ordenado pela nota. */
 (function(){
 "use strict";
@@ -3055,7 +3079,7 @@ function dias(e){if(!e.data)return null;return Math.round((D(e.data)-D(iso(new D
 var RASC={},SUJO={},MSG={};
 function base(e){var f=e.ficha||{};return {equipe:(f.equipe||(e.responsavel?[e.responsavel]:[])).slice(),objetivo:f.objetivo||'',metaSatisfacao:f.metaSatisfacao!=null?f.metaSatisfacao:80,
   publico:(f.publico||[]).slice(),semConvidado:!!f.semConvidado,salaReservada:f.salaReservada||'',reservaNum:f.reservaNum||'',levar:(f.levar||[]).map(function(x){return {item:x.item||'',quem:x.quem||''};}),
-  brindes:f.brindes||'',planoB:f.planoB||'',fotos:f.fotos||''};}
+  brindes:(Array.isArray(f.brindes)?f.brindes:String(f.brindes||'').trim()?[{item:String(f.brindes).trim()}]:[]).map(function(x){return {item:x.item||'',quem:x.quem||'',gasto:!!x.gasto};}),planoB:f.planoB||'',fotos:f.fotos||''};}
 function rasc(e){if(!RASC[e.id]||!SUJO[e.id])RASC[e.id]=base(e);return RASC[e.id];}
 
 /* ----- o que conta para a ficha estar completa ----- */
@@ -3079,7 +3103,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   /* 01 identificação */
   var q=e.data?D(e.data).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'sem data';
   var a=ro('Evento',esc(e.nome||'—')+' <span class="note">· '+esc(e.tipo||'')+'</span>')+ro('Data e horário',esc(q)+(e.hora?' · '+esc(e.hora):''))+ro('Local',e.sala?esc(e.sala)+(e.capacidade?' ('+e.capacidade+' lugares)':''):'—');
-  a+='<p class="note fi-pl">Nome, tipo, data e local vêm do Planejar; para mudar, use “Abrir no Planejar”.</p>';
+  a='<div class="fi-grp">'+a+'<p class="note fi-pl">Nome, tipo, data e local vêm do Planejar; para mudar, use “Abrir no Planejar”.</p></div>';
   a+=ed?'<label class="tresp"><span>Responsável</span><select data-tresp="'+id+'"></select></label>':ro('Responsável',esc(e.responsavel||'—'));
   var eq=r.equipe.map(function(n,k){return '<span class="fi-chip">'+esc(n)+(ed?'<button type="button" data-fi-eqx="'+k+'" aria-label="Tirar '+esc(n)+'">&times;</button>':'')+'</span>';}).join('');
   a+='<div class="field"><label>Equipe envolvida</label><div class="fi-chips">'+(eq||'<span class="note">ninguém ainda</span>')+(ed?'<select data-fi-eqadd aria-label="Adicionar pessoa à equipe"><option value="">+ adicionar pessoa</option>'+(window.__membros||[]).filter(function(m){return r.equipe.indexOf(m.nome)<0;}).map(function(m){return '<option>'+esc(m.nome)+'</option>';}).join('')+'</select>':'')+'</div></div>';
@@ -3110,8 +3134,14 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   b+='<div class="field"><label>Levar para o evento <span class="rq opt">o que não é da sala</span></label>'+(lv?'<table class="g-tab fi-levar"><tbody>'+lv+'</tbody></table>':'<p class="note" style="margin:0">Nada a levar.</p>')+
     (ed?'<div class="fi-add"><input id="fi-litem" placeholder="ex.: passador, extensão, banner" aria-label="Item a levar"><input id="fi-lquem" placeholder="quem leva" aria-label="Quem leva"><button type="button" class="btn small ghost" data-fi-ladd>Adicionar</button></div>':'')+'</div>';
   /* alimentação, plano B, fotos */
-  var cof=fm['f-coffee']===false?'sem coffee':(e.custoPrevItens&&e.custoPrevItens.porcoes?e.custoPrevItens.porcoes+' porções de coffee':'coffee');
-  b+=ed?'<div class="field"><label for="fi-brindes">Alimentação e brindes</label><div class="fi-val">'+esc(cof)+' <span class="note">do Planejar</span></div><input id="fi-brindes" data-fi="brindes" maxlength="200" value="'+v(r.brindes)+'" placeholder="brindes (ex.: ecobags do patrocinador)"></div>':ro('Alimentação e brindes',esc(cof)+(r.brindes?' · '+esc(r.brindes):''));
+  var cf=fm['f-coffee'],por=e.custoPrevItens&&e.custoPrevItens.porcoes;
+  var cof=cf===true?'<span class="fi-yn sim" aria-hidden="true">✓</span> Coffee'+(por?' · '+por+' porções':''):cf===false?'<span class="fi-yn nao" aria-hidden="true">✗</span> Sem coffee':'<span class="fi-yn ns" aria-hidden="true">?</span> Coffee não definido';
+  b+='<div class="field"><label>Alimentação</label><div class="fi-val">'+cof+' <span class="note">do Planejar</span></div></div>';
+  var bl=r.brindes.map(function(x,k){return '<tr><td>'+esc(x.item)+'</td><td>'+(ed?'<input data-fi-bquem="'+k+'" value="'+v(x.quem)+'" placeholder="responsável" aria-label="Responsável por '+esc(x.item)+'">':esc(x.quem||'—'))+'</td>'+
+    '<td class="fi-bg">'+(ed?'<label class="check"><input type="checkbox" data-fi-bg="'+k+'"'+(x.gasto?' checked':'')+'>gasto registrado</label>':(x.gasto?'<span class="chip ok">gasto registrado</span>':'<span class="chip warn">gasto não registrado</span>'))+'</td>'+
+    '<td class="r">'+(ed?'<button type="button" class="cf-x" data-fi-bx="'+k+'" aria-label="Tirar '+esc(x.item)+'">&times;</button>':'')+'</td></tr>';}).join('');
+  b+='<div class="field"><label>Brindes</label>'+(bl?'<table class="g-tab fi-levar fi-brindes"><tbody>'+bl+'</tbody></table>':'<p class="note" style="margin:0">Nenhum brinde.</p>')+
+    (ed?'<div class="fi-add"><input id="fi-bitem" placeholder="ex.: ecobags do patrocinador" aria-label="Brinde"><input id="fi-bquem" placeholder="responsável" aria-label="Responsável pelo brinde"><button type="button" class="btn small ghost" data-fi-badd>Adicionar</button></div>':'')+'</div>';
   var risco=(e.climaAvisos&&e.climaAvisos.length)||(e.notaData!=null&&e.notaData<60);
   b+=ed?'<div class="field"><label for="fi-pb">Plano B</label>'+(risco&&!r.planoB?'<p class="note fi-alerta">A nota de clima desta data está baixa: vale pensar no plano B.</p>':'')+'<textarea id="fi-pb" data-fi="planoB" rows="3" maxlength="800" placeholder="ex.: se o convidado cancelar, quem substitui; se chover, outra sala">'+v(r.planoB)+'</textarea></div>':ro('Plano B',esc(r.planoB||'—'));
   var fu=safeUrl(r.fotos);
@@ -3127,25 +3157,30 @@ function atual(){var dr=document.querySelector('#view-base .tpanel');var b=dr&&!
 var sec=$('view-base');
 sec.addEventListener('input',function(ev){var t=ev.target,id;if(!t.dataset)return;
   if(t.dataset.fi!=null&&(id=atual())){var e=evDe(id),r=rasc(e),k=t.dataset.fi;r[k]=k==='metaSatisfacao'?(t.value===''?'':Math.max(0,Math.min(100,+t.value))):t.value;sujar(id);}
-  else if(t.dataset.fiLquem!=null&&(id=atual())){rasc(evDe(id)).levar[+t.dataset.fiLquem].quem=t.value;sujar(id);}});
+  else if(t.dataset.fiLquem!=null&&(id=atual())){rasc(evDe(id)).levar[+t.dataset.fiLquem].quem=t.value;sujar(id);}
+  else if(t.dataset.fiBquem!=null&&(id=atual())){rasc(evDe(id)).brindes[+t.dataset.fiBquem].quem=t.value;sujar(id);}});
 sec.addEventListener('change',function(ev){var t=ev.target,id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
   if(t.dataset.fi==='salaReservada'){r.salaReservada=t.value;sujar(id);}
   else if(t.dataset.fiPub){var p=t.dataset.fiPub;r.publico=r.publico.filter(function(x){return x!==p;});if(t.checked)r.publico.push(p);r.publico.sort(function(a,b){return PUBLICOS.indexOf(a)-PUBLICOS.indexOf(b);});sujar(id);}
+  else if(t.dataset.fiBg!=null){r.brindes[+t.dataset.fiBg].gasto=t.checked;sujar(id);}
   else if(t.hasAttribute('data-fi-semconv')){r.semConvidado=t.checked;sujar(id);redesenha();}
   else if(t.hasAttribute('data-fi-eqadd')&&t.value){r.equipe.push(t.value);sujar(id);redesenha();}
   else if(t.dataset.fiGst&&db){var gid=t.dataset.fiGst;db.doc('convidados/'+gid).update({status:t.value}).catch(function(){alertMsg('Não foi possível mudar o status do convidado.');});}});
-sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-fi-eqx],[data-fi-lx],[data-fi-ladd],[data-fi-lauto],[data-fi-salvar]');if(!b)return;var id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
+sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-fi-eqx],[data-fi-lx],[data-fi-ladd],[data-fi-lauto],[data-fi-bx],[data-fi-badd],[data-fi-salvar]');if(!b)return;var id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
   if(b.dataset.fiEqx!=null){r.equipe.splice(+b.dataset.fiEqx,1);sujar(id);redesenha();}
   else if(b.dataset.fiLx!=null){r.levar.splice(+b.dataset.fiLx,1);sujar(id);redesenha();}
   else if(b.dataset.fiLauto){r.levar.push({item:b.dataset.fiLauto,quem:''});sujar(id);redesenha();var q=document.querySelector('#view-base .tpanel [data-fi-lquem="'+(r.levar.length-1)+'"]');if(q)q.focus();}
   else if(b.hasAttribute('data-fi-ladd')){var it=$('fi-litem'),qm=$('fi-lquem');if(!it.value.trim()){it.focus();return;}r.levar.push({item:it.value.trim().slice(0,80),quem:qm.value.trim().slice(0,80)});sujar(id);redesenha();var n=$('fi-litem');if(n)n.focus();}
+  else if(b.dataset.fiBx!=null){r.brindes.splice(+b.dataset.fiBx,1);sujar(id);redesenha();}
+  else if(b.hasAttribute('data-fi-badd')){var bi=$('fi-bitem'),bq=$('fi-bquem');if(!bi.value.trim()){bi.focus();return;}r.brindes.push({item:bi.value.trim().slice(0,80),quem:bq.value.trim().slice(0,80),gasto:false});sujar(id);redesenha();var nb=$('fi-bitem');if(nb)nb.focus();}
   else if(b.dataset.fiSalvar){if(!db)return;var fu=String(r.fotos||'').trim();if(fu&&!safeUrl(fu)){var m0=b.parentNode.querySelector('.msg');if(m0)m0.textContent='O link das fotos precisa começar com https://';return;}
     var f={equipe:r.equipe,objetivo:String(r.objetivo).trim().slice(0,200),metaSatisfacao:r.metaSatisfacao===''?null:+r.metaSatisfacao,publico:r.publico,semConvidado:!!r.semConvidado,salaReservada:r.salaReservada,reservaNum:String(r.reservaNum).trim().slice(0,60),
-      levar:r.levar.filter(function(x){return x.item;}),brindes:String(r.brindes).trim().slice(0,200),planoB:String(r.planoB).trim().slice(0,800),fotos:fu};
+      levar:r.levar.filter(function(x){return x.item;}),brindes:r.brindes.filter(function(x){return x.item;}),planoB:String(r.planoB).trim().slice(0,800),fotos:fu};
     b.disabled=true;var m=b.parentNode.querySelector('.msg');if(m)m.textContent='Salvando…';
     db.doc('eventos/'+id).update({ficha:f}).then(function(){delete SUJO[id];delete RASC[id];MSG[id]='Ficha salva.';redesenha();},function(){b.disabled=false;if(m)m.textContent='Não foi possível salvar a ficha.';});}});
 /* Enter num campo de texto da ficha não fecha nada nem envia */
-sec.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&ev.target.id==='fi-litem'){ev.preventDefault();var b=sec.querySelector('[data-fi-ladd]');if(b)b.click();}});
+sec.addEventListener('keydown',function(ev){if(ev.key!=='Enter')return;var k=ev.target.id;
+  if(k==='fi-litem'||k==='fi-lquem'||k==='fi-bitem'||k==='fi-bquem'){ev.preventDefault();var b=sec.querySelector(k.charAt(3)==='l'?'[data-fi-ladd]':'[data-fi-badd]');if(b)b.click();}});
 window.__fichaFechou=function(id){if(id&&!SUJO[id])delete MSG[id];};
 
 /* ============ PLANEJAR: convidado escolhido por segmento ============ */
