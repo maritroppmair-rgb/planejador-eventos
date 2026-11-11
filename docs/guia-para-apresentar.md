@@ -33,12 +33,12 @@ Só entra quem está na lista de acesso, com a conta Google do e-mail USP. O que
 3. No primeiro acesso, preencha o perfil: nome, como prefere ser chamado(a), celular, semestre de ingresso, foto e **as suas áreas** (Eventos, Financeiro, RH, C&D, Marketing). Dá para marcar mais de uma.
 4. Em cada área, a pessoa entra **sem cargo**. Quem atribui é a diretoria daquela área ou a presidência, clicando na pessoa em **Membros**. Quem já usava o app continua em Eventos, com o cargo que tinha.
 
-**A ordem dos cargos, de cima para baixo:** DEV, Presidente, Vice-presidente, Diretor(a), Coordenador(a), Membro(a), Trainee e Sem cargo. Só quem está acima muda o cargo de quem está abaixo, e ninguém muda o próprio cargo. A presidência fica fora das áreas: só o DEV nomeia Presidente, e o Presidente nomeia Vice-presidente.
+**A ordem dos cargos, de cima para baixo:** DEV, Presidente, Vice-presidente, Diretor(a), Coordenador(a), Membro(a), Trainee e Sem cargo. Só quem está acima muda o cargo de quem está abaixo, e ninguém muda o próprio cargo. A presidência fica fora das áreas: só o DEV nomeia Presidente, e o Presidente nomeia Vice-presidente. O(a) Diretor(a) de Eventos tem acesso total, no mesmo nível da Vice-presidência: mexe em todas as áreas, mas não nomeia a presidência.
 
 | Cargo | Na própria área | Nas outras áreas |
 | --- | --- | --- |
-| Presidente e Vice-presidente | Tudo, em todas as áreas, inclusive Lixeira e Histórico | Tudo |
-| Diretor(a) | Tudo, inclusive atribuir cargos abaixo do dele(a) e ver Lixeira e Histórico | Só visualiza |
+| Presidente, Vice-presidente e Diretor(a) de Eventos | Tudo, em todas as áreas, inclusive Lixeira e Histórico | Tudo |
+| Diretor(a) das outras áreas | Tudo, inclusive atribuir cargos abaixo do dele(a) e ver Lixeira e Histórico | Só visualiza |
 | Coordenador(a) | Cria, edita e exclui | Não vê as telas |
 | Membro(a) | O mesmo que Coordenador(a) | Não vê as telas |
 | Trainee | Cria e edita, mas não exclui | Não vê as telas |

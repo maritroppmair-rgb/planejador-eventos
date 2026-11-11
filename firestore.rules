@@ -5,7 +5,7 @@ rules_version = '2';
 //   Perfis antigos, sem "areas", contam como Eventos com o "cargo" que tinham.
 // - A presidência fica fora das áreas: presidencia = 'Presidente' | 'Vice-presidente' | ''.
 // - Hierarquia: DEV > Presidente > Vice-presidente > Diretor(a) > Coordenador(a) > Membro(a) > Trainee > Sem cargo.
-// - DEV e presidência: tudo, em todas as áreas.
+// - DEV, presidência e Diretor(a) de Eventos: tudo, em todas as áreas (Diretor(a) de Eventos vale como a Vice-presidência).
 // - Na própria área: Diretor(a) faz tudo e atribui cargos; Coordenador(a) e Membro(a) editam e excluem;
 //   Trainee edita sem excluir; sem cargo só lê. (Esconder as abas de outras áreas é feito na tela.)
 // - Área de cada coleção: documentos e arquivos são de todas; coleções com prefixo fin_, mkt_, cd_ e rh_ são de
@@ -57,6 +57,14 @@ service cloud.firestore {
     function presidente(me) {
       return presDe(me) in ['Presidente', 'Vice-presidente'];
     }
+    // acesso geral: presidência ou Diretor(a) de Eventos
+    function geral(me) {
+      return presidente(me) || areasDe(me).get('Eventos', '') == 'Diretor(a)';
+    }
+    // nível de quem tem acesso geral (Diretor(a) de Eventos = Vice-presidente); sem acesso geral, 7
+    function nivelG(me) {
+      return presidente(me) ? nivel(presDe(me)) : (areasDe(me).get('Eventos', '') == 'Diretor(a)' ? 2 : 7);
+    }
     // área dona da coleção: 'Comum', 'Financeiro', 'Marketing', 'C&D', 'RH' ou 'Eventos'
     function ehComum(c) { return c in ['documentos', 'arquivos']; }
     function cargoNaColecao(me, c, cargos) {
@@ -71,15 +79,15 @@ service cloud.firestore {
     // posso fazer algo numa coleção com um destes cargos? (DEV e presidência: sempre)
     function podeNa(c, cargos) {
       return liberado() && (ehDev()
-        || (temPerfil() && (presidente(get(eu()).data) || cargoNaColecao(get(eu()).data, c, cargos))));
+        || (temPerfil() && (geral(get(eu()).data) || cargoNaColecao(get(eu()).data, c, cargos))));
     }
     function diretorAlgum() {
       return liberado() && (ehDev()
-        || (temPerfil() && (presidente(get(eu()).data) || areasDe(get(eu()).data).values().hasAny(DIRIGE()))));
+        || (temPerfil() && (geral(get(eu()).data) || areasDe(get(eu()).data).values().hasAny(DIRIGE()))));
     }
     // estou acima do cargo c na área a? (presidência vale em todas; diretoria só na própria área)
     function acima(me, a, c) {
-      return nivel(presDe(me)) < nivel(c)
+      return nivelG(me) < nivel(c)
         || (areasDe(me).get(a, '') == 'Diretor(a)' && 3 < nivel(c));
     }
 
@@ -114,8 +122,8 @@ service cloud.firestore {
         && areasDe(depois()).values().hasOnly(['', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'])
         && (presDe(depois()) == presDe(antes())
             || (presDe(depois()) in ['', 'Presidente', 'Vice-presidente']
-                && nivel(presDe(me)) < nivel(presDe(antes()))
-                && nivel(presDe(me)) < nivel(presDe(depois()))))
+                && nivelG(me) < nivel(presDe(antes()))
+                && nivelG(me) < nivel(presDe(depois()))))
         && areaGestaoOk(me, 'Eventos') && areaGestaoOk(me, 'Financeiro') && areaGestaoOk(me, 'RH')
         && areaGestaoOk(me, 'C&D') && areaGestaoOk(me, 'Marketing');
     }
@@ -124,8 +132,8 @@ service cloud.firestore {
       return !(a in areasDe(antes())) || acima(me, a, areasDe(antes())[a]);
     }
     function removeOk(me) {
-      return (presidente(me) || areasDe(me).values().hasAny(DIRIGE()))
-        && (presDe(antes()) == '' || nivel(presDe(me)) < nivel(presDe(antes())))
+      return (geral(me) || areasDe(me).values().hasAny(DIRIGE()))
+        && (presDe(antes()) == '' || nivelG(me) < nivel(presDe(antes())))
         && areaRemoveOk(me, 'Eventos') && areaRemoveOk(me, 'Financeiro') && areaRemoveOk(me, 'RH')
         && areaRemoveOk(me, 'C&D') && areaRemoveOk(me, 'Marketing');
     }

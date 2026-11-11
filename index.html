@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111161037"></script>
-<script src="plataforma.js?v=20261111161037"></script>
+<script src="config.js?v=20261111162159"></script>
+<script src="plataforma.js?v=20261111162159"></script>
 </head>
 <body>
 
@@ -3401,6 +3401,7 @@ var THEMEKEY='feashion-tema';
 /* ---------- áreas, hierarquia e permissões (iguais às regras do Firestore: firestore.rules) ----------
    Cada pessoa escolhe as áreas no perfil; a diretoria da área atribui o cargo nela. A presidência fica fora das áreas.
    Hierarquia: DEV > Presidente > Vice-presidente > Diretor(a) > Coordenador(a) > Membro(a) > Trainee > Sem cargo.
+   Acesso total a todas as áreas: DEV, Presidente, Vice-presidente e Diretor(a) de Eventos (no mesmo nível da Vice).
    Só quem está acima muda o cargo de quem está abaixo. */
 var AREAS=['Eventos','Financeiro','RH','C&D','Marketing'];
 var CARGOS=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee'];
@@ -3420,7 +3421,9 @@ function areasOf(m){
 }
 function valores(o){return Object.keys(o).map(function(k){return o[k];});}
 function topo(m){if(ehDevM(m))return 0;return Math.min.apply(null,[nv(presOf(m))].concat(valores(areasOf(m)).map(nv)));}
-function meuG(){return souDev()?0:nv(presOf(myDoc));}
+/* acesso geral: DEV, presidência e Diretor(a) de Eventos (este vale como a Vice-presidência) */
+function nivelG(m){return Math.min(nv(presOf(m)),areasOf(m).Eventos==='Diretor(a)'?2:7);}
+function meuG(){return souDev()?0:nivelG(myDoc);}
 function meuCargoEm(a){var ar=areasOf(myDoc);return tem(ar,a)?ar[a]:null;}
 function diretorAlgum(){return meuG()<=2||valores(areasOf(myDoc)).indexOf('Diretor(a)')>=0;}
 /* o que eu posso fazer numa área ('Comum' = Documentos: vale o melhor cargo em qualquer área) */
