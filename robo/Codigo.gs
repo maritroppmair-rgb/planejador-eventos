@@ -16,9 +16,9 @@
 
 // ====================== CONFIGURAÇÃO ======================
 var CFG = {
-  PROJETO: 'feashion-eventos-teste',
-  API_KEY: 'AIzaSyCz5Jf_-IAoXQbuU2oDq7TKyrBLw_5hap0', // a mesma do config.js do site (não é senha)
-  MODELO_FORM_ID: '1tqsmAgRnyKDn-5tbWg-9pkhDfekBQcMe2BolOvCpjjQ',
+  PROJETO: 'planejador-de-eventos-261df',
+  API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
+  MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8',
   PASTA: 'Feashion · Inscrições',
   REMETENTE: 'Feashion · Diretoria de Eventos',
   HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes

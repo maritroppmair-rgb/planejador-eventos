@@ -2,7 +2,7 @@
 
 O robô cria o Forms de inscrição de cada evento a partir do Forms padrão, traz as respostas para o app a cada 10 minutos e manda o lembrete por e-mail para os inscritos.
 
-Ele roda na **conta Google dona do Firebase** (hoje, o Gmail pessoal do Pedro). Os e-mails saem dessa conta com o nome "Feashion · Diretoria de Eventos".
+Ele roda na **conta Google dona do Firebase** (o Gmail da diretoria de Eventos). Os e-mails saem dessa conta com o nome "Feashion · Diretoria de Eventos".
 
 ## Instalação (uma vez, uns 15 minutos)
 
