@@ -9,7 +9,7 @@ window.FIREBASE_CONFIG = {
 };
 
 /* Robô de inscrições (Apps Script). Cole aqui a URL do app da Web (termina em /exec). Vazio = desligado. */
-window.ROBO_URL = '';
+window.ROBO_URL = 'https://script.google.com/macros/s/AKfycbwhLRCqb7rHzJOOPfJHxa3qUKGwTBK-PxBexqCxr5L6lkw-ddG5jJTXD_x9mhsHkCnP/exec';
 
 /* Só para a apresentação: true esconde o perfil DEV da tela de Membros e o e-mail dele em "Quem pode entrar". Depois, troque para false (e tire a frase sobre isso do guia). */
 window.OCULTAR_DEV_EM_MEMBROS = true;
