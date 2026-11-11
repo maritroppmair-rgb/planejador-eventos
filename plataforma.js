@@ -316,7 +316,7 @@ function montarBackup(){
     armar(ok,'Clique de novo para importar','Confirmar importação',function(){
       var o=pend;pend=null;ok.hidden=true;msg.textContent='Importando…';
       importar(o,function(f){msg.textContent='Importando… '+Math.round(f*100)+'%';}).then(function(n){msg.textContent=n+' registros importados.';registrar('importou',fs.doc('parametros/backup'),n+' registros');})
-        .catch(function(e){msg.textContent='Erro na importação ('+(e&&e.message||e)+'). Parte dos dados pode ter sido gravada; importe de novo.';});
+        .catch(function(e){msg.textContent='Erro na importação ('+(e&&e.message||e)+'). O resto foi gravado.';});
     });
   });
 }
@@ -342,9 +342,12 @@ function importar(o,prog){
   var lotes=[],cur=[],tam=0;
   ops.forEach(function(op){if(cur.length&&(cur.length>=400||tam+op.t>6e6)){lotes.push(cur);cur=[];tam=0;}cur.push(op);tam+=op.t;});
   if(cur.length)lotes.push(cur);
-  var feitos=0;
+  var feitos=0,recusados=[];
+  /* se um lote for recusado, grava um a um para salvar o resto e saber exatamente o que foi barrado */
+  function umAUm(l){return l.reduce(function(p,op){return p.then(function(){return origSet.call(fs.doc(op.p),op.d).catch(function(e){recusados.push(op.p+' ('+(e&&e.code||e)+')');});});},Promise.resolve());}
   return lotes.reduce(function(p,l){return p.then(function(){var b=fs.batch();l.forEach(function(op){b.set(fs.doc(op.p),op.d);});
-    return b.commit().then(function(){feitos+=l.length;prog(feitos/ops.length);});});},Promise.resolve()).then(function(){return ops.length;});
+    return b.commit().catch(function(){return umAUm(l);}).then(function(){feitos+=l.length;prog(feitos/ops.length);});});},Promise.resolve())
+    .then(function(){if(recusados.length){console.warn('Importação: recusados',recusados);var e=new Error(recusados.length+' de '+ops.length+' registros recusados, por exemplo '+recusados.slice(0,3).join('; '));throw e;}return ops.length;});
 }
 
 document.addEventListener('DOMContentLoaded',function(){
