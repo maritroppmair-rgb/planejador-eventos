@@ -698,20 +698,23 @@ function mandar(para, m) {
   return true;
 }
 function diaCurto(ev) { return dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4); }
-function moldura(txt) {
+/* o botão abre as Pendências; no orçamento, abre direto o orçamento do evento no Financeiro */
+function moldura(txt, p, ev) {
+  var orc = p && p.k === 'orc' && ev;
+  var link = orc ? CFG.SITE + '#orcamento=' + encodeURIComponent(ev._id) : CFG.SITE + '#pendencias';
   return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">' + txt +
-    '<p>Quando terminar, marque o ponto como concluído no Planejador (tela Pendências ou no checklist da ficha do evento).</p>' +
-    '<p><a href="' + CFG.SITE + '#pendencias" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">Abrir as pendências</a></p>' +
+    '<p>' + (orc ? 'O ponto fica verde quando a diretoria do Financeiro clicar em <b>Validar orçamento</b> no Planejador.' : 'Quando terminar, marque o ponto como concluído no Planejador (tela Pendências).') + '</p>' +
+    '<p><a href="' + link + '" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">' + (orc ? 'Abrir o orçamento' : 'Abrir as pendências') + '</a></p>' +
     '<p style="color:#777;font-size:12px">Aviso automático do Planejador de Eventos da Feashion.</p></div>';
 }
 function emailVez(ev, p) {
   return { assunto: 'Sua vez: ' + p.n + ' · ' + (ev.nome || 'Evento') + ' (' + diaCurto(ev) + ')',
-    html: moldura('<p>Chegou a vez da área <b>' + esc(p.a) + '</b> no evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '): <b>' + esc(p.n) + '</b>, até ' + dataCurta(somaDiasIso(ev.data, -p.d)) + '.</p>') };
+    html: moldura('<p>Chegou a vez da área <b>' + esc(p.a) + '</b> no evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '): <b>' + esc(p.n) + '</b>, até ' + dataCurta(somaDiasIso(ev.data, -p.d)) + '.</p>', p, ev) };
 }
 function emailAtraso(ev, area, ps) {
   var lista = '<ul>' + ps.map(function (p) { return '<li><b>' + esc(p.n) + '</b>: prazo ' + dataCurta(somaDiasIso(ev.data, -p.d)) + '</li>'; }).join('') + '</ul>';
   return { assunto: 'Atrasado: ' + (ps.length === 1 ? ps[0].n : ps.length + ' pontos do checklist') + ' · ' + (ev.nome || 'Evento') + ' (' + diaCurto(ev) + ')',
-    html: moldura('<p>No evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '), ' + (ps.length === 1 ? 'este ponto da área ' : 'estes pontos da área ') + '<b>' + esc(area) + '</b> passaram do prazo:</p>' + lista) };
+    html: moldura('<p>No evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '), ' + (ps.length === 1 ? 'este ponto da área ' : 'estes pontos da área ') + '<b>' + esc(area) + '</b> passaram do prazo:</p>' + lista, ps.length === 1 ? ps[0] : null, ev) };
 }
 
 /* ---------- equipe: quem tem cargo no app edita a pasta (Forms e planilhas herdam) ---------- */

@@ -35,7 +35,7 @@ var MENU={
   'Eventos':[['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
              ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab']]],
              ['Ajustes',[['par','Parâmetros','tab']]]],
-  'Financeiro':[['Financeiro',[['fin-custos','Verba por evento','view'],['fin-coffee','Contatos de coffee','view'],['fin-ana','Analytics','view']]]],
+  'Financeiro':[['Financeiro',[['fin-custos','Orçamento por evento','view'],['fin-coffee','Contatos de coffee','view'],['fin-ana','Analytics','view']]]],
   'Marketing':[['Marketing',[['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
@@ -43,7 +43,7 @@ var MENU={
 var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
-  'fin-custos':['Verba por evento','Financeiro','Verba liberada para cada evento.'],
+  'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],
   'fin-ana':['Analytics','Financeiro','Visão dos gastos dos eventos.'],
   'mkt-posts':['Posts','Marketing','Do rascunho à publicação: ideia, produção, aprovação e publicado.'],
   'mkt-met':['Métricas','Marketing','Seguidores, alcance e engajamento, mês a mês.'],
@@ -132,6 +132,8 @@ try{atual=localStorage.getItem(CHAVE_AREA);}catch(e){}
 if(AREAS.indexOf(atual)<0)atual='Eventos';
 /* área em que a pessoa está agora: os documentos novos guardam isso */
 window.__areaAtual=function(){return atual||'Eventos';};
+/* vai para uma área e uma tela dela (ex.: o link do e-mail abre o orçamento no Financeiro) */
+window.__irArea=function(a,alvo){if(a!==atual)escolher(a);var b=alvo&&side.querySelector('.sitem[data-alvo="'+alvo+'"]');if(b)b.click();};
 function visiveis(){var P=window.__perm;if(!P||!P.carregado())return [atual];return AREAS.filter(function(a){return !!P.podeEm(a).ver;});}
 function telaAberta(){var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});return vis;}
 function primeira(){return side.querySelector('.sgroup:not([hidden]) .sitem:not([hidden])');}

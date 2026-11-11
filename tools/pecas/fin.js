@@ -2,7 +2,8 @@
    Roda dentro do script principal (mesmo escopo de events, docs, db, P, esc, fmt, D, painelAbrir...).
    Coleções do Financeiro (as regras dão a edição a quem tem cargo no Financeiro):
    - fin_coffee/{id}: contatos de coffee {nome, contato, telefone, endereco, obs, itens:[{item, preco, unidade}]}
-   - fin_verbas/{eventoId}: verba liberada para cada evento {valor, obs, historico:[{valor, em, porNome}]}
+   - fin_verbas/{eventoId}: verba liberada para cada evento {valor, obs, historico:[{valor, em, porNome}]} (= soma do orçamento)
+   - fin_orcamentos/{eventoId}: orçamento por item e a validação; fin_pagamentos/{eventoId}: pagamento de cada gasto (ver Orçamento por evento)
    Os gastos (cada um com seu comprovante) são registrados pela área de Eventos, no botão Registrar gastos (Base de eventos). */
 var finLigar=null,finMudou=function(){},finAplicar=null,finDocs=null;
 (function(){
@@ -140,6 +141,7 @@ window.__gastosBlk=function(e){var ed=epode('editar'),l=gastosDe(e).slice().sort
       '<div class="field"><label for="g-valor">Valor (R$)</label><input id="g-valor" inputmode="decimal" placeholder="0,00"></div>'+
       '<div class="field g-wide"><label for="g-desc">Descrição <span class="rq">vira o nome do comprovante em Documentos</span></label><input id="g-desc" maxlength="120" placeholder="ex.: Coffee para 60 pessoas"></div>'+
       '<div class="field g-wide" id="g-locbox"><label for="g-local">Local do coffee <span class="rq opt">dos Contatos de coffee</span></label><select id="g-local"><option value="">Sem local</option>'+ops+'</select></div>'+
+      (function(){var oi=((orcDe(e.id)||{}).itens||[]);return oi.length?'<div class="field g-wide"><label for="g-orc">Linha do orçamento <span class="rq opt">opcional · para o Financeiro comparar o aprovado com o gasto</span></label><select id="g-orc"><option value="">Sem linha</option>'+oi.map(function(x){return '<option value="'+esc(x.id)+'">'+esc((x.desc||tipoNome(x.tipo))+' · '+reais(x.valor))+'</option>';}).join('')+'</select></div>':'';})()+
       '<div class="field g-wide g-compbox"><label for="g-arq">Comprovante <span class="rq opt">opcional · dá para anexar depois</span></label><input id="g-arq" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"><input id="g-link" type="url" placeholder="ou cole um link (https://...)" aria-label="Link do comprovante"><span class="note">Nota fiscal, recibo ou print do pagamento (PDF ou imagem, até 10 MB). Vai para a pasta do evento em Documentos. Sem comprovante, o gasto fica marcado como “sem comprovante”.</span></div>'+
       '</div><div class="btns" style="margin-top:10px"><button type="button" class="btn" id="g-salvar">Registrar gasto</button><span class="msg" id="g-msg" role="status"></span></div></div>';}
   return out;};
@@ -168,6 +170,7 @@ window.__gastosLigar=function(dr,id){
     if(!file&&link&&!safeUrl(link)){msg.textContent='O link precisa começar com https://';return;}
     if(file&&file.size>10*1024*1024){msg.textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
     var g={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:dt,tipo:t,desc:ds.slice(0,120),valor:arred(vl),local:t==='coffee'?(dr.querySelector('#g-local').value||null):null,porNome:String(window.__meuNome||'').slice(0,80),em:new Date().toISOString()};
+    var go=dr.querySelector('#g-orc');if(go&&go.value)g.orcItem=go.value;
     msg.textContent=file?'Enviando o comprovante…':'Salvando…';sv.disabled=true;
     (file||link?criarComprovante(id,g.desc,tipoNome(t)+' · '+reais(g.valor)+' · '+dataBR(dt),file,file?'':link):Promise.resolve(null))
       .then(function(docId){if(docId)g.docId=docId;msg.textContent='Salvando…';return gravarGastos(id,legado(e).concat(gastosDe(e),[g]));})
@@ -179,37 +182,155 @@ window.__gastosLigar=function(dr,id){
     gravarGastos(id,gastosDe(e).filter(function(g){return g.id!==b.dataset.gdel;})).then(function(){if(g0&&g0.docId&&docDe(g0.docId))return db.doc('documentos/'+g0.docId).delete();}).catch(function(){b.disabled=false;});});
 };
 
-/* ---------------- Financeiro: Verba por evento ---------------- */
-/* fin_verbas/{eventoId} = {valor, obs, nome, em, porNome, historico:[{valor, em, porNome}]} */
+/* ---------------- Financeiro: Orçamento por evento ----------------
+   fin_verbas/{eventoId} = {valor, obs, nome, em, porNome, historico:[{valor, em, porNome}]}: a verba liberada. Desde o orçamento
+     por item, o valor é a soma das linhas do orçamento, gravada junto ao salvar (o resto do app continua lendo daqui).
+   fin_orcamentos/{eventoId} = {itens:[{id, tipo, desc, fornecedor, local, valor, fonte}], nome, em, porNome, validado:{em, por, uid}|null}
+     Abre já com as linhas do previsto no Planejar. "Validar orçamento" (diretoria do Financeiro e acesso total) exige descrição,
+     fornecedor (no coffee, um dos Contatos de coffee), valor e fonte em toda linha, e grava também eventos/{id}.etapas.orcamento,
+     que deixa verde o ponto "Orçamento validado" do checklist. Salvar uma mudança depois desfaz a validação; com o orçamento
+     validado, só quem valida pode mudar.
+   fin_pagamentos/{eventoId} = {g:{idDoGasto:{sit:'apagar'|'pago'|'reembolso', forma, data, em, por}}}: o Financeiro marca o
+     pagamento de cada gasto lançado por Eventos. Gastos registrados antes de PAG_DESDE não entram em "A pagar".
+   Cada gasto pode apontar para uma linha do orçamento (gasto.orcItem), escolhida em Registrar gastos: aprovado × gasto por linha. */
+var FONTES=['Caixa da Feashion','Patrocínio','Outro'];
+var PAGS=[['apagar','A pagar','warn'],['pago','Pago','ok'],['reembolso','Reembolsar membro','bad']];
+var FORMAS=['Pix','Cartão','Dinheiro','Boleto'];
+var PAG_DESDE='2026-11-11';
+fin.orc={};fin.pag={};
+function orcDe(id){return fin.orc[id]||null;}
+function somaItens(l){return arred((l||[]).reduce(function(t,x){return t+(+x.valor||0);},0));}
+function novoId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ddmmF(s){return s?s.slice(8,10)+'/'+s.slice(5,7):'';}
+function prim(n){return String(n||'').split(' ')[0];}
+function quemF(){return {em:new Date().toISOString(),por:String(window.__meuNome||'').slice(0,80),uid:window.__euId||''};}
+function podeValidar(){var p=window.__perm;if(!p||!p.carregado())return false;var c=p.cargoEm('Financeiro');return !!(p.dev()||p.geral()||c==='Diretor(a)'||c==='Coordenador(a)');}
+function validadoDe(e){var o=orcDe(e.id);return o&&o.validado&&o.validado.em?o.validado:null;}
+function estadoOrc(e){var o=orcDe(e.id);if(validadoDe(e))return 'val';if(o&&o.itens&&o.itens.length)return 'prep';return 'sem';}
+var EORC={sem:['Sem orçamento','warn'],prep:['A validar','neutral'],val:['Validado','ok']};
+/* pode mexer no orçamento deste evento? (validado: só quem valida) */
+function podeOrc(e){return fpode('editar')&&(!validadoDe(e)||podeValidar());}
+function itensIniciais(e){var o=orcDe(e.id);if(o&&o.itens)return JSON.parse(JSON.stringify(o.itens));
+  var pi=e.custoPrevItens,l=[];
+  if(pi)[['coffee','Coffee',pi.coffee],['material','Material impresso',pi.material],['sala','Sala',pi.sala],['outro','Outros',pi.outros]].forEach(function(r){if(+r[2]>0)l.push({id:novoId(),tipo:r[0],desc:r[1],fornecedor:'',local:null,valor:arred(+r[2]),fonte:''});});
+  var v=verbaDe(e.id);if(!l.length&&v!=null)l.push({id:novoId(),tipo:'outro',desc:'Verba liberada antes do orçamento por item',fornecedor:'',local:null,valor:v,fonte:''});
+  return l;}
+var ORAS={};
+function rascOrc(e){var r=ORAS[e.id];if(!r){var it0=itensIniciais(e),nv0=!orcDe(e.id)&&it0.length>0;r=ORAS[e.id]={itens:it0,sujo:nv0,novo:nv0,msg:''};}else if(!r.sujo)r.itens=itensIniciais(e);return r;}
+function linhaOk(x){return !!String(x.desc||'').trim()&&(x.tipo==='coffee'?!!x.local:!!String(x.fornecedor||'').trim())&&+x.valor>0&&FONTES.indexOf(x.fonte)>=0;}
+function nomeForn(x){if(x.tipo==='coffee'){var c=fin.coffee.filter(function(y){return y.id===x.local;})[0];return c?c.nome:'';}return x.fornecedor||'';}
+function gastoPorItem(e){var m={},ids={};((orcDe(e.id)||{}).itens||[]).forEach(function(x){ids[x.id]=1;});
+  gastosDe(e).forEach(function(g){var k=g.orcItem&&ids[g.orcItem]?g.orcItem:'';m[k]=arred((m[k]||0)+(+g.valor||0));});return m;}
+function coffeeOps(sel){return fin.coffee.slice().sort(function(a,b){return String(a.nome).localeCompare(String(b.nome),'pt-BR');}).map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===sel?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('');}
+function orcBlk(e){var ed=podeOrc(e),gp=gastoPorItem(e),val=validadoDe(e),it=ed?rascOrc(e).itens:((orcDe(e.id)||{}).itens||[]),h='';
+  if(!it.length&&!ed)return '<p class="note" style="margin:0">O Financeiro ainda não montou o orçamento deste evento.</p>';
+  if(ed){
+    h='<p class="note" style="margin:0 0 8px">Uma linha por item, com fornecedor, valor aprovado e de onde sai o dinheiro. Abre com o previsto no Planejar; o total vira a verba liberada.</p><div class="orc-l">'+it.map(function(x,i){var a='data-oi="'+i+'" data-of=';
+      var forn=x.tipo==='coffee'?'<select '+a+'"local" aria-label="Local do coffee"><option value="">Local do coffee…</option>'+coffeeOps(x.local)+'</select>'
+        :'<input '+a+'"fornecedor" maxlength="80" placeholder="Fornecedor" value="'+esc(x.fornecedor||'')+'" aria-label="Fornecedor">';
+      return '<div class="orc-r'+(linhaOk(x)?'':' inc')+'">'+
+        '<select '+a+'"tipo" aria-label="Tipo">'+TIPOS.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===x.tipo?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select>'+
+        '<input '+a+'"desc" maxlength="80" placeholder="Descrição" value="'+esc(x.desc||'')+'" aria-label="Descrição">'+forn+
+        '<span class="vb-in"><span>R$</span><input '+a+'"valor" inputmode="decimal" placeholder="0,00" value="'+esc(x.valor!=null&&x.valor!==''?nv(x.valor):'')+'" aria-label="Valor aprovado"></span>'+
+        '<select '+a+'"fonte" aria-label="Fonte do recurso"><option value="">Fonte…</option>'+FONTES.map(function(f){return '<option'+(f===x.fonte?' selected':'')+'>'+f+'</option>';}).join('')+'</select>'+
+        '<span class="orc-g">'+(gp[x.id]?'gasto '+reais(gp[x.id]):'')+'</span>'+
+        '<button type="button" class="cf-x" data-ox="'+i+'" aria-label="Tirar a linha '+esc(x.desc||'')+'" title="Tirar linha">&times;</button></div>';}).join('')+'</div>'+
+      '<button type="button" class="btn small ghost" data-oadd style="margin-top:8px">+ Adicionar item</button>';
+  }else h='<table class="fc-prev orc-t"><tbody>'+it.map(function(x){return '<tr><td><b>'+esc(x.desc||tipoNome(x.tipo))+'</b><span class="tsub">'+esc([tipoNome(x.tipo),nomeForn(x),x.fonte].filter(Boolean).join(' · '))+'</span></td><td class="r num">'+reais(x.valor)+(gp[x.id]?'<span class="tsub">gasto '+reais(gp[x.id])+'</span>':'')+'</td></tr>';}).join('')+'</tbody></table>';
+  h+='<p class="fin-ro orc-tot"><span>Total aprovado (verba liberada)</span><b>'+reais(somaItens(it))+'</b></p>';
+  if(gp[''])h+='<p class="note" style="margin:0">Gastos sem linha do orçamento: '+reais(gp[''])+'.</p>';
+  h+='<p class="orc-st">'+(val?'<span class="chip ok">✓ Orçamento validado por '+esc(prim(val.por))+' em '+ddmmF(val.em)+'</span>'+(fpode('editar')&&!podeValidar()?' <span class="note">Só a diretoria do Financeiro muda um orçamento validado.</span>':''):'<span class="chip warn">Ainda não validado</span>')+'</p>';
+  return h;}
+function rodOrc(e){if(!podeOrc(e))return '';var r=rascOrc(e),val=validadoDe(e),pv=podeValidar(),falta=!r.itens.length||r.itens.some(function(x){return !linhaOk(x);});
+  var vb=pv?(val?'<button type="button" class="btn ghost" id="or-desval">Desfazer validação</button>':'<button type="button" class="btn ghost" id="or-val"'+(r.sujo||falta||!orcDe(e.id)?' disabled':'')+'>Validar orçamento</button>'):'';
+  var dica=r.msg||(r.sujo?(r.novo?'Rascunho com o previsto no Planejar: complete e salve.':'Alterações não salvas.')+(val?' Salvar desfaz a validação.':''):pv&&!val?(falta?'Para validar, toda linha precisa de descrição, fornecedor, valor e fonte.':!orcDe(e.id)?'Salve o orçamento para poder validar.':''):'');
+  return '<div class="btns"><button type="button" class="btn" id="or-salvar"'+(r.sujo?'':' disabled')+'>Salvar orçamento</button>'+vb+'<span class="msg" id="or-msg" role="status">'+esc(dica)+'</span></div>';}
+function redesenhaOrc(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.closest('#view-fin-custos .tpanel'))a.blur();painelAtualizar('view-fin-custos');}
+function salvarOrc(e){var r=rascOrc(e),q=quemF(),eraVal=!!validadoDe(e);
+  if(r.itens.some(function(x){return x.valor===null||(x.valor!==''&&!(+x.valor>=0));})){r.msg='Valor inválido: use só números, como 1.200,50.';redesenhaOrc();return;}
+  var it=r.itens.map(function(x){return {id:x.id,tipo:x.tipo,desc:String(x.desc||'').trim().slice(0,80),fornecedor:x.tipo==='coffee'?'':String(x.fornecedor||'').trim().slice(0,80),local:x.tipo==='coffee'?(x.local||null):null,valor:x.valor===''?0:arred(+x.valor||0),fonte:x.fonte||''};});
+  r.msg='Salvando…';redesenhaOrc();
+  var ps=[db.doc('fin_orcamentos/'+e.id).set({itens:it,nome:e.nome||'',em:q.em,porNome:q.por,validado:null}),salvarVerba(e.id,nv(somaItens(it)),null,null)];
+  if(eraVal)ps.push(db.doc('eventos/'+e.id).update({'etapas.orcamento':null}));
+  Promise.all(ps).then(function(){r.sujo=false;r.novo=false;r.itens=JSON.parse(JSON.stringify(it));r.msg='Orçamento salvo: verba liberada de '+reais(somaItens(it))+'.'+(eraVal?' A validação foi desfeita; valide de novo.':'');redesenhaOrc();})
+    .catch(function(){r.msg='Não foi possível salvar o orçamento.';redesenhaOrc();});}
+function validarOrc(e,on){var r=rascOrc(e),q=quemF();r.msg='Salvando…';redesenhaOrc();
+  Promise.all([db.doc('fin_orcamentos/'+e.id).update({validado:on?{em:q.em,por:q.por,uid:q.uid}:null}),db.doc('eventos/'+e.id).update({'etapas.orcamento':on?{s:'ok',em:q.em,por:q.por,uid:q.uid}:null})])
+    .then(function(){r.msg=on?'Orçamento validado: o ponto do checklist ficou verde.':'Validação desfeita.';redesenhaOrc();})
+    .catch(function(){r.msg='Não foi possível '+(on?'validar':'desfazer a validação')+'. Confira se seu cargo permite.';redesenhaOrc();});}
+/* os ouvintes ficam no painel (que é reaproveitado entre redesenhos e eventos): ligados uma vez, leem o evento aberto em dr._orcId */
+function evAberto(dr){return events.filter(function(x){return x.id===dr._orcId;})[0]||null;}
+function ligarOrc(dr){
+  function ctx(){var e=evAberto(dr);return e&&podeOrc(e)?{e:e,r:rascOrc(e)}:null;}
+  function mexeu(c){c.r.sujo=true;c.r.msg='';var s=dr.querySelector('#or-salvar');if(s)s.disabled=false;var v=dr.querySelector('#or-val');if(v)v.disabled=true;var m=dr.querySelector('#or-msg');if(m)m.textContent='Alterações não salvas.'+(validadoDe(c.e)?' Salvar desfaz a validação.':'');}
+  function campo(t){var c=ctx();if(!c)return null;var x=c.r.itens[+t.dataset.oi],f=t.dataset.of;if(!x)return null;
+    if(f==='valor'){var v=t.value.trim();x.valor=v===''?'':num(v);}else x[f]=t.value||(f==='local'?null:'');
+    var row=t.closest('.orc-r');if(row)row.classList.toggle('inc',!linhaOk(x));mexeu(c);return f;}
+  dr.addEventListener('input',function(ev){var t=ev.target;if(t.dataset&&t.dataset.oi!=null&&t.tagName==='INPUT')campo(t);});
+  dr.addEventListener('change',function(ev){var t=ev.target;if(!t.dataset||t.dataset.oi==null)return;if(campo(t)==='tipo')redesenhaOrc();});
+  dr.addEventListener('click',function(ev){var b=ev.target.closest('[data-oadd],[data-ox],#or-salvar,#or-val,#or-desval');if(!b)return;var c=ctx();if(!c)return;
+    if(b.hasAttribute('data-oadd')){c.r.itens.push({id:novoId(),tipo:'outro',desc:'',fornecedor:'',local:null,valor:'',fonte:''});mexeu(c);redesenhaOrc();var l=dr.querySelectorAll('.orc-r [data-of="desc"]');if(l.length)l[l.length-1].focus();}
+    else if(b.dataset.ox!=null){c.r.itens.splice(+b.dataset.ox,1);mexeu(c);redesenhaOrc();}
+    else if(b.id==='or-salvar')salvarOrc(c.e);
+    else if(b.id==='or-val')validarOrc(c.e,true);
+    else if(b.id==='or-desval')validarOrc(c.e,false);});}
+
+/* pagamento de cada gasto */
+function pagDe(eid,gid){var p=fin.pag[eid];return p&&p.g&&p.g[gid]||null;}
+function sitDe(eid,g){var p=pagDe(eid,g.id);return p&&p.sit?p.sit:((g.em||'')>=PAG_DESDE?'apagar':'');}
+function pagNome(s){for(var i=0;i<PAGS.length;i++)if(PAGS[i][0]===s)return PAGS[i];return ['Antes do controle de pagamento','neutral'];}
+function pagBlk(e){var l=gastosDe(e).filter(function(g){return g.tipo!=='antigo';}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;}),ed=fpode('editar');
+  if(!l.length)return '<p class="note" style="margin:0">Nenhum gasto registrado pela área de Eventos ainda.</p>';
+  return '<ul class="pg-l">'+l.map(function(g){var p=pagDe(e.id,g.id)||{},s=sitDe(e.id,g),pn=pagNome(s),a='data-pg="'+esc(g.id)+'" data-pf=';
+    var ctl=ed?'<select '+a+'"sit" aria-label="Situação do pagamento">'+(s?'':'<option value="" selected>Antes do controle</option>')+PAGS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===s?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'+
+      '<select '+a+'"forma" aria-label="Forma de pagamento"><option value="">Forma…</option>'+FORMAS.map(function(f){return '<option'+(f===p.forma?' selected':'')+'>'+f+'</option>';}).join('')+'</select>'+
+      '<input type="date" '+a+'"data" value="'+esc(p.data||'')+'" aria-label="Data do pagamento">'
+      :'<span class="chip '+pn[2]+'">'+pn[1]+'</span>'+(p.forma||p.data?'<span class="note">'+esc([p.forma,p.data?dataBR(p.data):''].filter(Boolean).join(' · '))+'</span>':'');
+    return '<li class="pg-'+(s||'ant')+'"><div><b>'+esc(g.desc||tipoNome(g.tipo))+' · '+reais(g.valor)+'</b><span class="tsub">'+esc([dataBR(g.data),tipoNome(g.tipo),g.porNome].filter(Boolean).join(' · '))+'</span></div><div class="pg-c">'+ctl+'</div></li>';}).join('')+'</ul>';}
+function ligarPag(dr){dr.addEventListener('change',function(ev){var t=ev.target,id=dr._orcId;if(!t.dataset||t.dataset.pg==null||!db||!id)return;
+  var cur=JSON.parse(JSON.stringify(fin.pag[id]||{}));cur.g=cur.g||{};var x=cur.g[t.dataset.pg]||{},q=quemF();
+  x[t.dataset.pf]=t.value;if(!x.sit)x.sit='apagar';if(t.dataset.pf==='sit'&&t.value==='pago'&&!x.data)x.data=hojeISO();x.em=q.em;x.por=q.por;cur.g[t.dataset.pg]=x;delete cur.id;
+  db.doc('fin_pagamentos/'+id).set(cur).catch(function(){alertMsg('Não foi possível salvar o pagamento.');});});}
+/* tudo o que falta pagar (ou reembolsar), de todos os eventos */
+function aPagar(){var out=[];events.forEach(function(e){if(/\[teste\]/i.test(e.nome||''))return;
+  gastosDe(e).forEach(function(g){if(g.tipo==='antigo')return;var s=sitDe(e.id,g);if(s==='apagar'||s==='reembolso')out.push({e:e,g:g,s:s});});});
+  return out.sort(function(a,b){return (a.g.data||'')<(b.g.data||'')?-1:1;});}
+
 function situacao(e){var v=verbaDe(e.id),g=gastoDe(e)||0;if(v==null)return 'sem';if(g>v+0.005)return 'passou';return 'ok';}
-var SIT={sem:['Sem verba','warn'],ok:['Verba liberada','ok'],passou:['Gasto passou da verba','bad']};
-var sx=secao('fin-custos','Verba por evento','Cada evento com o custo previsto no Planejar. O Financeiro preenche a verba liberada; os gastos, cada um com seu comprovante, são registrados pela área de Eventos e aparecem na linha do tempo de cada evento.');
-sx.insertAdjacentHTML('beforeend','<div class="kpis fkpis" id="fc-kpis"></div><div class="sbar"><input type="search" id="fc-busca" placeholder="Buscar evento" aria-label="Buscar evento"><select id="fc-sem" aria-label="Semestre"><option value="">Todos os semestres</option></select><select id="fc-sit" aria-label="Situação"><option value="">Todas as situações</option><option value="sem">Sem verba</option><option value="ok">Verba liberada</option><option value="passou">Gasto passou da verba</option></select><label class="check"><input type="checkbox" id="fc-pass"> Mostrar eventos passados</label><span class="note" id="fc-conta" aria-live="polite"></span></div><div class="tablewrap"><table id="fc-tab" class="tlist"></table></div><p class="msg" id="fc-ok" role="status"></p>');
+var SIT={sem:['Sem verba','warn'],ok:['Dentro da verba','ok'],passou:['Gasto passou da verba','bad']};
+var sx=secao('fin-custos','Orçamento por evento','O Financeiro monta o orçamento de cada evento, linha por linha (fornecedor, valor e fonte), e valida; o total vira a verba liberada. Os gastos, lançados pela área de Eventos, aparecem em cada evento para marcar o pagamento.');
+sx.insertAdjacentHTML('beforeend','<div class="kpis fkpis" id="fc-kpis"></div><div id="fc-apagar"></div><div class="sbar"><input type="search" id="fc-busca" placeholder="Buscar evento" aria-label="Buscar evento"><select id="fc-sem" aria-label="Semestre"><option value="">Todos os semestres</option></select><select id="fc-sit" aria-label="Situação"><option value="">Todas as situações</option><option value="o-sem">Sem orçamento</option><option value="o-prep">Orçamento a validar</option><option value="o-val">Orçamento validado</option><option value="passou">Gasto passou da verba</option></select><label class="check"><input type="checkbox" id="fc-pass"> Mostrar eventos passados</label><span class="note" id="fc-conta" aria-live="polite"></span></div><div class="tablewrap"><table id="fc-tab" class="tlist"></table></div><p class="msg" id="fc-ok" role="status"></p>');
 $('fc-busca').addEventListener('input',function(){renderCustos();});
 ['fc-sem','fc-sit','fc-pass'].forEach(function(k){$(k).addEventListener('change',function(){renderCustos();});});
 function difHtml(r,p){if(r==null||p==null||!+p)return '<span class="note">—</span>';var d=r-p,pc=Math.round(d/p*100);
   return '<span class="fdif '+(d>0.005?'mais':'menos')+'">'+(d>0.005?'+':d<-0.005?'−':'')+reais(Math.abs(d),0)+' <small>('+(pc>0?'+':'')+pc+'%)</small></span>';}
+function renderAPagar(){var l=aPagar(),box=$('fc-apagar');if(!box)return;
+  if(!l.length){box.innerHTML='';return;}
+  var tot=arred(l.reduce(function(t,x){return t+(+x.g.valor||0);},0));
+  box.innerHTML='<details class="fc-ap" open><summary><b>A pagar</b> <span class="note">'+l.length+(l.length===1?' gasto':' gastos')+' · '+reais(tot)+'</span></summary><ul class="pg-l">'+l.map(function(x){var pn=pagNome(x.s);
+    return '<li data-fcopen="'+esc(x.e.id)+'" tabindex="0"><div><b>'+esc(x.g.desc||tipoNome(x.g.tipo))+' · '+reais(x.g.valor)+'</b><span class="tsub">'+esc([x.e.nome||'Evento',dataBR(x.g.data),x.g.porNome].filter(Boolean).join(' · '))+'</span></div><span class="chip '+pn[2]+'">'+pn[1]+'</span></li>';}).join('')+'</ul></details>';}
 function renderCustos(){
   var hoje=hojeISO(),q=nrm($('fc-busca').value).trim(),fs=$('fc-sem').value,ft=$('fc-sit').value,ps=$('fc-pass').checked||!!fs;
   var sems={};events.forEach(function(e){var s=semestre(e.data);if(s)sems[s]=1;});
   var sel=$('fc-sem'),cur=sel.value;sel.innerHTML='<option value="">Todos os semestres</option>'+Object.keys(sems).sort().reverse().map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>';}).join('');
   var base=events.filter(function(e){return !/\[teste\]/i.test(e.nome||'')&&(!fs||semestre(e.data)===fs);});
   var prox=base.filter(function(e){return !e.data||e.data>=hoje;});
-  var V=0,G=0,sem=0,pas=0;base.forEach(function(e){var v=verbaDe(e.id),g=gastoDe(e);if(v!=null)V+=v;if(g!=null)G+=g;if(situacao(e)==='passou')pas++;});prox.forEach(function(e){if(situacao(e)==='sem')sem++;});
-  $('fc-kpis').innerHTML=[[reais(V,0),'verba liberada'+(fs?' em '+fs:''),''],[reais(G,0),'gasto lançado pela área de Eventos',''],[sem,sem===1?'próximo evento sem verba':'próximos eventos sem verba',sem?'kbad':''],[pas,pas===1?'evento com gasto acima da verba':'eventos com gasto acima da verba',pas?'kbad':'']]
+  var V=0,G=0,aval=0,ap=aPagar();base.forEach(function(e){var v=verbaDe(e.id),g=gastoDe(e);if(v!=null)V+=v;if(g!=null)G+=g;});prox.forEach(function(e){if(estadoOrc(e)!=='val')aval++;});
+  var apT=arred(ap.reduce(function(t,x){return t+(+x.g.valor||0);},0));
+  $('fc-kpis').innerHTML=[[reais(V,0),'verba liberada'+(fs?' em '+fs:''),''],[reais(G,0),'gasto lançado pela área de Eventos',''],[aval,aval===1?'próximo evento sem orçamento validado':'próximos eventos sem orçamento validado',aval?'kbad':''],[reais(apT,0),'a pagar ou reembolsar',ap.length?'kbad':'']]
     .map(function(k){return '<div class="kpi '+k[2]+'"><div class="v num">'+k[0]+'</div><div class="l">'+k[1]+'</div></div>';}).join('');
+  renderAPagar();
   if(!events.length){$('fc-tab').innerHTML='<tbody><tr><td class="empty">Nenhum evento na base ainda.</td></tr></tbody>';$('fc-conta').textContent='';return;}
-  var ed=fpode('editar');
-  var l=base.filter(function(e){if(!ps&&e.data&&e.data<hoje)return false;if(ft&&situacao(e)!==ft)return false;if(q&&nrm([e.nome,e.tipo,e.convidado].join(' ')).indexOf(q)<0)return false;return true;})
+  var l=base.filter(function(e){if(!ps&&e.data&&e.data<hoje)return false;if(ft&&(ft.slice(0,2)==='o-'?'o-'+estadoOrc(e):situacao(e))!==ft)return false;if(q&&nrm([e.nome,e.tipo,e.convidado].join(' ')).indexOf(q)<0)return false;return true;})
     .sort(function(a,b){return ps?((a.data||'')<(b.data||'')?1:-1):((a.data||'9')<(b.data||'9')?-1:1);});
   $('fc-conta').textContent=l.length+(l.length===1?' evento':' eventos');
-  var h='<thead><tr><th>Data</th><th>Evento</th><th class="r">Previsto</th><th class="r">Verba liberada</th><th class="r">Gasto</th><th>Situação</th></tr></thead><tbody>';
+  var h='<thead><tr><th>Data</th><th>Evento</th><th class="r">Previsto</th><th class="r">Verba liberada</th><th class="r">Gasto</th><th>Orçamento</th></tr></thead><tbody>';
   if(!l.length)h+='<tr><td colspan="6" class="empty">'+(ps?'Nenhum evento com esses filtros.':'Nenhum evento pela frente. Marque “Mostrar eventos passados” para ver os anteriores.')+'</td></tr>';
-  l.forEach(function(e){var v=verbaDe(e.id),g=gastoDe(e),s=situacao(e);
+  l.forEach(function(e){var v=verbaDe(e.id),g=gastoDe(e),s=situacao(e),o=EORC[estadoOrc(e)];
     h+='<tr data-fcopen="'+esc(e.id)+'" tabindex="0"><td class="num"><b>'+(e.data?dataBR(e.data):'—')+'</b></td><td><span class="tn">'+esc(e.nome||'Sem nome')+'</span><span class="tsub">'+esc([e.tipo,e.sala].filter(Boolean).join(' · '))+'</span></td>'+
       '<td class="r num">'+(e.custoPrev!=null?reais(e.custoPrev,0):'<span class="note">sem previsão</span>')+'</td>'+
-      '<td class="r">'+(ed?'<span class="vb-in"><span>R$</span><input data-verba="'+esc(e.id)+'" inputmode="decimal" aria-label="Verba liberada para '+esc(e.nome||'o evento')+'" placeholder="'+(e.custoPrev!=null?esc(nv(Math.round(e.custoPrev))):'0')+'" value="'+esc(v!=null?nv(v):'')+'"></span>':(v!=null?'<b class="num">'+reais(v,0)+'</b>':'<span class="note">—</span>'))+'</td>'+
-      '<td class="r num">'+(g!=null?reais(g,0):'<span class="note">—</span>')+'</td><td><span class="chip '+SIT[s][1]+'">'+SIT[s][0]+'</span></td></tr>';});
+      '<td class="r num">'+(v!=null?'<b>'+reais(v,0)+'</b>':'<span class="note">—</span>')+'</td>'+
+      '<td class="r num">'+(g!=null?reais(g,0):'<span class="note">—</span>')+(s==='passou'?'<span class="tsub fdif mais">passou da verba</span>':'')+'</td><td><span class="chip '+o[1]+'">'+o[0]+'</span></td></tr>';});
   $('fc-tab').innerHTML=h+'</tbody>';
 }
 function salvarVerba(id,txt,obs,msgEl){var e=events.filter(function(x){return x.id===id;})[0];if(!e||!db)return Promise.resolve();
@@ -223,8 +344,6 @@ function salvarVerba(id,txt,obs,msgEl){var e=events.filter(function(x){return x.
   if(msgEl)msgEl.textContent='Salvando…';
   return db.doc('fin_verbas/'+id).set(d).then(function(){if(msgEl)msgEl.textContent=val==null?'Verba retirada.':'Verba de '+reais(val)+' salva para '+(e.nome||'o evento')+'.';})
     .catch(function(){if(msgEl)msgEl.textContent='Não foi possível salvar a verba.';});}
-$('fc-tab').addEventListener('change',function(ev){var i=ev.target.closest('[data-verba]');if(i)salvarVerba(i.dataset.verba,i.value.trim(),null,$('fc-ok'));});
-$('fc-tab').addEventListener('keydown',function(ev){var i=ev.target.closest('[data-verba]');if(i&&ev.key==='Enter'){ev.preventDefault();i.blur();}});
 
 /* linha do tempo de um evento: planejamento, verba, gastos, notas e o dia do evento */
 function timeline(e){var it=[],acum=0;
@@ -246,17 +365,19 @@ function montarVerba(id){var e=events.filter(function(x){return x.id===id;})[0];
   var ed=fpode('editar'),vb=fin.verbas[id]||{},pi=e.custoPrevItens;
   var prev=pi?'<table class="fc-prev"><tbody>'+[['Coffee',pi.coffee,pi.porcoes?pi.porcoes+' porções':''],['Material impresso',pi.material,''],['Sala',pi.sala,''],['Outros',pi.outros,'']].filter(function(r){return +r[1];}).map(function(r){return '<tr><td>'+r[0]+(r[2]?' <span class="note">'+r[2]+'</span>':'')+'</td><td class="r num">'+reais(r[1])+'</td></tr>';}).join('')+'<tr class="tot"><td>Total previsto</td><td class="r num">'+reais(e.custoPrev)+'</td></tr></tbody></table>':
     (e.custoPrev!=null?'<p class="fin-ro"><span>Total previsto</span><b>'+reais(e.custoPrev)+'</b></p>':'<p class="note" style="margin:0">Este evento não foi planejado no app, então não tem previsão.</p>');
-  var verba=ed?'<div class="fin-grid"><div class="field"><label for="vb-valor">Verba liberada (R$)</label><input id="vb-valor" inputmode="decimal" placeholder="'+(e.custoPrev!=null?esc(nv(Math.round(e.custoPrev))):'0,00')+'" value="'+esc(vb.valor!=null?nv(vb.valor):'')+'"></div><div class="field ffull"><label for="vb-obs">Observação <span class="rq opt">opcional</span></label><input id="vb-obs" placeholder="ex.: liberado só o coffee; material fica para depois" value="'+esc(vb.obs||'')+'"></div></div>':
-    '<p class="fin-ro"><span>Verba liberada</span><b>'+(vb.valor!=null?reais(vb.valor):'ainda não')+'</b></p>'+(vb.obs?'<p class="note" style="margin:0">'+esc(vb.obs)+'</p>':'');
-  var corpo=blk('',resumoGasto(e))+blk('Verba',verba)+blk('Previsto no Planejar',prev)+blk('Linha do tempo dos gastos',timeline(e));
-  var rod=ed?'<div class="btns"><button type="button" class="btn" id="vb-salvar">Salvar verba</button><span class="msg" id="vb-msg" role="status"></span></div>':'';
-  var sub=(e.data?D(e.data).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'sem data')+(e.sala?' · '+esc(e.sala):'')+' <span class="chip '+SIT[situacao(e)][1]+'">'+SIT[situacao(e)][0]+'</span>';
-  return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
+  var corpo=blk('',resumoGasto(e))+blk('Orçamento',orcBlk(e))+blk('Pagamento dos gastos',pagBlk(e))+blk('Previsto no Planejar',prev)+blk('Linha do tempo dos gastos',timeline(e));
+  var o=EORC[estadoOrc(e)],sub=(e.data?D(e.data).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'sem data')+(e.sala?' · '+esc(e.sala):'')+' <span class="chip '+o[1]+'">'+o[0]+'</span>';
+  return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rodOrc(e)};}
 function abrirVerba(id){vbAberto=id;
-  painelAbrir({sec:'view-fin-custos',chave:id,montar:function(){return montarVerba(id);},foco:'#vb-valor',aoFechar:function(){vbAberto=null;},depois:function(dr){
-    var sv=dr.querySelector('#vb-salvar');if(sv)sv.addEventListener('click',function(){salvarVerba(id,dr.querySelector('#vb-valor').value.trim(),dr.querySelector('#vb-obs').value.trim(),dr.querySelector('#vb-msg'));});}});}
-function cliqueFc(ev){if(ev.target.closest('[data-verba]'))return;var tr=ev.target.closest('[data-fcopen]');if(tr&&(ev.type==='click'||ev.key==='Enter'||ev.key===' ')){if(ev.type==='keydown')ev.preventDefault();abrirVerba(tr.dataset.fcopen);}}
+  painelAbrir({sec:'view-fin-custos',chave:id,montar:function(){return montarVerba(id);},aoFechar:function(){vbAberto=null;},depois:function(dr){
+    dr._orcId=id;if(!dr._orcLig){dr._orcLig=1;ligarOrc(dr);ligarPag(dr);}}});}
+/* abre o orçamento de um evento (Pendências e o link do e-mail "Sua vez" do robô: #orcamento=ID) */
+window.__abrirOrc=function(id){if(window.__irArea)window.__irArea('Financeiro','fin-custos');setTimeout(function(){abrirVerba(id);},60);};
+(function(){var m=/^#orcamento=(.+)$/.exec(location.hash||'');if(!m)return;var id=decodeURIComponent(m[1]),n=0;
+  (function tenta(){var P=window.__perm;if(P&&P.carregado()&&events.some(function(x){return x.id===id;})){if(P.podeEm('Financeiro').ver)window.__abrirOrc(id);return;}if(++n<60)setTimeout(tenta,500);})();})();
+function cliqueFc(ev){var tr=ev.target.closest('[data-fcopen]');if(tr&&(ev.type==='click'||ev.key==='Enter'||ev.key===' ')){if(ev.type==='keydown')ev.preventDefault();abrirVerba(tr.dataset.fcopen);}}
 $('fc-tab').addEventListener('click',cliqueFc);$('fc-tab').addEventListener('keydown',cliqueFc);
+$('fc-apagar').addEventListener('click',cliqueFc);$('fc-apagar').addEventListener('keydown',cliqueFc);
 function atualizarTudo(){adiar('view-fin-custos',renderCustos);if(vbAberto)painelAtualizar('view-fin-custos');renderAna();renderCoffee();}
 finAplicar=function(){atualizarTudo();};
 finDocs=function(){atualizarTudo();painelAtualizar('view-base');};
@@ -346,6 +467,8 @@ var rtA;window.addEventListener('resize',function(){clearTimeout(rtA);rtA=setTim
 var ligado=false;
 finLigar=function(){if(ligado||!db)return;ligado=true;
   db.collection('fin_coffee').onSnapshot(function(s){fin.coffee=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});atualizarTudo();},function(){});
+  db.collection('fin_orcamentos').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});fin.orc=m;atualizarTudo();painelAtualizar('view-base');},function(){});
+  db.collection('fin_pagamentos').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});fin.pag=m;atualizarTudo();},function(){});
   db.collection('fin_verbas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});fin.verbas=m;atualizarTudo();painelAtualizar('view-base');},function(){});
 };
 document.addEventListener('permissoes',function(){document.body.classList.toggle('fin-editar',fpode('editar'));renderCoffee();renderCustos();});
