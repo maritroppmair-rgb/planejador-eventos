@@ -409,6 +409,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       foco:'#g-valor',depois:function(dr){if(window.__gastosLigar)window.__gastosLigar(dr,id);var b=dr.querySelector('[data-tabrir]');if(b)b.addEventListener('click',function(){abrir(id);});}});}
   function clique(e){var bg=e.target.closest('[data-egastos]'),bf=e.target.closest('[data-efin]'),bfi=e.target.closest('[data-eficha]'),bav=e.target.closest('[data-eavisos]'),ba=e.target.closest('[data-eand]');
     if(e.target.closest('[data-tplan]'))return; /* a canetinha: tratada abaixo (leva ao Planejar) */
+    if(e.target.closest('.and-x'))return; /* checklist aberto: os seletores são tratados em etapas.js */
     if(ba){if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();var ai=ba.dataset.eand;andAberto[ai]=!andAberto[ai];renderBase();var nb=e.type==='keydown'&&$('etable').querySelector('[data-eand="'+ai+'"]');if(nb)nb.focus();return;}
     if(bg||bf||bfi||bav){if(e.type!=='click')return;e.stopPropagation();if(bg){abrirGastos(bg.dataset.egastos);return;}
       if(bfi){abrir(bfi.dataset.eficha);return;}if(bav){abrir(bav.dataset.eavisos,'avisos');return;}bReg=bf.dataset.efin;abrir(bReg,'fin');return;}

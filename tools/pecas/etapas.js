@@ -8,6 +8,8 @@
                                                                             cada área mudar só o seu); mesmo formato
      eventos/{id}.etapas.ficha = {em, por}                                  quando a ficha ficou pronta (gravado ao salvar)
      eventos/{id}.responsavelAex = {uid, nome}                              quem cuida do Formulário da AEX
+   O checklist fica só na linha do evento, na Base: a caixinha Andamento aberta mostra cada ponto com o seletor de quem pode marcar; a tela Pendências também marca.
+   (O Responsável AEX ainda não se escolhe no site: por enquanto o Formulário da AEX é marcado por quem edita Eventos.)
    Quem marca: Aprovação, só Presidente, Vice-presidente e DEV (ficha pronta, evento futuro), no botão ao lado de "Salvar ficha";
    Orçamento, a diretoria do Financeiro; Divulgação, a diretoria do Marketing; Formulário da AEX, o responsável AEX;
    o resto, quem edita Eventos. O acesso geral marca tudo, menos a Aprovação. */
@@ -81,8 +83,6 @@ function quem(){return {em:new Date().toISOString(),por:String(window.__meuNome|
 function falhou(){alertMsg('Não foi possível salvar. Confira se seu cargo permite.');}
 function gravar(eid,k,s){var p=PONTOS.filter(function(x){return x.k===k;})[0];if(!p||!db)return;var up={},q=quem();
   up[campo(p)]=s?{s:s,em:q.em,por:q.por,uid:q.uid}:null;db.doc('eventos/'+eid).update(up).catch(falhou);}
-function definirAex(eid,uid){if(!db)return;var m=(window.__membros||[]).filter(function(x){return x.id===uid;})[0];
-  db.doc('eventos/'+eid).update({responsavelAex:m?{uid:m.id,nome:m.nome}:null}).catch(falhou);}
 function seletor(x,eid){return '<select class="ck-s '+(x.s||'nao')+'" data-ck="'+x.k+'" data-eid="'+esc(eid)+'" aria-label="'+esc(x.n)+'">'+['','andamento','ok'].map(function(v){return '<option value="'+v+'"'+(v===x.s?' selected':'')+'>'+NOME[v]+'</option>';}).join('')+'</select>';}
 
 /* ----- caixinha Andamento (Base): uma bolinha por ponto, em três grupos ----- */
@@ -90,26 +90,18 @@ window.__andamento=function(e,ab){
   if(dn(e)&&!e.etapas&&!e.checklist)return '<span class="note">Evento anterior ao andamento.</span>';
   var l=pontosDe(e),n=l.filter(function(x){return x.feito;}).length,cur=l.filter(function(x){return !x.feito;})[0],id=esc(e.id);
   function cls(x){return x.feito?'ok':x===cur?(x.atrasado?'atr':'vez'):x.atrasado?'atr2':x.s==='andamento'?'and':'';}
-  var h='<div class="and'+(!cur?' fim':'')+(ab?' on':'')+'" role="button" tabindex="0" data-eand="'+id+'" aria-expanded="'+!!ab+'" aria-label="Andamento: '+n+' de '+l.length+' pontos do checklist. '+(ab?'Fechar':'Ver')+' prazos e datas">'+
+  var h='<div class="and'+(!cur?' fim':'')+(ab?' on':'')+'"><div class="and-hd" role="button" tabindex="0" data-eand="'+id+'" aria-expanded="'+!!ab+'" aria-label="Andamento: '+n+' de '+l.length+' pontos do checklist. '+(ab?'Fechar':'Abrir o checklist')+'">'+
     '<div class="and-t"><span>Andamento</span><span>'+n+' de '+l.length+'<span class="and-s" aria-hidden="true">'+(ab?'▲':'▼')+'</span></span></div>'+
     '<div class="and-gs" aria-hidden="true">'+[30,7,3].map(function(b){var lb=l.filter(function(x){return x.b===b;});return '<ol class="and-g" style="flex:'+lb.length+'"><li class="and-gl">'+b+'</li>'+lb.map(function(x){return '<li class="'+cls(x)+'" title="'+esc(x.n+' · '+x.a+' · até '+x.ptxt+' · '+NOME[x.s])+'"><i>'+(x.feito?'✓':'')+'</i></li>';}).join('')+'</ol>';}).join('')+'</div>'+
     '<div class="and-p">'+(!cur?'<span><b>Checklist completo</b></span>':
-      '<span>'+(cur.atrasado?'Atrasado: ':'Agora: ')+'<b>'+esc(cur.n)+'</b> · '+cur.a+'</span><span class="and-d'+(cur.atrasado?' atz':'')+'">até '+cur.ptxt+'</span>')+'</div>';
-  if(ab)h+=[30,7,3].map(function(b){return '<div class="and-bl"><h5>'+b+' dias</h5><ul>'+l.filter(function(x){return x.b===b;}).map(function(x){var c=cls(x);
+      '<span>'+(cur.atrasado?'Atrasado: ':'Agora: ')+'<b>'+esc(cur.n)+'</b> · '+cur.a+'</span><span class="and-d'+(cur.atrasado?' atz':'')+'">até '+cur.ptxt+'</span>')+'</div></div>';
+  if(ab)h+='<div class="and-x">'+[30,7,3].map(function(b){return '<div class="and-bl"><h5>'+b+' dias</h5><ul>'+l.filter(function(x){return x.b===b;}).map(function(x){var c=cls(x);
       var det='prazo '+x.ptxt+(x.k==='lembrete'?' (48 h antes)':'')+(x.feito?(x.em?' · concluído '+ddmm(x.em.slice(0,10))+(x.por?' por '+esc(primeiro(x.por)):''):''):x.s==='andamento'?' · em andamento':x.prazo&&!dn(e)?' · '+faltaTxt(x.prazo):'');
-      return '<li><span class="and-k '+c+'"></span><span><b>'+esc(x.n)+'</b> · '+x.a+'<small'+(x.atrasado?' class="atz"':'')+'>'+det+'</small></span></li>';}).join('')+'</ul></div>';}).join('');
+      var ctl=!dn(e)&&x.k!=='aprov'&&podeMarcar(x.p,e)?seletor(x,e.id):'';
+      return '<li><span class="and-k '+c+'"></span><span><b>'+esc(x.n)+'</b> · '+x.a+'<small'+(x.atrasado?' class="atz"':'')+'>'+det+'</small>'+(ctl?'<span class="and-c">'+ctl+'</span>':'')+'</span></li>';}).join('')+'</ul></div>';}).join('')+'</div>';
   return h+'</div>';};
 
-/* ----- ficha: 06 checklist e o botão de aprovação ao lado de "Salvar ficha" ----- */
-window.__fichaEtapasBlk=function(e){if(dn(e))return '';
-  var ed=evEd(),id=esc(e.id),l=pontosDe(e),ra=e.responsavelAex;
-  var aex=ed?'<label class="et-aex"><span>Responsável AEX</span><select data-et-aex="'+id+'"><option value="">— escolher —</option>'+(window.__membros||[]).map(function(m){return '<option value="'+esc(m.id)+'"'+(ra&&ra.uid===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join('')+(ra&&!(window.__membros||[]).some(function(m){return m.id===ra.uid;})?'<option value="'+esc(ra.uid)+'" selected>'+esc(ra.nome||'?')+'</option>':'')+'</select></label>'
-    :'<p class="note" style="margin:0">Responsável AEX: <b>'+esc(ra&&ra.nome||'a definir')+'</b></p>';
-  var cols=[30,7,3].map(function(b){return '<div class="ck-col"><h5>'+b+' dias</h5><ul>'+l.filter(function(x){return x.b===b;}).map(function(x){
-      var st=podeMarcar(x.p,e)&&x.k!=='aprov'?seletor(x,e.id):'<span class="ck-s '+(x.s||'nao')+'">'+NOME[x.s]+'</span>';
-      var sub=[x.a!=='Eventos'?x.a:'',x.auto?'automático':'','até '+x.ptxt+(x.k==='lembrete'?' (48 h antes)':'')].filter(Boolean).join(' · ');
-      return '<li class="'+(x.atrasado?'atz':'')+'">'+st+'<span class="ck-l">'+esc(x.n)+(x.atrasado?' <span class="ck-atz">atrasado</span>':'')+'<small>'+esc(sub)+(x.feito&&x.em&&!x.auto?' · '+esc(primeiro(x.por))+' em '+ddmm(x.em.slice(0,10)):'')+'</small></span></li>';}).join('')+'</ul></div>';}).join('');
-  return '<div class="tp-blk fi-sec"><h4>06 · Checklist</h4><p class="note" style="margin:0">O que precisa estar pronto até 30, 7 e 3 dias antes, cada ponto com o seu prazo. Os automáticos se marcam sozinhos; cada área marca os seus (aqui ou em Pendências).</p>'+aex+'<div class="ck-grid">'+cols+'</div></div>';};
+/* ----- ficha: o botão de aprovação ao lado de "Salvar ficha" ----- */
 window.__fichaAprovHtml=function(e){if(dn(e))return '';var x=pontosDe(e).filter(function(y){return y.k==='aprov';})[0],id=esc(e.id);
   if(pres()){var bl=bloqueioAprov(e);
     return '<label class="fi-aprov'+(x.feito?' on':'')+(bl&&!x.feito?' off':'')+'"><input type="checkbox" data-et="aprov" data-eid="'+id+'"'+(x.feito?' checked':'')+(bl?' disabled':'')+'><span><b>'+(x.feito?'Ficha aprovada':'Aprovo esta ficha')+'</b><small>'+(x.feito&&x.em?'por '+esc(primeiro(x.por))+' em '+ddmm(x.em.slice(0,10)):bl||'Presidência · até '+x.ptxt)+'</small></span></label>';}
@@ -119,8 +111,7 @@ window.__fichaAprovHtml=function(e){if(dn(e))return '';var x=pontosDe(e).filter(
 function ligar(sec){if(!sec)return;
   sec.addEventListener('change',function(ev){var t=ev.target;
     if(t.dataset.et==='aprov'){gravar(t.dataset.eid,'aprov',t.checked?'ok':'');t.blur();return;}
-    if(t.dataset.ck){gravar(t.dataset.eid,t.dataset.ck,t.value);t.className='ck-s '+(t.value||'nao');return;}
-    if(t.dataset.etAex!=null){definirAex(t.dataset.etAex,t.value);}});
+    if(t.dataset.ck){gravar(t.dataset.eid,t.dataset.ck,t.value);t.className='ck-s '+(t.value||'nao');return;}});
   sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-pd-abrir]');if(b&&window.__abrirFicha)__abrirFicha(b.dataset.pdAbrir);});}
 ligar($('view-base'));
 

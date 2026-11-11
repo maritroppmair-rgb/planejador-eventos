@@ -103,7 +103,6 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
       (window.ROBO_URL&&!r.fotos?'<div class="btns" style="margin:0 0 6px"><button type="button" class="btn small" data-fi-pasta="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando a pasta…':'Criar pasta de fotos')+'</button>'+(fm2?'<span class="msg">'+esc(fm2)+'</span>':'')+'</div><span class="note">O robô cria a pasta no Drive da diretoria, com o nome e a data do evento. Já tem uma pasta? Cole o link:</span>':'')+
       '<input id="fi-fotos" data-fi="fotos" type="url" value="'+v(r.fotos)+'" placeholder="https://drive.google.com/...">'+abre+'</div>';}
   h+=fblk('02 · Público e logística',b,'fi-sec');
-  if(window.__fichaEtapasBlk)h+=window.__fichaEtapasBlk(e); /* 06 checklist (etapas.js) */
   /* salvar e, ao lado, a aprovação da Presidência */
   if(ed)h+='<div class="btns fi-salvar"><button type="button" class="btn" data-fi-salvar="'+id+'"'+(SUJO[e.id]?'':' disabled')+'>Salvar ficha</button><span class="msg" role="status">'+(SUJO[e.id]?'Alterações não salvas.':(MSG[e.id]||''))+'</span>'+(window.__fichaAprovHtml?window.__fichaAprovHtml(e):'')+'</div>';
   return h;};
