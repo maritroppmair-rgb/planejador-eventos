@@ -566,8 +566,6 @@ function clique(p) {
 /* ---------- rotina automática (gatilho a cada 10 min) ---------- */
 function rotina() {
   try { sincronizarEquipe(); } catch (err) { console.error('Equipe: ' + err); }
-  try { atualizarMailing(); } catch (err) { console.error('Lista do mailing: ' + err); }
-  try { rotinaMailing(); } catch (err) { console.error('Envios do mailing: ' + err); }
   var agora = new Date(), H = 3600e3;
   fsList('eventos').forEach(function (ev) {
     if (!ev.inscricao || !ev.inscricao.formId || !ev.data) return;
@@ -586,6 +584,9 @@ function rotina() {
       console.error('Evento ' + ev._id + ': ' + err);
     }
   });
+  /* depois de buscar as respostas: quem pediu novidades entra no mailing já nesta rodada */
+  try { atualizarMailing(); } catch (err) { console.error('Lista do mailing: ' + err); }
+  try { rotinaMailing(); } catch (err) { console.error('Envios do mailing: ' + err); }
 }
 
 /* ---------- equipe: quem tem cargo no app edita a pasta (Forms e planilhas herdam) ---------- */
