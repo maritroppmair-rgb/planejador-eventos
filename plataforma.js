@@ -209,6 +209,15 @@ function ehDev(email){
     return ref.set({email:email,em:new Date().toISOString()}).then(function(){return true;},function(){return false;});
   }).catch(function(){return false;});
 }
+/* migração: o DEV, ao entrar, devolve a cada pessoa já cadastrada as áreas e a presidência que ela tinha no backup */
+function aplicarCargosImportados(){
+  return fs.collection('perfisImportados').get().then(function(s){if(s.empty)return;
+    return fs.collection('membros').get().then(function(ms){var por={};ms.forEach(function(m){var e=String(m.data().email||'').toLowerCase();if(e)por[e]=m;});
+      return Promise.all(s.docs.map(function(i){var m=por[i.id];if(!m)return;var d=i.data(),up={};
+        if(d.areas&&Object.keys(d.areas).length)up.areas=d.areas;if(d.presidencia)up.presidencia=d.presidencia;
+        return (Object.keys(up).length?m.ref.update(up):Promise.resolve()).then(function(){return i.ref.delete();});}));});
+  }).catch(function(){});
+}
 function posEntrada(u,email,dev){
   /* perfil vindo do backup da versão no Claude: vira o perfil desta conta no primeiro acesso */
   var meu=fs.doc('membros/'+u.uid),imp=fs.doc('perfisImportados/'+email);
@@ -216,7 +225,9 @@ function posEntrada(u,email,dev){
     if(s.exists){if(dev&&s.data().cargo!=='DEV')return meu.update({cargo:'DEV'});return;}
     return imp.get().then(function(i){if(!i.exists)return;var d=i.data();
     var novo={nome:d.nome||'',apelido:d.apelido||'',email:email,telefone:d.telefone||'',cargo:dev?'DEV':'',entrada:d.entrada||'',foto:d.foto||'',tema:d.tema||'auto',criadoEm:d.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()};
-    return meu.set(novo).then(function(){return imp.delete();});});}).catch(function(){});
+    /* cargos e áreas não podem ser dados pela própria pessoa: o perfil importado fica guardado até o DEV entrar e aplicar */
+    var temCargo=!!d.presidencia||Object.keys(d.areas||{}).some(function(k){return !!d.areas[k];});
+    return meu.set(novo).then(function(){if(!temCargo)return imp.delete();});});}).catch(function(){}).then(function(){if(dev)return aplicarCargosImportados();});
   montarSair();montarAcesso(email);montarBackup();
 }
 /* ao sair, apaga também a cópia dos dados guardada neste navegador (importante em computador compartilhado) */
@@ -324,7 +335,7 @@ function importar(o,prog){
   COLECOES.forEach(function(c){var col=o.colecoes[c];if(!col)return;Object.keys(col).forEach(function(id){
     var d=Object.assign({},col[id]);
     /* perfis não podem ser gravados por outra pessoa: viram perfis "a reivindicar", que cada um recebe no próximo login */
-    if(c==='membros'){if(usuario&&id===usuario.uid)return;var em=String(d.email||'').toLowerCase();if(!em)return;delete d.cargo;ops.push({p:'perfisImportados/'+em,d:d,t:JSON.stringify(d).length});return;}
+    if(c==='membros'){if(usuario&&id===usuario.uid)return;var em=String(d.email||'').toLowerCase();if(!em)return;if(!d.areas&&d.cargo&&d.cargo!=='DEV')d.areas={Eventos:d.cargo};delete d.cargo;ops.push({p:'perfisImportados/'+em,d:d,t:JSON.stringify(d).length});return;}
     if(c==='arquivos'){var ps=d.__partes||[];delete d.__partes;ps.forEach(function(x,i){ops.push({p:'arquivos/'+id+'/partes/'+i,d:{d:x},t:x.length});});d.partes=ps.length;}
     ops.push({p:c+'/'+id,d:d,t:JSON.stringify(d).length});
   });});
