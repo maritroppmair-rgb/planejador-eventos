@@ -1,7 +1,8 @@
 /* ============================== FINANCEIRO ==============================
    Roda dentro do script principal (mesmo escopo de events, docs, db, P, esc, fmt, D, painelAbrir...).
    Coleções do Financeiro (as regras dão a edição a quem tem cargo no Financeiro):
-   - fin_coffee/{id}: contatos de coffee {nome, contato, telefone, endereco, obs, itens:[{item, preco, unidade}]}
+   - fin_coffee/{id}: contatos de coffee {nome, contato, telefone, endereco, obs, itens:[{item, preco, unidade}]} (tela em Eventos > Recursos;
+     editam Eventos e Financeiro; o nome da coleção ficou fin_ para não perder os dados)
    - fin_verbas/{eventoId}: verba liberada para cada evento {valor, obs, historico:[{valor, em, porNome}]} (= soma do orçamento)
    - fin_orcamentos/{eventoId}: orçamento por item e a validação; fin_pagamentos/{eventoId}: pagamento de cada gasto (ver Orçamento por evento)
    Os gastos (cada um com seu comprovante) são registrados pela área de Eventos, no botão Registrar gastos (Base de eventos). */
@@ -13,6 +14,8 @@ function nrm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀
 function blk(t,h){return '<div class="tp-blk">'+(t?'<h4>'+t+'</h4>':'')+h+'</div>';}
 function confirma(b,txt,fn){if(b.dataset.sure){fn();return;}var o=b.textContent;b.dataset.sure='1';b.textContent=txt;setTimeout(function(){delete b.dataset.sure;b.textContent=o;},5000);}
 function fpode(k){var p=window.__perm;return !!(p&&p.carregado()&&p.podeEm('Financeiro')[k]);}
+/* Contatos de coffee: a tela fica em Eventos (Recursos); edita quem edita Eventos ou Financeiro */
+function cfpode(k){var p=window.__perm;return !!(p&&p.carregado()&&(p.podeEm('Eventos')[k]||p.podeEm('Financeiro')[k]));}
 function reais(v,dec){return 'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:dec==null?2:dec,maximumFractionDigits:dec==null?2:dec});}
 function num(v){if(v==null||v==='')return null;var n=+String(v).replace(/\s/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');return isFinite(n)?n:null;}
 function nv(v){return v==null||v===''?'':String(v).replace('.',',');}
@@ -25,7 +28,7 @@ var fin={coffee:[],verbas:{}};window.__fin=fin;
 /* ---------------- Contatos de coffee ---------------- */
 var UNID=['por pessoa','por unidade','por kit','por cento','por litro','por kg','valor fixo'];
 var sc=secao('fin-coffee','Contatos de coffee','Fornecedores de coffee e lanches, com contato e os itens e valores de cada um. Quem lança o gasto de coffee de um evento escolhe o local daqui; “Usado em” conta esses eventos.',
-  '<button class="btn fin-ed" type="button" id="cf-novo">+ Novo local</button>');
+  '<button class="btn cf-ed" type="button" id="cf-novo">+ Novo local</button>');
 sc.insertAdjacentHTML('beforeend','<div class="sbar"><input type="search" id="cf-busca" placeholder="Buscar local, contato, endereço ou item" aria-label="Buscar contato de coffee"><span class="note" id="cf-conta" aria-live="polite"></span></div><div class="tablewrap"><table id="cf-tab" class="tlist"></table></div>');
 $('cf-busca').addEventListener('input',function(){renderCoffee();});
 function usos(id){var n=0;events.forEach(function(e){if((e.gastos||[]).some(function(g){return g.local===id;}))n++;});return n;}
@@ -33,7 +36,7 @@ function porPessoa(c){var v=(c.itens||[]).filter(function(i){return i.unidade===
 function wa(t){var d=String(t||'').replace(/\D/g,'');if(d.length<10)return '';if(d.length<=11)d='55'+d;return 'https://wa.me/'+d;}
 function renderCoffee(){
   var q=nrm($('cf-busca').value).trim(),L=fin.coffee;
-  if(!L.length){$('cf-tab').innerHTML='<tbody><tr><td class="empty">Nenhum local ainda.'+(fpode('editar')?' Clique em “+ Novo local”.':'')+'</td></tr></tbody>';$('cf-conta').textContent='';return;}
+  if(!L.length){$('cf-tab').innerHTML='<tbody><tr><td class="empty">Nenhum local ainda.'+(cfpode('editar')?' Clique em “+ Novo local”.':'')+'</td></tr></tbody>';$('cf-conta').textContent='';return;}
   var l=L.filter(function(c){return !q||nrm([c.nome,c.contato,c.endereco,c.telefone,c.obs].concat((c.itens||[]).map(function(i){return i.item;})).join(' ')).indexOf(q)>=0;})
     .sort(function(a,b){return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');});
   $('cf-conta').textContent=l.length+' de '+L.length+(L.length===1?' local':' locais');
@@ -55,7 +58,7 @@ function itemLinha(i,ed){i=i||{};
 function campo(id,rot,val,extra){return '<div class="field'+(extra&&extra.full?' ffull':'')+'"><label for="'+id+'">'+rot+'</label>'+(extra&&extra.area?'<textarea id="'+id+'" rows="3">'+esc(val||'')+'</textarea>':'<input id="'+id+'" value="'+esc(val||'')+'"'+(extra&&extra.attr?' '+extra.attr:'')+'>')+'</div>';}
 function montarCoffee(id){
   var c=id?fin.coffee.filter(function(x){return x.id===id;})[0]:{itens:[{}]};if(id&&!c)return null;
-  var ed=fpode('editar'),it=c.itens||[];
+  var ed=cfpode('editar'),it=c.itens||[];
   if(!ed){var w=wa(c.telefone);
     return {titulo:c.nome||'Local',sub:esc(c.endereco||''),
       corpo:blk('Contato','<p class="fin-ro"><span>Pessoa</span><b>'+esc(c.contato||'—')+'</b></p><p class="fin-ro"><span>Telefone</span><b>'+esc(c.telefone||'—')+(w?' · <a href="'+esc(w)+'" target="_blank" rel="noopener">WhatsApp ↗</a>':'')+'</b></p>'+(c.obs?'<p class="note" style="margin:8px 0 0">'+esc(c.obs)+'</p>':''))+
@@ -64,7 +67,7 @@ function montarCoffee(id){
       campo('cf-end','Endereço',c.endereco,{full:1})+campo('cf-obs','Observações',c.obs,{full:1,area:1})+'</div>')+
     blk('Itens e valores','<table class="cf-itens"><thead><tr><th>Item</th><th>Preço (R$)</th><th>Unidade</th><th><span class="sr">Tirar</span></th></tr></thead><tbody id="cf-its">'+(it.length?it:[{}]).map(function(i){return itemLinha(i,true);}).join('')+'</tbody></table>'+
       '<button type="button" class="btn small ghost" id="cf-add" style="margin-top:8px">+ Adicionar item</button>');
-  var rod='<div class="btns"><button type="button" class="btn" id="cf-salvar">'+(id?'Salvar alterações':'Adicionar local')+'</button>'+(id&&fpode('excluir')?'<button type="button" class="btn small ghost tdanger" id="cf-del">Excluir</button>':'')+'<span class="msg" id="cf-msg" role="status"></span></div>';
+  var rod='<div class="btns"><button type="button" class="btn" id="cf-salvar">'+(id?'Salvar alterações':'Adicionar local')+'</button>'+(id&&cfpode('excluir')?'<button type="button" class="btn small ghost tdanger" id="cf-del">Excluir</button>':'')+'<span class="msg" id="cf-msg" role="status"></span></div>';
   return {titulo:id?c.nome||'Local':'Novo local de coffee',sub:id?esc(c.endereco||''):'',corpo:corpo,rodape:rod};}
 function abrirCoffee(id){
   painelAbrir({sec:'view-fin-coffee',chave:id||'novo',montar:function(){return montarCoffee(id);},foco:'#cf-nome',depois:function(dr){
@@ -471,5 +474,5 @@ finLigar=function(){if(ligado||!db)return;ligado=true;
   db.collection('fin_pagamentos').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});fin.pag=m;atualizarTudo();},function(){});
   db.collection('fin_verbas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});fin.verbas=m;atualizarTudo();painelAtualizar('view-base');},function(){});
 };
-document.addEventListener('permissoes',function(){document.body.classList.toggle('fin-editar',fpode('editar'));renderCoffee();renderCustos();});
+document.addEventListener('permissoes',function(){document.body.classList.toggle('fin-editar',fpode('editar'));document.body.classList.toggle('cf-editar',cfpode('editar'));renderCoffee();renderCustos();});
 })();

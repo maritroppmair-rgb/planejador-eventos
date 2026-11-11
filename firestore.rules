@@ -8,6 +8,7 @@ rules_version = '2';
 // - DEV, presidência e Diretor(a) de Eventos: tudo, em todas as áreas (Diretor(a) de Eventos vale como a Vice-presidência).
 // - Na própria área: Diretor(a) faz tudo e atribui cargos; Coordenador(a) e Membro(a) editam e excluem;
 //   Trainee edita sem excluir; sem cargo só lê. (Esconder as abas de outras áreas é feito na tela.)
+// - Contatos de coffee (fin_coffee): a tela fica em Eventos; editam Eventos e Financeiro.
 // - Área de cada coleção: documentos e arquivos são de todas; coleções com prefixo fin_, mkt_, cd_ e rh_ são de
 //   Financeiro, Marketing, C&D e RH; o resto é de Eventos.
 // - Só quem está acima muda o cargo de quem está abaixo. Ninguém muda o próprio cargo (só o DEV).
@@ -73,6 +74,7 @@ service cloud.firestore {
       let ar = areasDe(me);
       return (ehComum(c) && ar.values().hasAny(cargos))
         || (c.matches('fin_.*') && ar.get('Financeiro', null) in cargos)
+        || (c == 'fin_coffee' && ar.get('Eventos', null) in cargos)
         || (c.matches('mkt_.*') && ar.get('Marketing', null) in cargos)
         || (c.matches('cd_.*') && ar.get('C&D', null) in cargos)
         || (c.matches('rh_.*') && ar.get('RH', null) in cargos)

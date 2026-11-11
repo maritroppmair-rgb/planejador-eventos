@@ -33,9 +33,9 @@ var I={
 var AREAS=['Eventos','Financeiro','Marketing','C&D','RH'];
 var MENU={
   'Eventos':[['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
-             ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab']]],
+             ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['fin-coffee','Contatos de coffee','view']]],
              ['Ajustes',[['par','Parâmetros','tab']]]],
-  'Financeiro':[['Financeiro',[['fin-custos','Orçamento por evento','view'],['fin-coffee','Contatos de coffee','view'],['fin-ana','Analytics','view']]]],
+  'Financeiro':[['Financeiro',[['fin-custos','Orçamento por evento','view'],['fin-ana','Analytics','view']]]],
   'Marketing':[['Marketing',[['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
@@ -52,7 +52,7 @@ var NOVAS={
   'rh':['RH','RH','O que a área de RH vai acompanhar aqui ainda será definido.']
 };
 var main=document.querySelector('main');
-var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist','view-pend'];
+var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist','view-pend','view-fin-coffee'];
 Object.keys(NOVAS).forEach(function(k){
   if(document.getElementById('view-'+k)){SOLTAS.push('view-'+k);return;} /* telas já prontas (ex.: Financeiro, no fin.js) */
   var n=NOVAS[k],sec=document.createElement('section');sec.id='view-'+k;sec.hidden=true;sec.setAttribute('aria-labelledby',k+'-title');

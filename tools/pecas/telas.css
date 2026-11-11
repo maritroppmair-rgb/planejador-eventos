@@ -199,6 +199,7 @@ h2 .beta{font-size:12px;margin-left:10px;vertical-align:middle;padding:2px 9px}
 .dbusca{margin:0 0 8px}
 /* Financeiro */
 body:not(.fin-editar) .fin-ed{display:none!important}
+body:not(.cf-editar) .cf-ed{display:none!important}
 .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
 .fin-grid .ffull{grid-column:1/-1}
 .fin-grid textarea,.tp-body textarea{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:8px 10px;width:100%;font:inherit;resize:vertical}
