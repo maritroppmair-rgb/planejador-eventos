@@ -334,16 +334,20 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 .fi-salvar{margin:0}
 .fi-selo{display:block;margin-top:4px}.fi-selo:empty{display:none}.fi-selo .chip{font-size:11px}
 /* Planejar: convidado por segmento */
-.convsel{border:1px solid var(--line);border-radius:6px;padding:10px 12px 12px;margin:4px 0 12px;display:grid;gap:8px}
+.convsel{min-width:0;min-inline-size:0;border:1px solid var(--line);border-radius:6px;padding:10px 12px 12px;margin:4px 0 12px;display:grid;gap:8px}
 .convsel legend{font-weight:700;padding:0 4px}
-.convsel .row2{margin:0}
+.convsel .row2{margin:0}.convsel .row2>*,.convsel input,.convsel select{min-width:0}
 .convsug{display:grid;gap:6px}
-.csug{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;font:inherit;color:inherit}
+.csug{display:grid;grid-template-columns:auto minmax(0,1fr) auto;min-width:0;width:100%;gap:10px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;font:inherit;color:inherit}
 .csug:hover{border-color:var(--wine)}
 .csug.on{border-color:var(--wine);background:var(--wine-soft);box-shadow:inset 3px 0 0 var(--wine)}
 .csn{font-family:var(--display);font-size:20px;min-width:30px;text-align:center;color:var(--wine)}
-.cst b{display:block;font-size:14px}
+.cst{min-width:0}.cst b,.cst .tsub{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cst b{font-size:14px}
 @media (max-width:700px){.fi-row{grid-template-columns:1fr}.fi-ro{grid-template-columns:1fr;gap:2px}}
 #etable .tsub{white-space:normal}
 #etable td:nth-child(2){min-width:200px}
 .pinsc{margin-top:18px;max-width:760px}.pinsc a{color:var(--wine);font-weight:700}.pinsc h4{margin-top:0}.pinsc-row input{flex:1;min-width:220px}
+/* explicação dos campos dos e-mails */
+.tchips [data-dica]{position:relative}
+.tchips [data-dica]:hover::after,.tchips [data-dica]:focus-visible::after{content:attr(data-dica);position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:max-content;max-width:min(260px,70vw);white-space:pre-line;text-align:left;background:var(--fg);color:var(--surface);font-family:var(--body);font-size:12.5px;line-height:1.45;font-weight:500;letter-spacing:0;text-transform:none;padding:8px 10px;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
+.tchips [data-dica]:nth-last-child(-n+2):hover::after,.tchips [data-dica]:nth-last-child(-n+2):focus-visible::after{left:auto;right:0}

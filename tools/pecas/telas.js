@@ -4,6 +4,19 @@
 function $(id){return document.getElementById(id);}
 function el(html){var t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstChild;}
 function pode(c){return document.body.classList.contains('pode-'+c);}
+/* explicação de cada campo dos e-mails, mostrada ao passar o mouse (ou focar) no botão do campo */
+var DICAS={
+  '{nome}':'Primeiro nome de quem recebe.\nEx.: Ana. Sem nome no cadastro, vira “pessoal”.',
+  '{evento}':'Nome do evento.\nEx.: Palestra de abertura',
+  '{quando}':'Dia da semana, data e horário do evento.\nEx.: quarta, 2 de dezembro, às 17h',
+  '{sala}':'Sala do evento.\nEx.: Sala Ruy Leme. Sem sala definida, vira “a confirmar”.',
+  '{convidado}':'Nome do convidado do evento.\nEx.: Ana Beatriz. Sem convidado, fica vazio.',
+  '{fechamento}':'Quando as inscrições fecham (36 h antes do início).\nEx.: segunda, 30 de novembro, às 5h',
+  '{detalhes}':'Um quadrinho com Quando, Onde e Com (convidado). Funciona sozinho num parágrafo.',
+  '{link_inscricao}':'Botão vermelho “Quero me inscrever”, que leva ao Forms do evento. Funciona sozinho num parágrafo.',
+  '{link_avaliacao}':'Botão “Avaliar o evento”, com o link de avaliação. Funciona sozinho num parágrafo.',
+  '{mudanca}':'O que mudou no evento (data, horário, sala ou nome).\nEx.: o horário mudou de 17h para 18h'};
+function dica(c){var d=DICAS[c];return d?' data-dica="'+esc(d).replace(/\n/g,'&#10;')+'" aria-label="'+esc(c+': '+d.replace(/\n/g,' '))+'"':'';}
 function nrm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
 
 /* ===== painel lateral genérico ===== */
@@ -351,7 +364,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       '<div class="field"><label for="ed-assunto">Assunto</label><input id="ed-assunto" data-ed="assunto" value="'+esc(r.assunto)+'"></div>'+
       '<div class="field" style="margin-top:10px"><label for="ed-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ed-corpo" data-ed="corpo" rows="10">'+esc(r.corpo)+'</textarea></div>'+
       (t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
-      '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='mailing');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" title="'+c[1]+'">'+c[0]+'</button>';}).join('')+'</div>')+
+      '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='mailing');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" "'+dica(c[0])+'>'+c[0]+'</button>';}).join('')+'</div>')+
       blk('Prévia',ph?'<iframe class="tprev" sandbox="" srcdoc="'+esc(ph)+'" title="Prévia do e-mail"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia” para ver o e-mail como chega, com o nome de exemplo.</p>')+
       (emMsg[e.id]?'<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>':'');
     var oc=emOcup[e.id];
@@ -475,7 +488,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     return '<div class="tml-grid"><div class="tp-blk"><h4>Texto base do convite</h4>'+
       '<div class="field"><label for="ml-assunto">Assunto</label><input id="ml-assunto" data-ml="assunto" value="'+esc(rasc.assunto)+'"'+(ed?'':' disabled')+'></div>'+
       '<div class="field" style="margin-top:10px"><label for="ml-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ml-corpo" data-ml="corpo" rows="11"'+(ed?'':' disabled')+'>'+esc(rasc.corpo)+'</textarea></div>'+
-      '<p class="note" style="margin:10px 0 6px">Campos:</p><div class="tchips">'+['{nome}','{evento}','{quando}','{sala}','{convidado}','{fechamento}','{detalhes}','{link_inscricao}'].map(function(c){return '<button type="button" data-mlins="'+c+'">'+c+'</button>';}).join('')+'</div>'+
+      '<p class="note" style="margin:10px 0 6px">Campos:</p><div class="tchips">'+['{nome}','{evento}','{quando}','{sala}','{convidado}','{fechamento}','{detalhes}','{link_inscricao}'].map(function(c){return '<button type="button" data-mlins="'+c+'"'+dica(c)+'>'+c+'</button>';}).join('')+'</div>'+
       '<h4 style="margin-top:16px">Horário</h4><div class="treg"><div class="field"><label for="ml-hora">Hora do envio padrão</label><input id="ml-hora" data-ml="hora" type="time" value="'+esc(rasc.hora)+'"'+(ed?'':' disabled')+'></div><div class="field"><label for="ml-int">Intervalo mínimo entre envios (dias)</label><input id="ml-int" data-ml="intervalo" type="number" min="0" max="14" value="'+esc(rasc.intervalo)+'"'+(ed?'':' disabled')+'></div></div>'+
       '<p class="note">O envio padrão sai no dia seguinte à criação do evento nesse horário. Os convites só saem de segunda a sexta: evento criado na sexta ou no fim de semana manda na segunda. Se o último envio foi há menos dias que o intervalo, o próximo espera (sem passar do prazo de inscrição).</p>'+
       (ed?'<div class="btns" style="margin-top:12px"><button type="button" class="btn" id="ml-salvar">Salvar</button><button type="button" class="btn ghost" id="ml-prev"'+(ocup?' disabled':'')+'>Ver prévia</button><button type="button" class="btn ghost" id="ml-teste"'+(ocup?' disabled':'')+'>Enviar teste para mim</button><button type="button" class="btn small ghost" id="ml-pad">Voltar ao padrão</button></div>':'')+
