@@ -1,5 +1,7 @@
 /* ---------- telas no padrão de Salas ---------- */
 table.tlist{min-width:640px}
+#etable .tacoes{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+#etable .tacoes .btn{white-space:nowrap}
 .tlist td{padding:10px 12px;vertical-align:top}
 .tlist tbody tr[tabindex]{cursor:pointer}
 @media (hover:hover){.tlist tbody tr[tabindex]:hover td{background:var(--surface-2)}}
@@ -72,6 +74,8 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
   #etable tbody tr[data-eopen] td:nth-child(4){grid-column:2;grid-row:1}
   #etable tbody tr[data-eopen] td:nth-child(3){grid-column:1/-1;font-size:13px}
   #etable tbody tr[data-eopen] td:nth-child(5){display:none}
+  #etable tbody tr[data-eopen] td:nth-child(6){grid-column:1/-1;text-align:left}
+  #etable .tacoes{justify-content:flex-start;margin-top:4px}
   #ktab tbody tr td:nth-child(1){grid-column:1/-1;order:2;font-size:13px}
   #ktab tbody tr td:nth-child(3){grid-column:2;grid-row:1}
   #ktab tbody tr td:nth-child(4){display:none}

@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111103804"></script>
-<script src="plataforma.js?v=20261111103804"></script>
+<script src="config.js?v=20261111115527"></script>
+<script src="plataforma.js?v=20261111115527"></script>
 </head>
 <body>
 
@@ -500,6 +500,8 @@ header.app .wrap{max-width:none;padding-left:max(12px,env(safe-area-inset-left,0
 @media (max-width:800px){.acharts{grid-template-columns:1fr}}
 /* ---------- telas no padrão de Salas ---------- */
 table.tlist{min-width:640px}
+#etable .tacoes{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+#etable .tacoes .btn{white-space:nowrap}
 .tlist td{padding:10px 12px;vertical-align:top}
 .tlist tbody tr[tabindex]{cursor:pointer}
 @media (hover:hover){.tlist tbody tr[tabindex]:hover td{background:var(--surface-2)}}
@@ -572,6 +574,8 @@ fieldset:disabled .tseg button,.tseg-src:disabled+.tseg button{cursor:default;op
   #etable tbody tr[data-eopen] td:nth-child(4){grid-column:2;grid-row:1}
   #etable tbody tr[data-eopen] td:nth-child(3){grid-column:1/-1;font-size:13px}
   #etable tbody tr[data-eopen] td:nth-child(5){display:none}
+  #etable tbody tr[data-eopen] td:nth-child(6){grid-column:1/-1;text-align:left}
+  #etable .tacoes{justify-content:flex-start;margin-top:4px}
   #ktab tbody tr td:nth-child(1){grid-column:1/-1;order:2;font-size:13px}
   #ktab tbody tr td:nth-child(3){grid-column:2;grid-row:1}
   #ktab tbody tr td:nth-child(4){display:none}
@@ -1652,8 +1656,10 @@ function salvarRegistro(e){e.preventDefault();var f=e.target,id=f.dataset.regfor
     return '';})();
   var em=f.querySelector('.regerro');if(!em){em=document.createElement('p');em.className='msg regerro';em.setAttribute('role','alert');em.style.cssText='color:var(--red);font-weight:700;margin:8px 0 0';f.appendChild(em);}
   em.textContent=erro;if(erro)return;
+  var ev0=events.filter(function(x){return x.id===id;})[0],fin1=!ev0||ev0.status!=='realizado';
   var upd={status:'realizado',inscritos:v('ri'),presentes:v('rp'),semInscricao:v('rw'),membros:v('rm'),duracaoReal:v('rd'),porcoesCompradas:v('rpc'),porcoesConsumidas:v('rpu'),metodoCheckin:$('rmt-'+id).value||null,atraso:v('ra')};
-  db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;if(window.aposRegistro)aposRegistro(id);delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
+  if(fin1){upd.finalizadoEm=new Date().toISOString();upd.finalizadoPor=String(window.__meuNome||'').slice(0,80);}
+  db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;if(window.aposRegistro)aposRegistro(id);if(fin1&&window.aoFinalizar)window.aoFinalizar(id); /* relatórios do evento (a definir) */delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
 }
 $('etable').addEventListener('submit',salvarRegistro);
 function alertMsg(m){$('dbstatus').textContent=m;}
@@ -2221,7 +2227,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function brl(v){return 'R$ '+(+v).toFixed(2).replace('.',',');}
   function situ(e,today){var dn=e.status==='realizado';
     if(dn){var tc=e.inscritos?Math.max(0,e.presentes-(+e.semInscricao||0))/e.inscritos:null;return tc==null?'<span class="chip neutral">realizado</span>':semaf(tc,'tc').replace('</span>',' vieram</span>');}
-    if(e.data&&e.data<today)return '<span class="chip bad">resultado pendente</span>';
+    if(e.data&&e.data<today)return '<span class="chip bad">falta finalizar</span>';
     var i=e.inscricao,cs=climaSelo(e);if(i&&i.formId)return (i.aberto===false?'<span class="chip neutral">inscrições fechadas</span>':'<span class="chip ok">inscrições abertas</span>')+cs;
     return '<span class="chip neutral">'+(window.ROBO_URL?'sem Forms':'planejado')+'</span>'+cs;}
   function insc(e){var dn=e.status==='realizado',meta=+e.inscritosMeta||0;
@@ -2235,7 +2241,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var real=all.filter(function(e){return e.status==='realizado';}),pend=all.filter(function(e){return e.status!=='realizado'&&e.data&&e.data<today;});
     var I=0,Pr=0,C=0,CP=0,realK=real.filter(function(e){return !/\[teste\]/i.test(e.nome||'');});realK.forEach(function(e){if(+e.inscritos){I+=+e.inscritos;Pr+=Math.max(0,(+e.presentes||0)-(+e.semInscricao||0));}if(e.custo){C+=+e.custo;CP+=+e.presentes||0;}});
     var prox=all.length-real.length-pend.length;
-    $('kpis').innerHTML=[['Próximos',prox,''],['Resultados pendentes',pend.length,pend.length?'kbad':''],['Comparecimento geral',I?Math.round(Pr/I*100)+'%':'—',''],['Custo por presente',CP?'R$ '+(C/CP).toFixed(2).replace('.',','):'—','']].map(function(k){return '<div class="kpi '+k[2]+'"><div class="v num">'+k[1]+'</div><div class="l">'+k[0]+'</div></div>';}).join('');
+    $('kpis').innerHTML=[['Próximos',prox,''],['Falta finalizar',pend.length,pend.length?'kbad':''],['Comparecimento geral',I?Math.round(Pr/I*100)+'%':'—',''],['Custo por presente',CP?'R$ '+(C/CP).toFixed(2).replace('.',','):'—','']].map(function(k){return '<div class="kpi '+k[2]+'"><div class="v num">'+k[1]+'</div><div class="l">'+k[0]+'</div></div>';}).join('');
     var types={};all.forEach(function(e){if(e.tipo)types[e.tipo]=1;});
     var cur=fb.value;fb.innerHTML='<option value="">Todos os tipos</option>'+Object.keys(types).sort().map(function(t){return '<option'+(t===cur?' selected':'')+'>'+esc(t)+'</option>';}).join('');
     if(!all.length){$('etable').innerHTML='<tbody><tr><td class="empty">A base está vazia. Planeje um evento e clique em “Salvar evento”.</td></tr></tbody>';$('b-conta').textContent='';painelAtualizar('view-base');return;}
@@ -2247,11 +2253,11 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     $('b-conta').textContent=list.length+(list.length===1?' evento':' eventos')+(pen.length?' · '+pen.length+' pendente'+(pen.length>1?'s':''):'');
     function row(e){var d=e.data?e.data.slice(8,10)+'/'+e.data.slice(5,7):'—',dnn=e.status==='realizado',cp=dnn&&e.custo&&e.presentes?e.custo/e.presentes:null;
       var sub=[e.tipo,e.sala?(e.sala+(e.capacidade?' ('+e.capacidade+')':'')):'',e.hora,e.responsavel?'resp. '+String(e.responsavel).split(' ')[0]:''].filter(Boolean).join(' · ');
-      return '<tr data-eopen="'+esc(e.id)+'" tabindex="0"><td class="num"><b>'+d+'</b><span class="tsub">'+(e.data?e.data.slice(0,4):'')+'</span></td><td><span class="tn">'+esc(e.nome||'Sem nome')+'</span>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+'<span class="tsub"><span class="tmob">'+d+' · </span>'+esc(sub)+'</span></td><td>'+insc(e)+'</td><td>'+situ(e,today)+'</td><td class="r">'+(cp!=null?semaf(cp,'cp'):'<span class="note">—</span>')+'</td></tr>';}
-    var h='<thead><tr><th>Data</th><th>Evento</th><th>Inscrições</th><th>Situação</th><th class="r">Custo/presente</th></tr></thead><tbody>';
-    if(pen.length||nx.length)h+='<tr class="grp"><td colspan="5">Próximos e pendentes ('+(pen.length+nx.length)+')</td></tr>'+pen.concat(nx).map(row).join('');
-    if(dn.length)h+='<tr class="grp"><td colspan="5">Realizados ('+dn.length+')</td></tr>'+dn.map(row).join('');
-    if(!list.length)h+='<tr><td colspan="5" class="empty">Nenhum evento com esses filtros.</td></tr>';
+      return '<tr data-eopen="'+esc(e.id)+'" tabindex="0"><td class="num"><b>'+d+'</b><span class="tsub">'+(e.data?e.data.slice(0,4):'')+'</span></td><td><span class="tn">'+esc(e.nome||'Sem nome')+'</span>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+'<span class="tsub"><span class="tmob">'+d+' · </span>'+esc(sub)+'</span></td><td>'+insc(e)+'</td><td>'+situ(e,today)+'</td><td class="r">'+(cp!=null?semaf(cp,'cp'):'<span class="note">—</span>')+'</td><td class="r"><div class="tacoes"><button type="button" class="btn small ghost" data-egastos="'+esc(e.id)+'">'+(pode('editar')?'Registrar gastos':'Ver gastos')+'</button>'+(!dnn&&pode('editar')?'<button type="button" class="btn small'+(e.data&&e.data<=today?'':' ghost')+'" data-efin="'+esc(e.id)+'">Finalizar evento</button>':'')+'</div></td></tr>';}
+    var h='<thead><tr><th>Data</th><th>Evento</th><th>Inscrições</th><th>Situação</th><th class="r">Custo/presente</th><th class="r"><span class="sr">Ações</span></th></tr></thead><tbody>';
+    if(pen.length||nx.length)h+='<tr class="grp"><td colspan="6">Próximos e pendentes ('+(pen.length+nx.length)+')</td></tr>'+pen.concat(nx).map(row).join('');
+    if(dn.length)h+='<tr class="grp"><td colspan="6">Realizados ('+dn.length+')</td></tr>'+dn.map(row).join('');
+    if(!list.length)h+='<tr><td colspan="6" class="empty">Nenhum evento com esses filtros.</td></tr>';
     $('etable').innerHTML=h+'</tbody>';$('etable').classList.add('tlist');
     painelAtualizar('view-base');
   };
@@ -2259,9 +2265,9 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function regForm(e){var dn=e.status==='realizado',g=function(k){return dn&&e[k]!=null?e[k]:'';};
     var ins=dn?e.inscritos:(e.inscricao&&e.inscricao.formId?e.inscricao.total:(e.inscritosMeta||''));
     return '<form class="tp-reg" data-regform="'+esc(e.id)+'" novalidate><div class="treg">'+fld(e,'ri','Inscritos',ins,1)+fld(e,'rp','Presentes (total)',g('presentes'),1)+fld(e,'rw','Vieram sem inscrição',g('semInscricao'))+fld(e,'rm','Membros presentes',g('membros'))+fld(e,'rpc','Porções compradas',g('porcoesCompradas'))+fld(e,'rpu','Porções consumidas',g('porcoesConsumidas'))+fld(e,'rd','Duração real (min)',g('duracaoReal'))+fld(e,'ra','Atraso (min)',g('atraso'))+
-      '<p class="note" style="grid-column:1/-1;margin:2px 0">Os gastos e as notas fiscais do evento são lançados no bloco <b>Gastos</b>, mais abaixo.</p>'+
+      '<p class="note" style="grid-column:1/-1;margin:2px 0">Os gastos e as notas fiscais ficam no botão <b>Registrar gastos</b>, na lista de eventos.</p>'+
       '<div class="field"><label for="rmt-'+esc(e.id)+'">Método de check-in</label><select id="rmt-'+esc(e.id)+'"><option value="">—</option><option value="papel"'+(e.metodoCheckin==='papel'?' selected':'')+'>Lista de papel</option><option value="qr"'+(e.metodoCheckin==='qr'?' selected':'')+'>QR</option></select></div></div>'+
-      '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">Salvar resultado</button>'+(dn?'<button class="btn ghost" type="button" data-treg="">Cancelar</button>':'')+'</div></form>';}
+      '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">'+(dn?'Salvar resultado':'Finalizar evento')+'</button>'+(dn?'<button class="btn ghost" type="button" data-treg="">Cancelar</button>':'')+'</div></form>';}
   /* ----- e-mails para os inscritos ----- */
   var ETIPOS=[['confirmacao','Confirmação de inscrição','até 10 min depois de cada inscrição',true],['lembrete','Lembrete','a partir de 48 h antes',true],['dia','Aviso no dia','3 h antes do início',false],['agradecimento','Agradecimento','no dia seguinte ao evento',true]];
   var bEmail=null,rasc={},prevHtml={},emMsg={},emOcup={},alcance={},hist={},modelos=null;
@@ -2305,16 +2311,24 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var quando=e.data?D(e.data).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'sem data';
     var sub=quando+(e.hora?' · '+e.hora:'')+(e.sala?' · '+esc(e.sala):'')+' '+situ(e,today);
     var corpo=blk('',pode('editar')?'<label class="tresp"><span>Responsável</span><select data-tresp="'+esc(id)+'"></select></label>':'<p class="tresp" style="margin:0"><span>Responsável</span><b>'+esc(e.responsavel||'—')+'</b></p>');
-    if(reg)corpo+=blk(dn?'Editar resultado':'Registrar resultado',(dn?'':'<p class="note" style="margin:0 0 10px">O evento já aconteceu. Preencha com a lista de presença: é isso que calibra os próximos.</p>')+regForm(e));
+    if(reg)corpo+=blk(dn?'Editar resultado':'Finalizar evento',(dn?'':'<p class="note" style="margin:0 0 10px">'+(late?'O evento já aconteceu. ':'')+'Preencha com a lista de presença: é isso que calibra os próximos. Ao finalizar, o evento passa para Realizados.</p>')+regForm(e));
     corpo+=blk(dn?'Resultado e previsto × real':'Detalhes',detail(e));
-    if(window.__gastosBlk)corpo+=window.__gastosBlk(e); /* gastos e notas fiscais (fin.js) */
     if(window.ROBO_URL&&e.inscricao&&e.inscricao.formId)corpo+=emailsBlk(e);
-    var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Registrar resultado</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
+    var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Finalizar evento</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
   function abrir(id){
-    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);if(window.__gastosLigar)window.__gastosLigar(dr,id);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
-  function clique(e){var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
+    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
+  /* gastos e notas fiscais (fin.js) num painel próprio, aberto pelo botão da lista */
+  function abrirGastos(id){
+    painelAbrir({sec:'view-base',chave:'gastos:'+id,montar:function(){var e=events.filter(function(x){return x.id===id;})[0];if(!e||!window.__gastosBlk)return null;
+      var quando=e.data?D(e.data).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'sem data';
+      return {titulo:'Gastos · '+(e.nome||'Evento'),sub:quando+' '+situ(e,iso(new Date())),corpo:window.__gastosBlk(e),rodape:'<div class="btns"><button type="button" class="btn ghost" data-tabrir="'+esc(id)+'">Ver detalhes do evento</button></div>'};},
+      foco:'#g-valor',depois:function(dr){if(window.__gastosLigar)window.__gastosLigar(dr,id);var b=dr.querySelector('[data-tabrir]');if(b)b.addEventListener('click',function(){abrir(id);});}});}
+  function clique(e){var bg=e.target.closest('[data-egastos]'),bf=e.target.closest('[data-efin]');
+    if(bg||bf){if(e.type!=='click')return;e.stopPropagation();if(bg){abrirGastos(bg.dataset.egastos);return;}bReg=bf.dataset.efin;abrir(bReg);return;}
+    var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
   $('etable').addEventListener('click',clique);$('etable').addEventListener('keydown',clique);
+  document.addEventListener('permissoes',function(){adiar('view-base',renderBase,function(){return regOpen!=null;});}); /* botões da lista dependem do cargo */
   var ultimoCampo=null;
   sec.addEventListener('input',function(e){var f=e.target.dataset&&e.target.dataset.ed;if(!f||!bEmail)return;var k=bEmail.id+'|'+bEmail.tipo;rasc[k][f]=e.target.value;});
   sec.addEventListener('focusin',function(e){if(e.target.dataset&&(e.target.dataset.ed==='assunto'||e.target.dataset.ed==='corpo'))ultimoCampo=e.target;});

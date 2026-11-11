@@ -1081,8 +1081,10 @@ function salvarRegistro(e){e.preventDefault();var f=e.target,id=f.dataset.regfor
     return '';})();
   var em=f.querySelector('.regerro');if(!em){em=document.createElement('p');em.className='msg regerro';em.setAttribute('role','alert');em.style.cssText='color:var(--red);font-weight:700;margin:8px 0 0';f.appendChild(em);}
   em.textContent=erro;if(erro)return;
+  var ev0=events.filter(function(x){return x.id===id;})[0],fin1=!ev0||ev0.status!=='realizado';
   var upd={status:'realizado',inscritos:v('ri'),presentes:v('rp'),semInscricao:v('rw'),membros:v('rm'),duracaoReal:v('rd'),porcoesCompradas:v('rpc'),porcoesConsumidas:v('rpu'),metodoCheckin:$('rmt-'+id).value||null,atraso:v('ra')};
-  db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;if(window.aposRegistro)aposRegistro(id);delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
+  if(fin1){upd.finalizadoEm=new Date().toISOString();upd.finalizadoPor=String(window.__meuNome||'').slice(0,80);}
+  db.doc('eventos/'+id).update(upd).then(function(){regOpen=null;if(window.aposRegistro)aposRegistro(id);if(fin1&&window.aoFinalizar)window.aoFinalizar(id); /* relatórios do evento (a definir) */delete pendente['view-base'];renderBase();}).catch(function(){alertMsg('Não foi possível salvar o resultado.');});
 }
 $('etable').addEventListener('submit',salvarRegistro);
 function alertMsg(m){$('dbstatus').textContent=m;}

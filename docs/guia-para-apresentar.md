@@ -1,6 +1,6 @@
 # Planejador de Eventos · guia para apresentar
 
-Nov 10, 2026 · @Pedro
+Nov 11, 2026 · @Pedro
 
 ## O que é o Planejador
 
@@ -56,7 +56,7 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da 
 | --- | --- | --- |
 | **Ideia de evento** (BETA) | Descrever em texto corrido o evento ou a série que se quer; a IA propõe nome, formato, datas e convidados da nossa lista | Que público, sala e coffee da proposta são calculados pelo próprio Planejar, que dá para pedir ajustes ou trocar um evento da série, e o medidor "Para sair do BETA" |
 | **Planejar** | Montar um evento novo: tipo, data, inscrições esperadas e necessidades da sala | A faixa de público provável, a sala sugerida com 2 alternativas, as compras calculadas e a previsão do tempo na nota da data |
-| **Base** | Histórico de todos os eventos salvos, com o resultado real de cada um | Registrar resultado (inscritos, presentes, porções), os indicadores com semáforo e o selo ⚠ clima quando a previsão do tempo piora a data de um evento. Dentro de cada evento, o bloco **Gastos**: a área de Eventos lança cada gasto (coffee com o local, material, sala ou outro) e anexa as notas fiscais, vendo previsto, verba liberada pelo Financeiro e quanto já gastou |
+| **Base** | Histórico de todos os eventos salvos, com o resultado real de cada um | Os indicadores com semáforo e o selo ⚠ clima quando a previsão do tempo piora a data de um evento. Cada evento da lista tem dois botões: **Registrar gastos**, onde a área de Eventos lança cada gasto (coffee com o local, material, sala ou outro) e anexa as notas fiscais, vendo previsto, verba liberada pelo Financeiro e quanto já gastou; e **Finalizar evento**, onde se preenche o resultado (inscritos, presentes, porções) e o evento passa para Realizados |
 | **Analytics** | Visão geral em gráficos, com filtro por semestre e tipo | Comparecimento por tipo, previsto × real e custo por presente contra a meta |
 | **Mailing** | Lista de quem pediu para receber os próximos eventos (marcado no Forms), sem e-mail repetido, e os convites programados | Que cada evento novo vira um convite automático no dia útil seguinte, e que o Analytics mostra quantas inscrições vieram do mailing e em que horário |
 | **Convidados** | Lista de palestrantes e contatos, com nota e status | A cobertura por tema, que mostra onde faltam nomes |
