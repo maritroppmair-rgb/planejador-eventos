@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111131319"></script>
-<script src="plataforma.js?v=20261111131319"></script>
+<script src="config.js?v=20261111134828"></script>
+<script src="plataforma.js?v=20261111134828"></script>
 </head>
 <body>
 
@@ -2857,7 +2857,7 @@ function resumoGasto(e){var g=gastoDe(e),v=verbaDe(e.id),p=e.custoPrev;
   return h;}
 
 /* ---- "Registrar gastos" (painel próprio, aberto pela lista da Base) ----
-   Cada gasto é uma ficha única: data, tipo, valor, descrição, local do coffee e o comprovante.
+   Cada gasto é uma ficha única: data, tipo, valor, descrição, local do coffee e o comprovante (opcional; sem ele, o gasto fica marcado).
    O comprovante vira um documento (tipo Comprovante) na pasta do evento, com a descrição do gasto como nome. */
 function docDe(id){return id?docs.filter(function(d){return d.id===id;})[0]||null:null;}
 function linkDoc(d){if(!d)return '';var f=dFontes(d);return safeUrl(dPrincipal(d.tipo,f.link,f.arquivo))||'';}
@@ -2881,7 +2881,7 @@ window.__gastosBlk=function(e){var ed=epode('editar'),l=gastosDe(e).slice().sort
       '<div class="field"><label for="g-valor">Valor (R$)</label><input id="g-valor" inputmode="decimal" placeholder="0,00"></div>'+
       '<div class="field g-wide"><label for="g-desc">Descrição <span class="rq">vira o nome do comprovante em Documentos</span></label><input id="g-desc" maxlength="120" placeholder="ex.: Coffee para 60 pessoas"></div>'+
       '<div class="field g-wide" id="g-locbox"><label for="g-local">Local do coffee <span class="rq opt">dos Contatos de coffee</span></label><select id="g-local"><option value="">Sem local</option>'+ops+'</select></div>'+
-      '<div class="field g-wide g-compbox"><label for="g-arq">Comprovante <span class="rq">obrigatório</span></label><input id="g-arq" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"><input id="g-link" type="url" placeholder="ou cole um link (https://...)" aria-label="Link do comprovante"><span class="note">Nota fiscal, recibo ou print do pagamento (PDF ou imagem, até 10 MB). Vai para a pasta do evento em Documentos.</span></div>'+
+      '<div class="field g-wide g-compbox"><label for="g-arq">Comprovante <span class="rq opt">opcional · dá para anexar depois</span></label><input id="g-arq" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"><input id="g-link" type="url" placeholder="ou cole um link (https://...)" aria-label="Link do comprovante"><span class="note">Nota fiscal, recibo ou print do pagamento (PDF ou imagem, até 10 MB). Vai para a pasta do evento em Documentos. Sem comprovante, o gasto fica marcado como “sem comprovante”.</span></div>'+
       '</div><div class="btns" style="margin-top:10px"><button type="button" class="btn" id="g-salvar">Registrar gasto</button><span class="msg" id="g-msg" role="status"></span></div></div>';}
   return out;};
 function gravarGastos(id,lista){var e=events.filter(function(x){return x.id===id;})[0];
@@ -2905,14 +2905,13 @@ window.__gastosLigar=function(dr,id){
     var dt=dr.querySelector('#g-data').value,vl=num(dr.querySelector('#g-valor').value),ds=dr.querySelector('#g-desc').value.trim(),t=tp.value,file=dr.querySelector('#g-arq').files[0],link=dr.querySelector('#g-link').value.trim();
     if(!dt){msg.textContent='Escolha a data do gasto.';return;}
     if(vl==null||vl<=0){msg.textContent='Informe o valor, como 120,50.';dr.querySelector('#g-valor').focus();return;}
-    if(!ds){msg.textContent='Escreva a descrição: ela vira o nome do comprovante.';dr.querySelector('#g-desc').focus();return;}
-    if(!file&&!link){msg.textContent='Anexe o comprovante (arquivo ou link).';return;}
-    if(!file&&!safeUrl(link)){msg.textContent='O link precisa começar com https://';return;}
+    if(!ds){msg.textContent='Escreva a descrição do gasto.';dr.querySelector('#g-desc').focus();return;}
+    if(!file&&link&&!safeUrl(link)){msg.textContent='O link precisa começar com https://';return;}
     if(file&&file.size>10*1024*1024){msg.textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
     var g={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:dt,tipo:t,desc:ds.slice(0,120),valor:arred(vl),local:t==='coffee'?(dr.querySelector('#g-local').value||null):null,porNome:String(window.__meuNome||'').slice(0,80),em:new Date().toISOString()};
     msg.textContent=file?'Enviando o comprovante…':'Salvando…';sv.disabled=true;
-    criarComprovante(id,g.desc,tipoNome(t)+' · '+reais(g.valor)+' · '+dataBR(dt),file,file?'':link)
-      .then(function(docId){g.docId=docId;msg.textContent='Salvando…';return gravarGastos(id,legado(e).concat(gastosDe(e),[g]));})
+    (file||link?criarComprovante(id,g.desc,tipoNome(t)+' · '+reais(g.valor)+' · '+dataBR(dt),file,file?'':link):Promise.resolve(null))
+      .then(function(docId){if(docId)g.docId=docId;msg.textContent='Salvando…';return gravarGastos(id,legado(e).concat(gastosDe(e),[g]));})
       .catch(function(err){sv.disabled=false;msg.textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio: use um link do Drive.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito: use PDF ou imagem.':'Não foi possível registrar o gasto.';});});
   var bl=dr.querySelector('#g-blk');if(bl)bl.addEventListener('click',function(ev){var b=ev.target.closest('[data-gdel]');if(!b)return;
     if(!b.dataset.sure){b.dataset.sure='1';b.textContent='Excluir?';b.classList.add('sure');setTimeout(function(){delete b.dataset.sure;b.innerHTML='&times;';b.classList.remove('sure');},4000);return;}
