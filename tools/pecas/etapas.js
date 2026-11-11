@@ -34,11 +34,14 @@ function faltaTxt(prazo){if(!prazo)return '';var n=Math.round((D(prazo)-D(hoje()
 /* ----- os 14 pontos ----- (b = bloco; d = dias antes do evento; a = área; c = onde grava; auto = marca sozinho) */
 function convs(e){var ids=e.convidadoIds&&e.convidadoIds.length?e.convidadoIds:e.convidadoId?[e.convidadoId]:[];
   if(!ids.length)return e.ficha&&e.ficha.semConvidado?null:[];
-  return ids.map(function(i){return guests.filter(function(g){return g.id===i;})[0];}).filter(Boolean);}
+  return ids;}
+/* confirmado por escrito neste evento (check ao lado de cada convidado na ficha): todos precisam estar marcados */
+function convOk(e){var ids=convs(e),c=e.convConfirmados||{};if(!ids)return null;return ids.length>0&&ids.every(function(i){return !!c[i];});}
+function convUltimo(e){var c=e.convConfirmados||{},u=null;(convs(e)||[]).forEach(function(i){if(c[i]&&c[i].em&&(!u||c[i].em>u.em))u=c[i];});return u;}
 var PONTOS=[
   {k:'ficha',n:'Ficha do evento pronta',b:30,d:40,a:'Eventos',auto:function(e){return !!(window.__fichaCompleta&&__fichaCompleta(e));}},
   {k:'aprov',n:'Ficha aprovada pela Presidência',b:30,d:38,a:'Presidência',c:'etapas.aprovacao'},
-  {k:'conv',n:'Convidado confirmado por escrito',b:30,d:33,a:'Eventos',auto:function(e){var g=convs(e);if(!g)return null;return g.length>0&&g.every(function(x){return x.status==='Confirmado'||x.status==='Palestrou';});}},
+  {k:'conv',n:'Convidado confirmado por escrito',b:30,d:33,a:'Eventos',auto:convOk},
   {k:'sala',n:'Sala reservada',b:30,d:33,a:'Eventos',auto:function(e){var f=e.ficha||{};return f.salaReservada==='sim'&&!!String(f.reservaNum||'').trim();}},
   {k:'orc',n:'Orçamento validado',b:30,d:33,a:'Financeiro',c:'etapas.orcamento'},
   {k:'brief',n:'Briefing ao Marketing',b:30,d:30,a:'Eventos'},
@@ -55,7 +58,8 @@ function gravado(e,p){var ps=campo(p).split('.'),v=e[ps[0]]&&e[ps[0]][ps[1]];ret
 /* estado de cada ponto de um evento */
 function pontosDe(e){var t=hoje(),fim=dn(e);
   return PONTOS.map(function(p){var au=p.auto?p.auto(e):null,g=gravado(e,p),s,em='',por='';
-    if(au!=null){s=au?'ok':'';if(p.k==='ficha'&&e.etapas&&e.etapas.ficha){em=e.etapas.ficha.em||'';por=e.etapas.ficha.por||'';}}
+    if(au!=null){s=au?'ok':'';if(p.k==='ficha'&&e.etapas&&e.etapas.ficha){em=e.etapas.ficha.em||'';por=e.etapas.ficha.por||'';}
+      if(p.k==='conv'&&au){var u=convUltimo(e);if(u){em=u.em;por=u.por||'';}}}
     else{s=g.s==='ok'||g.s==='andamento'?g.s:g.em?'ok':'';em=g.em||'';por=g.por||'';}  /* marcas antigas {em,por} contam como concluídas */
     var prazo=e.data?somaDias(e.data,-p.d):null;
     return {p:p,k:p.k,n:p.n,a:p.a,b:p.b,s:s,feito:s==='ok',auto:au!=null,em:em,por:por,prazo:prazo,ptxt:ddmm(prazo),atrasado:s!=='ok'&&!fim&&!!prazo&&prazo<t};});}

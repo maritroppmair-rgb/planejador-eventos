@@ -310,6 +310,11 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 .fi-cks{display:flex;flex-wrap:wrap;gap:4px 16px}.fi-cks .check{margin:0}
 .fi-conv{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-2);border-radius:6px;padding:10px 12px}
 .fi-conv .tsub{display:block}
+.fi-cf{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 8px;background:var(--surface);color:var(--muted);cursor:pointer}
+.fi-cf input{width:16px;height:16px;margin:0;accent-color:var(--green)}
+.fi-cf small{display:block;font-weight:400;font-size:11px}
+.fi-cf.on{border-color:color-mix(in srgb,var(--green) 45%,var(--line));background:var(--green-bg);color:var(--green)}
+span.fi-cf{cursor:default}
 .fi-st{display:flex;align-items:center;gap:8px;font-size:13px}.fi-st span{color:var(--muted)}.fi-st select{width:auto;padding:4px 8px}
 .fi-eqs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .fi-eq{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;border:1px solid var(--line)}

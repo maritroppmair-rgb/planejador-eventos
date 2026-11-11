@@ -3,6 +3,8 @@
    eventos/{id}.ficha = {equipe:[nomes], objetivo, metaSatisfacao, publico:[...], semConvidado, salaReservada:'sim'|'nao'|'',
                          reservaNum, linkExterno, levar:[{item, quem}], brindes:[{item, quem, gasto}], planoB, fotos}
    (fichas antigas guardavam brindes como texto: vira o primeiro item da lista)
+   eventos/{id}.convConfirmados = {idDoConvidado: {em, por}}: convidado confirmado por escrito NESTE evento (marcado na ficha,
+   grava na hora); o ponto "Convidado confirmado" do checklist só fica verde com todos os convidados do evento marcados.
    No Planejar: o convidado é escolhido por segmento (mesma lista da tela Convidados), ordenado pela nota. */
 (function(){
 "use strict";
@@ -11,6 +13,10 @@ function fpode(){return document.body.classList.contains('pode-editar');}
 var PUBLICOS=['Membros','Trainees','Alunos FEA','Aberto'];
 var NEED_SALA={'n-proj':'projetor','n-som':'som','n-ar':'arCondicionado','n-tom':'tomadas','n-mesas':'mesas','n-acess':'acessibilidade'};
 function evDe(id){return events.filter(function(x){return x.id===id;})[0];}
+/* "confirmado por escrito" de um convidado neste evento */
+function confHtml(e,g,ed){var c=(e.convConfirmados||{})[g.id],q=c&&c.em?' em '+c.em.slice(8,10)+'/'+c.em.slice(5,7)+(c.por?' por '+esc(String(c.por).split(' ')[0]):''):'';
+  if(!ed)return '<span class="fi-cf'+(c?' on':'')+'">'+(c?'✓ Confirmado por escrito'+q:'Aguardando confirmação por escrito')+'</span>';
+  return '<label class="fi-cf'+(c?' on':'')+'"><input type="checkbox" data-fi-conf="'+esc(g.id)+'"'+(c?' checked':'')+'><span>Confirmado por escrito'+(q?'<small>'+q.slice(1)+'</small>':'')+'</span></label>';}
 /* convidados do evento: ids da base (eventos antigos tinham um só, ou só o nome) */
 function convIds(e){return Array.isArray(e.convidadoIds)&&e.convidadoIds.length?e.convidadoIds:(e.convidadoId?[e.convidadoId]:[]);}
 function convsDe(e){var l=convIds(e).map(function(i){return guests.filter(function(x){return x.id===i;})[0];}).filter(Boolean);
@@ -68,7 +74,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   /* convidado */
   var gl=convsDe(e),cv='';
   if(gl.length)cv=gl.map(function(g){return '<div class="fi-conv"><div><b>'+esc(g.nome)+'</b><span class="tsub">'+esc([g.cargo,g.empresa].filter(Boolean).join(' · ')||'sem cargo e empresa no cadastro')+'</span></div>'+
-    (ed?'<label class="fi-st"><span>Status do convite</span><select data-fi-gst="'+esc(g.id)+'">'+STATUS.concat(STATUS.indexOf(g.status)<0&&g.status?[g.status]:[]).map(function(x){return '<option'+(x===g.status?' selected':'')+'>'+esc(x)+'</option>';}).join('')+'</select></label>':'<span class="chip neutral">'+esc(g.status||'—')+'</span>')+'</div>';}).join('');
+    (ed?'<label class="fi-st"><span>Status do convite</span><select data-fi-gst="'+esc(g.id)+'">'+STATUS.concat(STATUS.indexOf(g.status)<0&&g.status?[g.status]:[]).map(function(x){return '<option'+(x===g.status?' selected':'')+'>'+esc(x)+'</option>';}).join('')+'</select></label>':'<span class="chip neutral">'+esc(g.status||'—')+'</span>')+confHtml(e,g,ed)+'</div>';}).join('');
   else if(e.convidado)cv='<div class="fi-conv"><div><b>'+esc(e.convidado)+'</b><span class="tsub">fora da base de Convidados: escolha pelo Planejar, entre os convidados da base</span></div></div>';
   else cv='<p class="note" style="margin:0">'+(r.semConvidado?'Evento sem convidado.':'Nenhum convidado escolhido. Escolha pelo segmento no Planejar (dá para escolher mais de um).')+'</p>';
   if(ed&&!gl.length&&!e.convidado)cv+='<label class="check"><input type="checkbox" data-fi-semconv'+(r.semConvidado?' checked':'')+'>Este evento não tem convidado</label>';
@@ -122,6 +128,8 @@ sec.addEventListener('change',function(ev){var t=ev.target,id=atual();if(!id)ret
   else if(t.dataset.fiBg!=null){r.brindes[+t.dataset.fiBg].gasto=t.checked;sujar(id);}
   else if(t.hasAttribute('data-fi-semconv')){r.semConvidado=t.checked;sujar(id);redesenha();}
   else if(t.hasAttribute('data-fi-eqadd')&&t.value){r.equipe.push(t.value);sujar(id);redesenha();}
+  else if(t.dataset.fiConf&&db){var up={};up['convConfirmados.'+t.dataset.fiConf]=t.checked?{em:new Date().toISOString(),por:String(window.__meuNome||'').slice(0,80)}:null;
+    db.doc('eventos/'+id).update(up).catch(function(){t.checked=!t.checked;alertMsg('Não foi possível salvar a confirmação do convidado.');});}
   else if(t.dataset.fiGst&&db){var gid=t.dataset.fiGst;db.doc('convidados/'+gid).update({status:t.value}).catch(function(){alertMsg('Não foi possível mudar o status do convidado.');});}});
 sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-fi-eqx],[data-fi-lx],[data-fi-ladd],[data-fi-lauto],[data-fi-bx],[data-fi-badd],[data-fi-pasta],[data-fi-salvar]');if(!b)return;var id=atual();if(!id)return;var e=evDe(id),r=rasc(e);
   if(b.dataset.fiEqx!=null){r.equipe.splice(+b.dataset.fiEqx,1);sujar(id);redesenha();}

@@ -645,7 +645,7 @@ function pontosFeitos(ev, convidados) {
     else if (p.k === 'conv') {
       var ids = (ev.convidadoIds && ev.convidadoIds.length) ? ev.convidadoIds : ev.convidadoId ? [ev.convidadoId] : [];
       if (!ids.length && f.semConvidado) ok.conv = marcado(ck.conv);
-      else { var gs = ids.map(function (i) { return convidados[i]; }).filter(Boolean); ok.conv = gs.length > 0 && gs.every(function (g) { return g.status === 'Confirmado' || g.status === 'Palestrou'; }); }
+      else { var cf = ev.convConfirmados || {}; ok.conv = ids.length > 0 && ids.every(function (i) { return !!cf[i]; }); } // check "Confirmado por escrito" da ficha
     }
     else if (p.k === 'lembrete' && ev.inscricao && ev.inscricao.formId) { var x = (ev.inscricao.emails || {}).lembrete; ok.lembrete = !!(x && x.enviados > 0); }
     else ok[p.k] = marcado(p.c ? et[p.c] : ck[p.k]);
