@@ -409,3 +409,46 @@ body:not(.fin-editar) .fin-ed{display:none!important}
   #etable .tmob{display:none}
   .and{max-width:none}
 }
+
+/* ===== Ficha: 06 checklist e 08 aprovação e etapas (etapas.js) ===== */
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:10px}
+.ck-col h5{margin:0 0 6px;font-family:var(--label);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--wine)}
+.ck-col ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ck-col li{display:grid;gap:3px;font-size:13px;line-height:1.3}
+.ck-col li.atz .ck-l{color:var(--red)}
+.ck-atz{font-size:11px;font-weight:700;color:var(--red)}
+.ck-s{justify-self:start;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);width:auto;min-height:0;height:auto}
+select.ck-s{cursor:pointer;padding-right:4px}
+.ck-s.andamento{background:var(--amber-bg);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 35%,var(--line))}
+.ck-s.ok{background:var(--green-bg);color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,var(--line))}
+@media (max-width:700px){.ck-grid{grid-template-columns:1fr}}
+.et-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.et-row{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);font-size:13.5px}
+.et-row:first-child{border-top:0;padding-top:2px}
+.et-row .and-k{margin-top:4px}
+.et-t small{display:block;color:var(--muted);font-size:12px}
+.et-t small.atz{color:var(--red);font-weight:700}
+.et-n{display:block;margin-top:4px;font-size:12px}
+.et-a{display:flex;gap:6px;align-items:center}
+.et-ck{font-weight:700}
+.et-aex{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.et-aex span{font-size:12px;color:var(--muted)}
+.et-aex select{width:auto;min-width:160px;padding:4px 8px;font-size:12.5px}
+@media (max-width:520px){.et-row{grid-template-columns:12px minmax(0,1fr)}.et-a{grid-column:2}}
+
+/* ===== Pendências ===== */
+.pd-g{margin-top:18px}
+.pd-g h3{margin:0 0 8px;font-size:15px}
+.pd-l{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.pd-it{display:grid;grid-template-columns:78px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+.pd-it:first-child{border-top:0}
+.pd-d{display:grid;line-height:1.2}
+.pd-d b{font-size:15px}
+.pd-d span{font-size:11px;color:var(--muted)}
+.pd-it.atz .pd-d b,.pd-it.atz .pd-d span{color:var(--red)}
+.pd-t .tsub{display:block}
+.pd-ac{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.sitem .pd-n{background:var(--wine);color:#fff;border-color:var(--wine)}
+@media (max-width:700px){.pd-it{grid-template-columns:64px minmax(0,1fr)}.pd-a{grid-column:2;justify-self:start}.pd-ac{grid-column:1/-1;justify-content:flex-start}}
+
+.et-ck:has(input:disabled){opacity:.5;cursor:not-allowed}

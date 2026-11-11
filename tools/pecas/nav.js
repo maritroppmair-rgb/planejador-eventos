@@ -25,7 +25,8 @@ var I={
   'mkt-met':'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   'cd-cap':'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2.5 2 9.5 2 12 0v-5"/>',
   'cd-trilha':'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
-  'rh':'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
+  'rh':'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  pend:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11"/><circle cx="5" cy="18" r="1.3"/>'
 };
 /* menu por área: a área é escolhida no subtítulo do topo ("Diretoria de Eventos ▾") e o menu mostra só as telas dela.
    O grupo Geral (Calendário, Documentos, Membros, Lixeira, Histórico) aparece em todas. Lixeira e Histórico: diretoria para cima. */
@@ -39,7 +40,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Verba por evento','Financeiro','Verba liberada para cada evento.'],
@@ -51,7 +52,7 @@ var NOVAS={
   'rh':['RH','RH','O que a área de RH vai acompanhar aqui ainda será definido.']
 };
 var main=document.querySelector('main');
-var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist'];
+var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist','view-pend'];
 Object.keys(NOVAS).forEach(function(k){
   if(document.getElementById('view-'+k)){SOLTAS.push('view-'+k);return;} /* telas já prontas (ex.: Financeiro, no fin.js) */
   var n=NOVAS[k],sec=document.createElement('section');sec.id='view-'+k;sec.hidden=true;sec.setAttribute('aria-labelledby',k+'-title');

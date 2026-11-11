@@ -293,19 +293,20 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var bReg=null,bModo='ficha',andAberto={};
   window.aposRegistro=function(id){if(bReg===id)bReg=null;if(bModo==='fin'&&TP&&TP.o.chave===id)painelFechar();};
   /* ----- Andamento: as etapas de cada evento, da ficha ao pós-evento -----
-     Prazos contados a partir da data do evento (d = dias; negativo = antes). A Aprovação vence 48 h depois do orçamento validado.
+     Prazos contados a partir da data do evento (d = dias; negativo = antes). A Aprovação vence 48 h depois de a ficha ficar completa.
      Cada etapa concluída fica em e.etapas[chave] = {em, por}. A Ficha também conta como feita quando está completa. */
-  var ETAPAS=[{k:'ficha',n:'Ficha',a:'Eventos',d:-30},{k:'orcamento',n:'Orçamento',a:'Financeiro',d:-25},{k:'aprovacao',n:'Aprovação',a:'Presidência',h:48},
+  var ETAPAS=[{k:'ficha',n:'Ficha',a:'Eventos',d:-30},{k:'aprovacao',n:'Aprovação',a:'Presidência',h:48},{k:'orcamento',n:'Orçamento',a:'Financeiro',d:-25},
     {k:'divulgacao',n:'Divulgação',a:'Marketing',d:-21},{k:'aex',n:'Dados AEX',a:'AEX',d:7},{k:'pos',n:'Pós-evento',a:'Eventos',d:7}];
   function ddmm(x){return x?x.slice(8,10)+'/'+x.slice(5,7):'—';}
   function somaDias(dt,n){var d=D(dt);d.setDate(d.getDate()+n);return iso(d);}
   function etapasDe(e){var et=e.etapas||{},today=iso(new Date());
     return ETAPAS.map(function(x){var r=et[x.k]||{},feita=!!r.em||(x.k==='ficha'&&window.__fichaCompleta&&__fichaCompleta(e)),prazo=null,txt='—';
-      if(x.h){var o=et.orcamento&&et.orcamento.em;if(o){var t=new Date(new Date(o).getTime()+x.h*36e5);prazo=iso(t);txt=ddmm(prazo);}else txt='48 h após o orçamento';}
+      if(x.h){var o=et.ficha&&et.ficha.em;if(o){var t=new Date(new Date(o).getTime()+x.h*36e5);prazo=iso(t);txt=ddmm(prazo);}else txt='48 h após a ficha completa';}
       else if(e.data){prazo=somaDias(e.data,x.d);txt=ddmm(prazo);}
       return {k:x.k,n:x.n,a:x.a,feita:feita,em:r.em||'',por:r.por||'',prazo:prazo,ptxt:txt,atrasada:!feita&&prazo&&prazo<today};});}
   function faltaTxt(prazo){if(!prazo)return '';var n=Math.round((D(prazo)-D(iso(new Date())))/864e5);
     return n<0?'atrasada há '+(-n)+' dia'+(n===-1?'':'s'):n===0?'vence hoje':'falta'+(n===1?' 1 dia':'m '+n+' dias');}
+  window.__etapasDe=etapasDe;window.__faltaTxt=faltaTxt;
   function andamento(e){var dn=e.status==='realizado';
     if(dn&&!e.etapas)return '<span class="note">Evento anterior ao andamento.</span>';
     var l=etapasDe(e),n=l.filter(function(x){return x.feita;}).length,cur=l.filter(function(x){return !x.feita;})[0],ab=!!andAberto[e.id],id=esc(e.id);
@@ -423,6 +424,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
   function abrir(id,modo){bModo=modo||'ficha';bEmail=null;
     painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;bModo='ficha';if(window.__fichaFechou)__fichaFechou(id);},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
+  /* abrir a ficha de outra tela (Pendências) */
+  window.__abrirFicha=function(id){var b=document.querySelector('.side .sitem[data-alvo="base"]');if(b)b.click();abrir(id);};
   /* gastos e notas fiscais (fin.js) num painel próprio, aberto pelo botão da lista */
   function abrirGastos(id){
     painelAbrir({sec:'view-base',chave:'gastos:'+id,montar:function(){var e=events.filter(function(x){return x.id===id;})[0];if(!e||!window.__gastosBlk)return null;

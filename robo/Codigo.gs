@@ -22,6 +22,7 @@ var CFG = {
   PASTA: 'Feashion · Inscrições',
   PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
   REMETENTE: 'Feashion · Diretoria de Eventos',
+  SITE: 'https://maritroppmair-rgb.github.io/planejador-eventos/', // link dos e-mails de etapas (abre em Pendências)
   HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes
   FECHAR_HORAS_ANTES: 36,   // inscrições fecham X horas antes do início
   CARGOS_QUE_EDITAM: ['DEV', 'Presidente', 'Vice-presidente', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'],
@@ -598,6 +599,88 @@ function rotina() {
   /* depois de buscar as respostas: quem pediu novidades entra no mailing já nesta rodada */
   try { atualizarMailing(); } catch (err) { console.error('Lista do mailing: ' + err); }
   try { rotinaMailing(); } catch (err) { console.error('Envios do mailing: ' + err); }
+  try { avisosEtapas(); } catch (err) { console.error('Etapas: ' + err); }
+}
+
+/* ---------- etapas do evento: e-mail para a diretoria da área quando chega a vez dela e quando atrasa ----------
+   As mesmas etapas e prazos da caixinha Andamento do site (telas.js). Cada aviso sai uma vez só:
+   eventos/{id}.etapasAvisos = {orcamento_vez: data, orcamento_atraso: data, ...}. A Ficha não avisa a vez (quem cria o evento já sabe),
+   só o atraso. Quem recebe: Diretor(a) e Coordenador(a) da área; na Presidência, Presidente e Vice; na AEX, o responsável escolhido
+   no evento (sem responsável, a diretoria de Eventos). */
+var ETAPAS = [
+  { k: 'ficha', o: 'Completar a ficha', a: 'Eventos', d: -30 },
+  { k: 'aprovacao', o: 'Aprovar a ficha', a: 'Presidência', h: 48 },
+  { k: 'orcamento', o: 'Validar o orçamento', a: 'Financeiro', d: -25 },
+  { k: 'divulgacao', o: 'Planejar a divulgação', a: 'Marketing', d: -21 },
+  { k: 'aex', o: 'Enviar os dados à AEX', a: 'AEX', d: 7 },
+  { k: 'pos', o: 'Fechar o pós-evento', a: 'Eventos', d: 7 }
+];
+function hojeIso() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+function somaDiasIso(iso, n) { var p = partes(iso), d = new Date(p.a, p.m - 1, p.d + n); return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+/* a ficha está completa? (os mesmos itens do site: ficha.js) */
+function fichaCompleta(ev) {
+  var f = ev.ficha || {}, i = ev.inscricao || {};
+  var temConv = (ev.convidadoIds && ev.convidadoIds.length) || ev.convidadoId || String(ev.convidado || '').trim();
+  return !!ev.responsavel && (f.equipe ? f.equipe.length > 0 : true) && !!String(f.objetivo || '').trim()
+    && f.metaSatisfacao !== '' && (f.publico || []).length > 0 && (!!i.formId || /^https:\/\//.test(String(f.linkExterno || '')))
+    && (!!f.semConvidado || !!temConv)
+    && f.salaReservada === 'sim' && !!String(f.reservaNum || '').trim() && !!String(f.planoB || '').trim();
+}
+function etapasDoEvento(ev) {
+  var et = ev.etapas || {}, hoje = hojeIso(), tz = Session.getScriptTimeZone();
+  return ETAPAS.map(function (x) {
+    var r = et[x.k] || {}, feita = !!r.em || (x.k === 'ficha' && fichaCompleta(ev)), prazo = null;
+    if (x.h) { if (et.ficha && et.ficha.em) prazo = Utilities.formatDate(new Date(new Date(et.ficha.em).getTime() + x.h * 3600e3), tz, 'yyyy-MM-dd'); }
+    else prazo = somaDiasIso(ev.data, x.d);
+    return { k: x.k, o: x.o, a: x.a, feita: feita, prazo: prazo, atrasada: !feita && !!prazo && prazo < hoje };
+  });
+}
+function emailsDaArea(area, ev, membros) {
+  var dir = ['Diretor(a)', 'Coordenador(a)'], out = {};
+  var cargoNa = function (m, a) { if (m.areas && typeof m.areas === 'object') return String(m.areas[a] || ''); return a === 'Eventos' ? String(m.cargo || '') : ''; };
+  membros.forEach(function (m) {
+    var e = String(m.email || '').toLowerCase().trim(); if (!e) return;
+    if (area === 'Presidência') { if (m.presidencia === 'Presidente' || m.presidencia === 'Vice-presidente') out[e] = 1; }
+    else if (area === 'AEX') { if (ev.responsavelAex && ev.responsavelAex.uid === m._id) out[e] = 1; }
+    else if (dir.indexOf(cargoNa(m, area)) >= 0) out[e] = 1;
+  });
+  if (area === 'AEX' && !Object.keys(out).length) return emailsDaArea('Eventos', ev, membros);
+  return Object.keys(out);
+}
+function avisosEtapas() {
+  var hoje = hojeIso(), membros = null;
+  fsList('eventos').forEach(function (ev) {
+    try {
+      if (!ev.data || /\[teste\]/i.test(ev.nome || '')) return;
+      if (ev.status === 'realizado' && !ev.etapas) return;            // evento anterior ao andamento
+      if (ev.data < somaDiasIso(hoje, -30)) return;                    // passou há mais de 30 dias
+      var cur = etapasDoEvento(ev).filter(function (x) { return !x.feita; })[0];
+      if (!cur) return;
+      var av = ev.etapasAvisos || {}, novo = false;
+      [['vez', cur.k !== 'ficha'], ['atraso', cur.atrasada]].forEach(function (t) {
+        var chave = cur.k + '_' + t[0];
+        if (!t[1] || av[chave]) return;
+        if (!membros) membros = fsList('membros');
+        var para = emailsDaArea(cur.a, ev, membros);
+        if (para.length && MailApp.getRemainingDailyQuota() < para.length + 5) return; // sem cota: tenta na próxima rodada
+        if (para.length) { var m = emailEtapa(ev, cur, t[0]); MailApp.sendEmail({ to: para.join(','), subject: m.assunto, htmlBody: m.html, name: CFG.REMETENTE }); }
+        av[chave] = new Date().toISOString(); novo = true;
+      });
+      if (novo) fsPatch('eventos/' + ev._id, { etapasAvisos: av });
+    } catch (err) { console.error('Etapas ' + ev._id + ': ' + err); }
+  });
+}
+function emailEtapa(ev, x, tipo) {
+  var dia = dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4), prazo = x.prazo ? dataCurta(x.prazo) : 'a definir';
+  var assunto = (tipo === 'atraso' ? 'Atrasado: ' : 'Sua vez: ') + x.o + ' · ' + (ev.nome || 'Evento') + ' (' + dia + ')';
+  var txt = tipo === 'atraso'
+    ? 'O prazo para <b>' + esc(x.o.toLowerCase()) + '</b> do evento <b>' + esc(ev.nome || '') + '</b> era ' + prazo + ', e a etapa ainda não foi marcada como feita.'
+    : 'Chegou a vez da área <b>' + esc(x.a) + '</b> no evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '): <b>' + esc(x.o.toLowerCase()) + '</b>, até ' + prazo + '.';
+  var html = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">' +
+    '<p>' + txt + '</p><p>Quando terminar, marque a etapa como feita no Planejador (tela Pendências ou na ficha do evento).</p>' +
+    '<p><a href="' + CFG.SITE + '#pendencias" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">Abrir as pendências</a></p>' +
+    '<p style="color:#777;font-size:12px">Aviso automático do Planejador de Eventos da Feashion.</p></div>';
+  return { assunto: assunto, html: html };
 }
 
 /* ---------- equipe: quem tem cargo no app edita a pasta (Forms e planilhas herdam) ---------- */

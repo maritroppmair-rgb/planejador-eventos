@@ -39,6 +39,10 @@ No painel do evento (Base), o bloco **E-mails para os inscritos** mostra cada ti
 
 Cada tipo tem o botão **Texto** (editar, ver a prévia e mandar um teste para si) e **Enviar agora**. Os textos padrão ficam em `MODELOS`, no código; o texto próprio de cada evento fica em `eventos/{id}.emails`. Quem recebeu fica em `inscricoes/{id}.envios`; quem saiu da lista de novidades fica em `descadastros`.
 
+## E-mails das etapas do evento
+
+A cada rodada (10 minutos), o robô olha a etapa da vez de cada evento (a mesma da caixinha Andamento do site) e manda **um** e-mail quando chega a vez de uma área e **um** quando a etapa atrasa. Quem recebe: Diretor(a) e Coordenador(a) da área; na Presidência, Presidente e Vice-presidente; nos Dados AEX, o responsável AEX escolhido no evento (sem responsável, a diretoria de Eventos). A Ficha só avisa quando atrasa. Os avisos já mandados ficam em `eventos/{id}.etapasAvisos`, para não repetir. Eventos com "[teste]" no nome, realizados antes do Andamento ou que passaram há mais de 30 dias ficam de fora. O botão do e-mail abre a tela Pendências (`CFG.SITE`).
+
 ## Mailing de eventos
 
 - **Lista:** a cada 10 minutos o robô junta quem marcou "quero receber novidades" em qualquer Forms em `mailing/{hash do e-mail}` (um registro por e-mail). Quem clicou em "sair da lista" ou foi tirado pela equipe fica em `descadastros` e não volta.

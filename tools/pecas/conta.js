@@ -78,6 +78,8 @@ window.__perm={
   carregado:function(){return carregado;},podeEm:podeEm,diretorAlgum:diretorAlgum,
   /* áreas que estão no meu perfil (o seletor do topo abre nelas primeiro) */
   minhas:function(){return Object.keys(areasOf(myDoc));},
+  /* etapas do evento: quem marca cada uma */
+  cargoEm:function(a){return meuCargoEm(a)||'';},presidencia:function(){return presOf(myDoc);},dev:souDev,geral:function(){return meuG()<=2;},
   /* lixeira: presidência e DEV restauram tudo; a diretoria só o que é da própria área */
   podeRestaurar:function(area){return meuG()<=2||(area!=='Comum'&&meuCargoEm(area)==='Diretor(a)')||(area==='Comum'&&valores(areasOf(myDoc)).indexOf('Diretor(a)')>=0);}
 };

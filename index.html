@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111162159"></script>
-<script src="plataforma.js?v=20261111162159"></script>
+<script src="config.js?v=20261111163625"></script>
+<script src="plataforma.js?v=20261111163625"></script>
 </head>
 <body>
 
@@ -909,6 +909,49 @@ body:not(.fin-editar) .fin-ed{display:none!important}
   #etable .tmob{display:none}
   .and{max-width:none}
 }
+
+/* ===== Ficha: 06 checklist e 08 aprovação e etapas (etapas.js) ===== */
+.ck-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:10px}
+.ck-col h5{margin:0 0 6px;font-family:var(--label);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--wine)}
+.ck-col ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ck-col li{display:grid;gap:3px;font-size:13px;line-height:1.3}
+.ck-col li.atz .ck-l{color:var(--red)}
+.ck-atz{font-size:11px;font-weight:700;color:var(--red)}
+.ck-s{justify-self:start;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);width:auto;min-height:0;height:auto}
+select.ck-s{cursor:pointer;padding-right:4px}
+.ck-s.andamento{background:var(--amber-bg);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 35%,var(--line))}
+.ck-s.ok{background:var(--green-bg);color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,var(--line))}
+@media (max-width:700px){.ck-grid{grid-template-columns:1fr}}
+.et-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.et-row{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);font-size:13.5px}
+.et-row:first-child{border-top:0;padding-top:2px}
+.et-row .and-k{margin-top:4px}
+.et-t small{display:block;color:var(--muted);font-size:12px}
+.et-t small.atz{color:var(--red);font-weight:700}
+.et-n{display:block;margin-top:4px;font-size:12px}
+.et-a{display:flex;gap:6px;align-items:center}
+.et-ck{font-weight:700}
+.et-aex{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.et-aex span{font-size:12px;color:var(--muted)}
+.et-aex select{width:auto;min-width:160px;padding:4px 8px;font-size:12.5px}
+@media (max-width:520px){.et-row{grid-template-columns:12px minmax(0,1fr)}.et-a{grid-column:2}}
+
+/* ===== Pendências ===== */
+.pd-g{margin-top:18px}
+.pd-g h3{margin:0 0 8px;font-size:15px}
+.pd-l{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.pd-it{display:grid;grid-template-columns:78px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+.pd-it:first-child{border-top:0}
+.pd-d{display:grid;line-height:1.2}
+.pd-d b{font-size:15px}
+.pd-d span{font-size:11px;color:var(--muted)}
+.pd-it.atz .pd-d b,.pd-it.atz .pd-d span{color:var(--red)}
+.pd-t .tsub{display:block}
+.pd-ac{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.sitem .pd-n{background:var(--wine);color:#fff;border-color:var(--wine)}
+@media (max-width:700px){.pd-it{grid-template-columns:64px minmax(0,1fr)}.pd-a{grid-column:2;justify-self:start}.pd-ac{grid-column:1/-1;justify-content:flex-start}}
+
+.et-ck:has(input:disabled){opacity:.5;cursor:not-allowed}
 </style>
 
 <script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
@@ -2384,19 +2427,20 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var bReg=null,bModo='ficha',andAberto={};
   window.aposRegistro=function(id){if(bReg===id)bReg=null;if(bModo==='fin'&&TP&&TP.o.chave===id)painelFechar();};
   /* ----- Andamento: as etapas de cada evento, da ficha ao pós-evento -----
-     Prazos contados a partir da data do evento (d = dias; negativo = antes). A Aprovação vence 48 h depois do orçamento validado.
+     Prazos contados a partir da data do evento (d = dias; negativo = antes). A Aprovação vence 48 h depois de a ficha ficar completa.
      Cada etapa concluída fica em e.etapas[chave] = {em, por}. A Ficha também conta como feita quando está completa. */
-  var ETAPAS=[{k:'ficha',n:'Ficha',a:'Eventos',d:-30},{k:'orcamento',n:'Orçamento',a:'Financeiro',d:-25},{k:'aprovacao',n:'Aprovação',a:'Presidência',h:48},
+  var ETAPAS=[{k:'ficha',n:'Ficha',a:'Eventos',d:-30},{k:'aprovacao',n:'Aprovação',a:'Presidência',h:48},{k:'orcamento',n:'Orçamento',a:'Financeiro',d:-25},
     {k:'divulgacao',n:'Divulgação',a:'Marketing',d:-21},{k:'aex',n:'Dados AEX',a:'AEX',d:7},{k:'pos',n:'Pós-evento',a:'Eventos',d:7}];
   function ddmm(x){return x?x.slice(8,10)+'/'+x.slice(5,7):'—';}
   function somaDias(dt,n){var d=D(dt);d.setDate(d.getDate()+n);return iso(d);}
   function etapasDe(e){var et=e.etapas||{},today=iso(new Date());
     return ETAPAS.map(function(x){var r=et[x.k]||{},feita=!!r.em||(x.k==='ficha'&&window.__fichaCompleta&&__fichaCompleta(e)),prazo=null,txt='—';
-      if(x.h){var o=et.orcamento&&et.orcamento.em;if(o){var t=new Date(new Date(o).getTime()+x.h*36e5);prazo=iso(t);txt=ddmm(prazo);}else txt='48 h após o orçamento';}
+      if(x.h){var o=et.ficha&&et.ficha.em;if(o){var t=new Date(new Date(o).getTime()+x.h*36e5);prazo=iso(t);txt=ddmm(prazo);}else txt='48 h após a ficha completa';}
       else if(e.data){prazo=somaDias(e.data,x.d);txt=ddmm(prazo);}
       return {k:x.k,n:x.n,a:x.a,feita:feita,em:r.em||'',por:r.por||'',prazo:prazo,ptxt:txt,atrasada:!feita&&prazo&&prazo<today};});}
   function faltaTxt(prazo){if(!prazo)return '';var n=Math.round((D(prazo)-D(iso(new Date())))/864e5);
     return n<0?'atrasada há '+(-n)+' dia'+(n===-1?'':'s'):n===0?'vence hoje':'falta'+(n===1?' 1 dia':'m '+n+' dias');}
+  window.__etapasDe=etapasDe;window.__faltaTxt=faltaTxt;
   function andamento(e){var dn=e.status==='realizado';
     if(dn&&!e.etapas)return '<span class="note">Evento anterior ao andamento.</span>';
     var l=etapasDe(e),n=l.filter(function(x){return x.feita;}).length,cur=l.filter(function(x){return !x.feita;})[0],ab=!!andAberto[e.id],id=esc(e.id);
@@ -2514,6 +2558,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
   function abrir(id,modo){bModo=modo||'ficha';bEmail=null;
     painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;bModo='ficha';if(window.__fichaFechou)__fichaFechou(id);},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
+  /* abrir a ficha de outra tela (Pendências) */
+  window.__abrirFicha=function(id){var b=document.querySelector('.side .sitem[data-alvo="base"]');if(b)b.click();abrir(id);};
   /* gastos e notas fiscais (fin.js) num painel próprio, aberto pelo botão da lista */
   function abrirGastos(id){
     painelAbrir({sec:'view-base',chave:'gastos:'+id,montar:function(){var e=events.filter(function(x){return x.id===id;})[0];if(!e||!window.__gastosBlk)return null;
@@ -3294,6 +3340,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
       '<input id="fi-fotos" data-fi="fotos" type="url" value="'+v(r.fotos)+'" placeholder="https://drive.google.com/...">'+abre+'</div>';}
   if(ed)b+='<div class="btns fi-salvar"><button type="button" class="btn" data-fi-salvar="'+id+'"'+(SUJO[e.id]?'':' disabled')+'>Salvar ficha</button><span class="msg" role="status">'+(SUJO[e.id]?'Alterações não salvas.':(MSG[e.id]||''))+'</span></div>';
   h+=fblk('02 · Público e logística',b,'fi-sec');
+  if(window.__fichaEtapasBlk)h+=window.__fichaEtapasBlk(e); /* 06 checklist e 08 aprovação e etapas (etapas.js) */
   return h;};
 
 /* ----- interação (delegada na seção da Base) ----- */
@@ -3388,6 +3435,180 @@ $('f-convid').addEventListener('change',function(){markStale();});
 document.addEventListener('permissoes',function(){planSegs();});
 })();
 
+/* ============ ETAPAS DO EVENTO, CHECKLIST E PENDÊNCIAS (seções 06 e 08 da Ficha de Evento Feashion) ============
+   eventos/{id}.etapas[chave] = {em, por, uid}   (chave: ficha, aprovacao, orcamento, divulgacao, aex, pos)
+   eventos/{id}.responsavelAex = {uid, nome}     (quem envia os dados à AEX; escolhido em cada evento)
+   eventos/{id}.checklist[chave] = {s:'andamento'|'ok', em, por}   (itens marcados à mão; os automáticos não gravam nada)
+   Quem marca cada etapa (igual às regras do Firestore):
+     Ficha: sozinha, quando a ficha fica completa · Aprovação: Presidente, Vice-presidente e DEV (eventos futuros, ficha completa)
+     Orçamento: diretoria do Financeiro · Divulgação: diretoria do Marketing · Dados AEX: o responsável AEX ou Eventos
+     Pós-evento: Eventos (depois da data). O acesso geral (Diretor(a) de Eventos, presidência, DEV) marca tudo, menos a Aprovação.
+   As contas de prazo e de "etapa da vez" ficam no telas.js (window.__etapasDe), as mesmas da caixinha Andamento. */
+(function(){
+"use strict";
+var EDITA=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee'];
+function P(){return window.__perm&&__perm.carregado()?__perm:null;}
+function dirDe(a){var p=P(),c=p&&p.cargoEm(a);return c==='Diretor(a)'||c==='Coordenador(a)';}
+function pres(){var p=P();return !!p&&(p.dev()||!!p.presidencia());}
+function geral(){var p=P();return !!p&&p.geral();}
+function evEd(){var p=P();return !!p&&!!p.podeEm('Eventos').editar;}
+function evCargo(){var p=P();return !!p&&EDITA.indexOf(p.cargoEm('Eventos'))>=0;}
+function hoje(){return iso(new Date());}
+function evDe(id){return events.filter(function(x){return x.id===id;})[0];}
+function ddmm(x){return x?x.slice(8,10)+'/'+x.slice(5,7):'—';}
+function primeiro(n){return String(n||'').split(' ')[0];}
+function dn(e){return e.status==='realizado';}
+
+/* ----- quem marca, quem é "dono" e quando dá para marcar ----- */
+function podeMarcar(k,e){
+  if(k==='aprovacao')return pres();
+  if(k==='orcamento')return geral()||dirDe('Financeiro');
+  if(k==='divulgacao')return geral()||dirDe('Marketing');
+  if(k==='aex')return evEd()||!!(e.responsavelAex&&e.responsavelAex.uid&&e.responsavelAex.uid===window.__euId);
+  if(k==='pos')return evEd();
+  return false;}
+function minha(k,e){
+  if(k==='aprovacao')return pres();
+  if(k==='orcamento')return dirDe('Financeiro');
+  if(k==='divulgacao')return dirDe('Marketing');
+  if(k==='aex')return e.responsavelAex&&e.responsavelAex.uid?e.responsavelAex.uid===window.__euId:evCargo();
+  return evCargo();}
+function bloqueio(k,e){
+  if(k==='aprovacao'){if(!(window.__fichaCompleta&&__fichaCompleta(e)))return 'Fica disponível quando a ficha estiver completa e salva.';
+    if(dn(e)||!e.data||e.data<hoje())return 'Só dá para aprovar eventos que ainda vão acontecer.';}
+  if(k==='pos'&&(!e.data||e.data>hoje()))return 'Fica disponível a partir do dia do evento.';
+  return '';}
+var FAZER={ficha:'Completar a ficha',aprovacao:'Aprovar a ficha',orcamento:'Validar o orçamento',divulgacao:'Planejar a divulgação',aex:'Enviar os dados à AEX',pos:'Fechar o pós-evento'};
+
+/* ----- checklist da seção 06: 30, 7 e 3 dias antes ----- */
+var CK=[
+  [30,'aprov','Ficha aprovada pela Presidência',function(e){return et(e,'aprovacao');}],
+  [30,'conv','Convidado confirmado por escrito',function(e){var g=convs(e);if(!g)return null;return g.length&&g.every(function(x){return x.status==='Confirmado'||x.status==='Palestrou';});}],
+  [30,'sala','Sala reservada',function(e){var f=e.ficha||{};return f.salaReservada==='sim'&&!!String(f.reservaNum||'').trim();}],
+  [30,'orc','Orçamento validado',function(e){return et(e,'orcamento');}],
+  [30,'brief','Briefing ao Marketing'],
+  [7,'divulg','Divulgação feita'],
+  [7,'forn','Fornecedores confirmados'],
+  [7,'aexform','Formulário da AEX pronto'],
+  [7,'funcoes','Funções do dia definidas'],
+  [3,'reconf','Reconfirmar convidado e sala'],
+  [3,'lembrete','Lembrete aos inscritos',function(e){var i=e.inscricao;if(!i||!i.formId)return null;var x=(i.emails||{}).lembrete;return !!(x&&x.enviados>0);}],
+  [3,'roteiro','Roteiro enviado à equipe'],
+  [3,'planob','Plano B revisado']];
+function et(e,k){return !!(e.etapas&&e.etapas[k]&&e.etapas[k].em);}
+/* convidados do evento (null = evento sem convidado: o item vira manual) */
+function convs(e){var ids=e.convidadoIds&&e.convidadoIds.length?e.convidadoIds:e.convidadoId?[e.convidadoId]:[];
+  if(!ids.length)return e.ficha&&e.ficha.semConvidado?null:[];
+  return ids.map(function(i){return guests.filter(function(g){return g.id===i;})[0];}).filter(Boolean);}
+/* estado de um item: {s:''|'andamento'|'ok', auto, prazo, atrasado} */
+function ckEstado(e,c){var auto=c[3]?c[3](e):null,m=(e.checklist||{})[c[1]]||{},s;
+  if(auto!=null)s=auto?'ok':'';else s=m.s==='ok'||m.s==='andamento'?m.s:'';
+  var prazo=e.data?somaDias(e.data,-c[0]):null;
+  return {s:s,auto:auto!=null,prazo:prazo,atrasado:s!=='ok'&&!dn(e)&&!!prazo&&prazo<hoje(),em:auto!=null?'':m.em,por:auto!=null?'':m.por};}
+function somaDias(dt,n){var d=D(dt);d.setDate(d.getDate()+n);return iso(d);}
+var CKNOME={'':'Não iniciada',andamento:'Em andamento',ok:'Concluída'};
+
+/* ----- gravar ----- */
+function quem(){return {em:new Date().toISOString(),por:String(window.__meuNome||'').slice(0,80),uid:window.__euId||''};}
+function falhou(){alertMsg('Não foi possível salvar. Confira se seu cargo permite.');}
+function marcar(eid,k,on){if(!db)return;var up={};up['etapas.'+k]=on?quem():null;db.doc('eventos/'+eid).update(up).catch(falhou);}
+function marcarCk(eid,k,s){if(!db)return;var up={},q=quem();up['checklist.'+k]=s?{s:s,em:q.em,por:q.por}:null;db.doc('eventos/'+eid).update(up).catch(falhou);}
+function definirAex(eid,uid){if(!db)return;var m=(window.__membros||[]).filter(function(x){return x.id===uid;})[0];
+  db.doc('eventos/'+eid).update({responsavelAex:m?{uid:m.id,nome:m.nome}:null}).catch(falhou);}
+
+/* ----- blocos da ficha (painel do evento) ----- */
+function linhaEtapa(e,x,cur){var c=x.feita?'ok':x===cur?(x.atrasada?'atr':'vez'):'',id=esc(e.id),acao='',nota='';
+  var det='prazo '+x.ptxt+(x.feita?(x.em?' · concluída '+ddmm(x.em.slice(0,10))+(x.por?' por '+esc(primeiro(x.por)):''):' · completa'):x===cur&&x.prazo?' · '+window.__faltaTxt(x.prazo):'');
+  var pm=podeMarcar(x.k,e),bl=bloqueio(x.k,e);
+  if(x.k==='ficha')nota='Marca sozinha quando a ficha fica completa.';
+  else if(x.k==='aprovacao'){
+    if(pm)acao='<label class="check et-ck"><input type="checkbox" data-et="aprovacao" data-eid="'+id+'"'+(x.feita?' checked':'')+(bl?' disabled':'')+'>Aprovo esta ficha</label>';
+    nota=bl&&pm?bl:x.feita?'':'Aguardando a Presidência.';}
+  else{
+    if(pm)acao=x.feita?'<button type="button" class="btn small ghost" data-et-off="'+x.k+'" data-eid="'+id+'">Desfazer</button>':'<button type="button" class="btn small ghost" data-et-on="'+x.k+'" data-eid="'+id+'"'+(bl?' disabled':'')+'>Marcar como feita</button>';
+    if(bl&&!x.feita)nota=bl;}
+  if(x.k==='aex'){var ra=e.responsavelAex;
+    nota=(evEd()?'<label class="et-aex"><span>Responsável AEX</span><select data-et-aex="'+id+'"><option value="">— escolher —</option>'+(window.__membros||[]).map(function(m){return '<option value="'+esc(m.id)+'"'+(ra&&ra.uid===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join('')+(ra&&!(window.__membros||[]).some(function(m){return m.id===ra.uid;})?'<option value="'+esc(ra.uid)+'" selected>'+esc(ra.nome||'?')+'</option>':'')+'</select></label>'
+      :'<span>Responsável AEX: <b>'+esc(ra&&ra.nome||'a definir')+'</b></span>')+(nota?' '+nota:'');}
+  return '<li class="et-row'+(c?' et-'+c:'')+'"><span class="and-k '+c+'"></span><div class="et-t"><b>'+x.n+'</b> · '+x.a+'<small'+(x===cur&&x.atrasada?' class="atz"':'')+'>'+det+'</small>'+(nota?'<span class="note et-n">'+nota+'</span>':'')+'</div>'+(acao?'<div class="et-a">'+acao+'</div>':'')+'</li>';}
+window.__fichaEtapasBlk=function(e){if(!window.__etapasDe)return '';
+  var h='',ed=evEd(),id=esc(e.id);
+  /* 06 checklist */
+  if(!dn(e)){var cols=[30,7,3].map(function(n){
+    return '<div class="ck-col"><h5>'+n+' dias</h5><ul>'+CK.filter(function(c){return c[0]===n;}).map(function(c){var s=ckEstado(e,c);
+      var st=s.auto||!ed?'<span class="ck-s '+(s.s||'nao')+'">'+CKNOME[s.s]+'</span>':
+        '<select class="ck-s '+(s.s||'nao')+'" data-ck="'+c[1]+'" data-eid="'+id+'" aria-label="'+esc(c[2])+'">'+['','andamento','ok'].map(function(v){return '<option value="'+v+'"'+(v===s.s?' selected':'')+'>'+CKNOME[v]+'</option>';}).join('')+'</select>';
+      return '<li class="'+(s.atrasado?'atz':'')+'">'+st+'<span class="ck-l">'+esc(c[2])+(s.auto?' <span class="note">· automático</span>':'')+(s.atrasado?' <span class="ck-atz">atrasado</span>':'')+'</span></li>';}).join('')+'</ul></div>';}).join('');
+    h+='<div class="tp-blk fi-sec"><h4>06 · Checklist</h4><p class="note" style="margin:0">O que precisa estar pronto 30, 7 e 3 dias antes. Os itens automáticos se marcam sozinhos'+(ed?'; os outros você muda aqui':'')+'.</p><div class="ck-grid">'+cols+'</div></div>';}
+  /* 08 aprovação e etapas */
+  if(dn(e)&&!e.etapas)return h;
+  var l=__etapasDe(e),cur=l.filter(function(x){return !x.feita;})[0];
+  h+='<div class="tp-blk fi-sec"><h4>08 · Aprovação e etapas</h4><ul class="et-list">'+l.map(function(x){return linhaEtapa(e,x,cur);}).join('')+'</ul></div>';
+  return h;};
+
+/* cliques e mudanças dentro do painel (Base) e da tela Pendências */
+function ligar(sec){if(!sec)return;
+  sec.addEventListener('change',function(ev){var t=ev.target;
+    if(t.dataset.et==='aprovacao'){marcar(t.dataset.eid,'aprovacao',t.checked);return;}
+    if(t.dataset.ck){marcarCk(t.dataset.eid,t.dataset.ck,t.value);t.className='ck-s '+(t.value||'nao');return;}
+    if(t.dataset.etAex!=null){definirAex(t.dataset.etAex,t.value);}});
+  sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-et-on],[data-et-off],[data-pd-abrir]');if(!b)return;
+    if(b.dataset.pdAbrir){if(window.__abrirFicha)__abrirFicha(b.dataset.pdAbrir);return;}
+    b.disabled=true;marcar(b.dataset.eid,b.dataset.etOn||b.dataset.etOff,!!b.dataset.etOn);});}
+ligar($('view-base'));
+
+/* ============ PENDÊNCIAS DA MINHA ÁREA ============ */
+var sec=document.createElement('section');sec.id='view-pend';sec.hidden=true;sec.setAttribute('aria-labelledby','pend-title');
+sec.innerHTML='<div class="section-head"><div><h2 id="pend-title">Pendências</h2><p class="note">O que está na vez da sua área, com o prazo de cada coisa: etapas do evento e o checklist de 30, 7 e 3 dias.</p></div></div>'+
+  '<div class="sbar"><div class="seg tseg" id="pd-vista" role="group"><button type="button" data-v="minhas" class="on" aria-pressed="true">Minhas áreas</button><button type="button" data-v="todas" aria-pressed="false">Todas as áreas</button></div></div><div id="pd-lista"></div>';
+document.querySelector('main').appendChild(sec);
+var vista='minhas';
+$('pd-vista').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;vista=b.dataset.v;[].forEach.call(this.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});renderPend();});
+ligar(sec);
+/* tudo o que está pendente; o filtro "minhas" fica para a tela */
+function pendencias(){var t=hoje(),lim=somaDias(t,14),lim7=somaDias(t,7),out=[];
+  events.forEach(function(e){if(/\[teste\]/i.test(e.nome||'')&&!document.getElementById('b-teste').checked)return;
+    if(dn(e)&&!e.etapas)return;                                        /* evento anterior ao andamento */
+    if(e.data&&e.data<somaDias(t,-30))return;                          /* passou há mais de 30 dias */
+    var l=window.__etapasDe(e),cur=l.filter(function(x){return !x.feita;})[0];
+    l.forEach(function(x){if(x.feita)return;if(x!==cur&&!(x.prazo&&x.prazo<=lim))return;
+      out.push({e:e,tipo:'etapa',k:x.k,o:FAZER[x.k],area:x.a,prazo:x.prazo,ptxt:x.ptxt,atr:x.atrasada,minha:minha(x.k,e)});});
+    if(!dn(e))CK.forEach(function(c){var s=ckEstado(e,c);if(s.s==='ok'||!s.prazo||s.prazo>lim7||c[1]==='aprov'||c[1]==='orc')return; /* esses dois já aparecem como etapa */
+      out.push({e:e,tipo:'ck',k:c[1],o:c[2],area:'Eventos',prazo:s.prazo,ptxt:ddmm(s.prazo),atr:s.atrasado,s:s.s,auto:s.auto,n:c[0],minha:evCargo()});});});
+  return out.sort(function(a,b){return (a.prazo||'9')<(b.prazo||'9')?-1:(a.prazo||'9')>(b.prazo||'9')?1:0;});}
+function linhaPend(p){var e=p.e,id=esc(e.id),acao='',P0=P();
+  var podeVer=!!P0&&!!P0.podeEm('Eventos').ver;
+  if(p.tipo==='etapa'){var bl=bloqueio(p.k,e);
+    if(p.k!=='ficha'&&p.k!=='aprovacao'&&podeMarcar(p.k,e)&&!bl)acao+='<button type="button" class="btn small" data-et-on="'+p.k+'" data-eid="'+id+'">Marcar como feita</button>';
+    if(p.k==='aprovacao'&&pres()&&!bl&&!podeVer)acao+='<label class="check et-ck"><input type="checkbox" data-et="aprovacao" data-eid="'+id+'">Aprovo esta ficha</label>';}
+  else if(!p.auto&&evEd())acao+='<select class="ck-s '+(p.s||'nao')+'" data-ck="'+p.k+'" data-eid="'+id+'" aria-label="'+esc(p.o)+'">'+['','andamento','ok'].map(function(v){return '<option value="'+v+'"'+(v===p.s?' selected':'')+'>'+CKNOME[v]+'</option>';}).join('')+'</select>';
+  if(podeVer)acao+='<button type="button" class="btn small ghost" data-pd-abrir="'+id+'">Abrir ficha</button>';
+  var fl=p.prazo?window.__faltaTxt(p.prazo):'';
+  return '<li class="pd-it'+(p.atr?' atz':'')+'"><div class="pd-d"><b>'+(p.prazo?ddmm(p.prazo):'—')+'</b><span>'+(p.atr?'atrasada':esc(fl))+'</span></div>'+
+    '<div class="pd-t"><b>'+esc(p.o)+'</b>'+(p.tipo==='ck'?' <span class="note">· checklist de '+p.n+' dias'+(p.auto?' · automático':'')+'</span>':'')+
+    '<span class="tsub">'+esc(e.nome||'Evento')+(e.data?' · '+ddmm(e.data)+'/'+e.data.slice(2,4):'')+'</span></div>'+
+    '<span class="chip neutral pd-a">'+esc(p.area)+'</span><div class="pd-ac">'+acao+'</div></li>';}
+function renderPend(){var box=$('pd-lista');if(!box||!window.__etapasDe)return;
+  var todas=pendencias(),minhas=todas.filter(function(p){return p.minha;}),l=vista==='todas'?todas:minhas;
+  contador(minhas.length);
+  if(!P()){box.innerHTML='<p class="note">Carregando…</p>';return;}
+  if(!l.length){box.innerHTML='<div class="embreve"><b>Nada pendente'+(vista==='minhas'?' para a sua área':'')+'</b><span>'+(vista==='minhas'?'Quando chegar a vez da sua área num evento, aparece aqui (e a diretoria recebe um e-mail).':'Nenhum evento com etapa ou item do checklist em aberto nas próximas semanas.')+'</span></div>';return;}
+  var t=hoje(),s7=somaDias(t,7);
+  var g=[['Atrasadas',l.filter(function(p){return p.atr;})],['Até 7 dias',l.filter(function(p){return !p.atr&&p.prazo&&p.prazo<=s7;})],['Depois',l.filter(function(p){return !p.atr&&!(p.prazo&&p.prazo<=s7);})]];
+  box.innerHTML=g.filter(function(x){return x[1].length;}).map(function(x){return '<div class="pd-g"><h3>'+x[0]+' <span class="note">('+x[1].length+')</span></h3><ul class="pd-l">'+x[1].map(linhaPend).join('')+'</ul></div>';}).join('');}
+/* número de pendências minhas no menu */
+function contador(n){var b=document.querySelector('.side .sitem[data-alvo="pend"]');if(!b)return;var c=b.querySelector('.pd-n');
+  if(!n){if(c)c.remove();return;}if(!c){c=document.createElement('span');c.className='beta pd-n';b.appendChild(c);}c.textContent=n;c.setAttribute('aria-label',n+' pendentes');}
+/* acompanha a Base, os convidados e os cargos */
+var _rb=renderBase;renderBase=function(){_rb.apply(this,arguments);adiar('view-pend',renderPend,function(){var a=document.activeElement;return !!(a&&sec.contains(a)&&a.tagName==='SELECT');});};
+var _rc=renderChks;renderChks=function(){_rc.apply(this,arguments);renderPend();};
+var foiHash=false;
+document.addEventListener('permissoes',function(){renderPend();
+  if(!foiHash&&location.hash==='#pendencias'){foiHash=true;setTimeout(function(){var b=document.querySelector('.side .sitem[data-alvo="pend"]');if(b)b.click();},0);}});
+document.addEventListener('membros',function(){renderPend();});
+renderPend();
+})();
+
 })();
 </script>
 <script>
@@ -3470,6 +3691,8 @@ window.__perm={
   carregado:function(){return carregado;},podeEm:podeEm,diretorAlgum:diretorAlgum,
   /* áreas que estão no meu perfil (o seletor do topo abre nelas primeiro) */
   minhas:function(){return Object.keys(areasOf(myDoc));},
+  /* etapas do evento: quem marca cada uma */
+  cargoEm:function(a){return meuCargoEm(a)||'';},presidencia:function(){return presOf(myDoc);},dev:souDev,geral:function(){return meuG()<=2;},
   /* lixeira: presidência e DEV restauram tudo; a diretoria só o que é da própria área */
   podeRestaurar:function(area){return meuG()<=2||(area!=='Comum'&&meuCargoEm(area)==='Diretor(a)')||(area==='Comum'&&valores(areasOf(myDoc)).indexOf('Diretor(a)')>=0);}
 };
@@ -3898,7 +4121,8 @@ var I={
   'mkt-met':'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   'cd-cap':'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2.5 2 9.5 2 12 0v-5"/>',
   'cd-trilha':'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
-  'rh':'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
+  'rh':'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  pend:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11"/><circle cx="5" cy="18" r="1.3"/>'
 };
 /* menu por área: a área é escolhida no subtítulo do topo ("Diretoria de Eventos ▾") e o menu mostra só as telas dela.
    O grupo Geral (Calendário, Documentos, Membros, Lixeira, Histórico) aparece em todas. Lixeira e Histórico: diretoria para cima. */
@@ -3912,7 +4136,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Verba por evento','Financeiro','Verba liberada para cada evento.'],
@@ -3924,7 +4148,7 @@ var NOVAS={
   'rh':['RH','RH','O que a área de RH vai acompanhar aqui ainda será definido.']
 };
 var main=document.querySelector('main');
-var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist'];
+var SOLTAS=['view-ana','view-mail','view-ia','view-lixeira','view-hist','view-pend'];
 Object.keys(NOVAS).forEach(function(k){
   if(document.getElementById('view-'+k)){SOLTAS.push('view-'+k);return;} /* telas já prontas (ex.: Financeiro, no fin.js) */
   var n=NOVAS[k],sec=document.createElement('section');sec.id='view-'+k;sec.hidden=true;sec.setAttribute('aria-labelledby',k+'-title');

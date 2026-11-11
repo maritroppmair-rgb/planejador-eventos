@@ -12,6 +12,8 @@ rules_version = '2';
 //   Financeiro, Marketing, C&D e RH; o resto é de Eventos.
 // - Só quem está acima muda o cargo de quem está abaixo. Ninguém muda o próprio cargo (só o DEV).
 // - Lixeira e registro de alterações: a diretoria (de qualquer área) para cima lê.
+// - Etapas do evento: a Aprovação só pela presidência e pelo DEV; Orçamento pela diretoria do Financeiro,
+//   Divulgação pela diretoria do Marketing e Dados AEX pelo responsável AEX do evento (além de quem edita Eventos).
 // No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -198,9 +200,32 @@ service cloud.firestore {
     function reservada(c) {
       return c in ['membros', 'perfisImportados', 'permitidos', 'parametros', 'config', 'lixeira', 'registro'];
     }
+    // etapas do evento: a Aprovação (eventos/{id}.etapas.aprovacao) só muda pela presidência ou pelo DEV
+    function presOuDev() {
+      return ehDev() || (temPerfil() && presidente(get(eu()).data));
+    }
+    function aprovacaoOk(c) {
+      return c != 'eventos' || resource == null || presOuDev()
+        || depois().get('etapas', {}).get('aprovacao', null) == antes().get('etapas', {}).get('aprovacao', null);
+    }
+    // outras áreas marcam só a própria etapa do evento: Orçamento (diretoria do Financeiro),
+    // Divulgação (diretoria do Marketing) e Dados AEX (o responsável AEX escolhido no evento)
+    function etapaDeArea(me) {
+      let k = depois().get('etapas', {}).diff(antes().get('etapas', {})).affectedKeys();
+      let ra = antes().get('responsavelAex', null);
+      return depois().diff(antes()).affectedKeys().hasOnly(['etapas'])
+        && k.size() == 1
+        && ((k.hasOnly(['orcamento']) && areasDe(me).get('Financeiro', '') in ['Diretor(a)', 'Coordenador(a)'])
+          || (k.hasOnly(['divulgacao']) && areasDe(me).get('Marketing', '') in ['Diretor(a)', 'Coordenador(a)'])
+          || (k.hasOnly(['aex']) && ra != null && ra.get('uid', '') == request.auth.uid));
+    }
+    match /eventos/{id} {
+      allow update: if liberado() && temPerfil() && etapaDeArea(get(eu()).data);
+    }
+
     match /{colecao}/{documento=**} {
       allow read: if liberado();
-      allow create, update: if !reservada(colecao) && podeNa(colecao, EDITA());
+      allow create, update: if !reservada(colecao) && podeNa(colecao, EDITA()); && aprovacaoOk(colecao);
       allow delete: if !reservada(colecao) && podeNa(colecao, EXCLUI());
     }
   }

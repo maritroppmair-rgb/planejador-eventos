@@ -104,6 +104,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
       '<input id="fi-fotos" data-fi="fotos" type="url" value="'+v(r.fotos)+'" placeholder="https://drive.google.com/...">'+abre+'</div>';}
   if(ed)b+='<div class="btns fi-salvar"><button type="button" class="btn" data-fi-salvar="'+id+'"'+(SUJO[e.id]?'':' disabled')+'>Salvar ficha</button><span class="msg" role="status">'+(SUJO[e.id]?'Alterações não salvas.':(MSG[e.id]||''))+'</span></div>';
   h+=fblk('02 · Público e logística',b,'fi-sec');
+  if(window.__fichaEtapasBlk)h+=window.__fichaEtapasBlk(e); /* 06 checklist e 08 aprovação e etapas (etapas.js) */
   return h;};
 
 /* ----- interação (delegada na seção da Base) ----- */
