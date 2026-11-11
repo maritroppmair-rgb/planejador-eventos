@@ -768,14 +768,7 @@ function ideia(b, u) {
     contents: [{ role: 'user', parts: partes }],
     generationConfig: { responseMimeType: 'application/json', responseSchema: IA_SCHEMA, temperature: 0.7 }
   };
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + CFG.IA_MODELO + ':generateContent';
-  var r, tentativa = 0;
-  while (true) {
-    r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, payload: JSON.stringify(corpo), muteHttpExceptions: true });
-    var c = r.getResponseCode();
-    if ((c === 503 || c === 500) && tentativa < 3) { tentativa++; Utilities.sleep(3000 * tentativa); continue; }
-    break;
-  }
+  var r = chamarModelos(key, corpo).r;
   var code = r.getResponseCode();
   if (code === 429) throw new Error('A IA gratuita está no limite agora. Espere um minuto e tente de novo.');
   if (code === 404) throw new Error('O modelo ' + CFG.IA_MODELO + ' não está disponível. Troque IA_MODELO no robô.');
@@ -791,13 +784,41 @@ function ideia(b, u) {
   return { proposta: prop, restantes: CFG.IA_LIMITE_DIA - usados - 1 };
 }
 
-/** Rode pelo editor para conferir se a chave funciona. */
+/* Modelos "flash" que a chave pode usar, os mais leves (lite) primeiro. Guardado por 6 h. */
+function modelosReserva(key) {
+  var cache = CacheService.getScriptCache(), c = cache.get('ia_modelos');
+  if (c) return JSON.parse(c);
+  var r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key }, muteHttpExceptions: true });
+  if (r.getResponseCode() !== 200) return [];
+  var ver = function (n) { var m = /gemini-(\d+(?:\.\d+)?)/.exec(n); return m ? +m[1] : 0; };
+  var l = (JSON.parse(r.getContentText()).models || []).filter(function (m) {
+    var n = m.name.replace('models/', '');
+    return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0 && /^gemini-.*flash/.test(n)
+      && !/image|tts|audio|live|thinking|embed|exp/.test(n);
+  }).map(function (m) { return m.name.replace('models/', ''); });
+  l.sort(function (a, b) { var la = /lite/.test(a) ? 0 : 1, lb = /lite/.test(b) ? 0 : 1; if (la !== lb) return la - lb; var pa = /preview/.test(a) ? 1 : 0, pb = /preview/.test(b) ? 1 : 0; if (pa !== pb) return pa - pb; return ver(b) - ver(a); });
+  cache.put('ia_modelos', JSON.stringify(l), 21600);
+  return l;
+}
+/* Tenta o modelo principal; se estiver sobrecarregado ou fora do ar, passa para os de reserva. */
+function chamarModelos(key, corpo) {
+  var tentados = {}, fila = [CFG.IA_MODELO], r = null, i = 0, reservaPega = false;
+  while (i < fila.length && i < 4) {
+    var m = fila[i++]; if (tentados[m]) continue; tentados[m] = 1;
+    r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent', { method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, payload: JSON.stringify(corpo), muteHttpExceptions: true });
+    var c = r.getResponseCode();
+    if (c === 200 || c === 400 || c === 403) return { r: r, modelo: m };
+    if (!reservaPega) { reservaPega = true; fila = fila.concat(modelosReserva(key)); }
+    Utilities.sleep(1500);
+  }
+  return { r: r, modelo: '' };
+}
+
+/** Rode pelo editor para conferir se a chave funciona: mostra os modelos disponíveis e qual respondeu. */
 function testarIA() {
   var key = PropertiesService.getScriptProperties().getProperty('GEMINI_KEY');
-  var r = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + CFG.IA_MODELO + ':generateContent', {
-    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-    headers: { 'x-goog-api-key': key },
-    payload: JSON.stringify({ contents: [{ parts: [{ text: 'Sugira em uma frase um tema de evento sobre moda circular para universitários.' }] }] })
-  });
-  Logger.log(r.getResponseCode() + ' ' + r.getContentText().slice(0, 800));
+  CacheService.getScriptCache().remove('ia_modelos');
+  Logger.log('Modelos de reserva: ' + modelosReserva(key).join(', '));
+  var x = chamarModelos(key, { contents: [{ parts: [{ text: 'Sugira em uma frase um tema de evento sobre moda circular para universitários.' }] }] });
+  Logger.log(x.r.getResponseCode() + (x.modelo ? ' (respondeu: ' + x.modelo + ')' : '') + ' ' + x.r.getContentText().slice(0, 600));
 }
