@@ -106,7 +106,7 @@ function planoBlk(e,ed){var d=planoDe(e.id),mk=membrosDe('Marketing');
       :'<div class="dv-cab"><b>'+esc(c.nome)+'</b><span class="note">'+(c.resp?'resp. '+esc(nomeMembro(c.resp)||'—'):'sem responsável')+'</span></div>';
     var lis=ps.map(function(p){var a='data-dp="'+esc(p.id)+'" data-df=';
       return ed?'<li class="dv-p'+(p.pub?' pub':'')+'"><select '+a+'"mom" aria-label="Quando">'+MOM.map(function(m){return '<option value="'+m[0]+'"'+(m[0]===p.mom?' selected':'')+'>'+m[1]+'</option>';}).join('')+'</select>'+
-        '<input '+a+'"oque" maxlength="100" placeholder="O que sai (ex.: post de anúncio)" value="'+esc(p.oque||'')+'" aria-label="O que sai">'+
+        '<input '+a+'"oque" maxlength="100" placeholder="O que vai ser postado (ex.: post de anúncio)" value="'+esc(p.oque||'')+'" aria-label="O que sai">'+
         '<input '+a+'"data" type="date" value="'+esc(p.data||'')+'" aria-label="Data prevista">'+
         '<label class="check dv-pub"><input type="checkbox" '+a+'"pub"'+(p.pub?' checked':'')+'>Publicado</label>'+
         '<button type="button" class="cf-x" data-dpx="'+esc(p.id)+'" aria-label="Tirar o post" title="Tirar post">&times;</button></li>'
