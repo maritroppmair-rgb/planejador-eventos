@@ -8,7 +8,8 @@
                                                                             cada área mudar só o seu); mesmo formato
      eventos/{id}.etapas.ficha = {em, por}                                  quando a ficha ficou pronta (gravado ao salvar)
      eventos/{id}.responsavelAex = {uid, nome}                              quem cuida do Formulário da AEX
-   O checklist fica só na linha do evento, na Base: a caixinha Andamento aberta mostra cada ponto com o seletor de quem pode marcar; a tela Pendências também marca.
+   O checklist fica só na linha do evento, na Base: a caixinha Andamento aberta só mostra cada ponto (prazo, quando e por quem foi concluído).
+   Por enquanto os pontos manuais se marcam na tela Pendências; depois, sozinhos, quando cada diretoria cumprir a sua tarefa no site.
    (O Responsável AEX ainda não se escolhe no site: por enquanto o Formulário da AEX é marcado por quem edita Eventos.)
    Quem marca: Aprovação, só Presidente, Vice-presidente e DEV (ficha pronta, evento futuro), no botão ao lado de "Salvar ficha";
    Orçamento, a diretoria do Financeiro; Divulgação, a diretoria do Marketing; Formulário da AEX, o responsável AEX;
@@ -97,8 +98,7 @@ window.__andamento=function(e,ab){
       '<span>'+(cur.atrasado?'Atrasado: ':'Agora: ')+'<b>'+esc(cur.n)+'</b> · '+cur.a+'</span><span class="and-d'+(cur.atrasado?' atz':'')+'">até '+cur.ptxt+'</span>')+'</div></div>';
   if(ab)h+='<div class="and-x">'+[30,7,3].map(function(b){return '<div class="and-bl"><h5>'+b+' dias</h5><ul>'+l.filter(function(x){return x.b===b;}).map(function(x){var c=cls(x);
       var det='prazo '+x.ptxt+(x.k==='lembrete'?' (48 h antes)':'')+(x.feito?(x.em?' · concluído '+ddmm(x.em.slice(0,10))+(x.por?' por '+esc(primeiro(x.por)):''):''):x.s==='andamento'?' · em andamento':x.prazo&&!dn(e)?' · '+faltaTxt(x.prazo):'');
-      var ctl=!dn(e)&&x.k!=='aprov'&&podeMarcar(x.p,e)?seletor(x,e.id):'';
-      return '<li><span class="and-k '+c+'"></span><span><b>'+esc(x.n)+'</b> · '+x.a+'<small'+(x.atrasado?' class="atz"':'')+'>'+det+'</small>'+(ctl?'<span class="and-c">'+ctl+'</span>':'')+'</span></li>';}).join('')+'</ul></div>';}).join('')+'</div>';
+      return '<li><span class="and-k '+c+'"></span><span><b>'+esc(x.n)+'</b> · '+x.a+'<small'+(x.atrasado?' class="atz"':'')+'>'+det+'</small></span></li>';}).join('')+'</ul></div>';}).join('')+'</div>';
   return h+'</div>';};
 
 /* ----- ficha: o botão de aprovação ao lado de "Salvar ficha" ----- */
