@@ -20,10 +20,11 @@ var CFG = {
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
   MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8',
   PASTA: 'Feashion · Inscrições',
+  PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
   REMETENTE: 'Feashion · Diretoria de Eventos',
   HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes
   FECHAR_HORAS_ANTES: 36,   // inscrições fecham X horas antes do início
-  CARGOS_QUE_EDITAM: ['DEV', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'],
+  CARGOS_QUE_EDITAM: ['DEV', 'Presidente', 'Vice-presidente', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'],
   IA_MODELO: 'gemini-3.5-flash-lite', // rápido e com pouca fila; troque se o AI Studio tirar do ar
   IA_RESERVA: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'], // tentados na hora, sem espera, se o principal falhar
   IA_LIMITE_DIA: 30              // pedidos de proposta por pessoa por dia
@@ -47,6 +48,7 @@ function doPost(e) {
       else if (b.acao === 'mailingTeste') out = mailingPrevia(b.evento, b.texto, u.email);
       else if (!b.evento) throw new Error('Evento não informado.');
       else if (b.acao === 'criarForm') out = criarForm(b.evento, u);
+      else if (b.acao === 'criarPastaFotos') out = criarPastaFotos(b.evento);
       else if (b.acao === 'sincronizar') out = sincronizarEvento(b.evento);
       else if (b.acao === 'atualizarForm') out = sincronizarEvento(b.evento, null, true);
       else if (b.acao === 'enviarAviso') out = enviarTipo(b.evento, 'lembrete');
@@ -94,7 +96,16 @@ function quemChama(idToken) {
   var ehDev = !!(dev && String(dev.email || '').toLowerCase() === email);
   if (!ehDev && !fsGet('permitidos/' + encodeURIComponent(email))) throw new Error('Seu e-mail não está liberado no app.');
   var m = fsGet('membros/' + u.localId);
-  return { email: email, uid: u.localId, cargo: ehDev ? 'DEV' : (m && m.cargo) || '' };
+  return { email: email, uid: u.localId, cargo: ehDev ? 'DEV' : cargoEventos(m) };
+}
+/* o mesmo critério do site: presidência vale em todas as áreas; senão, o cargo na área Eventos.
+   Perfis antigos (sem áreas) guardavam o cargo de Eventos em `cargo`. Diretoria de outra área não edita Eventos. */
+function cargoEventos(m) {
+  if (!m) return '';
+  if (m.cargo === 'DEV') return 'DEV';
+  if (m.presidencia === 'Presidente' || m.presidencia === 'Vice-presidente') return m.presidencia;
+  if (m.areas && typeof m.areas === 'object') return String(m.areas.Eventos || '');
+  return String(m.cargo || '');
 }
 
 /* ---------- criar o Forms de um evento ---------- */
@@ -595,9 +606,16 @@ function sincronizarEquipe() {
   var querem = {};
   fsList('membros').forEach(function (m) {
     var e = String(m.email || '').toLowerCase().trim();
-    if (e && CFG.CARGOS_QUE_EDITAM.indexOf(m.cargo || '') >= 0) querem[e] = 1;
+    if (e && CFG.CARGOS_QUE_EDITAM.indexOf(cargoEventos(m)) >= 0) querem[e] = 1;
   });
   delete querem[dono];
+  permissoesPasta(id, querem);
+  var fotos = DriveApp.getFoldersByName(CFG.PASTA_FOTOS);
+  if (fotos.hasNext()) permissoesPasta(fotos.next().getId(), querem);
+  return Object.keys(querem);
+}
+/* deixa na pasta exatamente quem tem cargo (as subpastas herdam) */
+function permissoesPasta(id, querem) {
   var j = drive('get', id + '/permissions?fields=permissions(id,emailAddress,role,type)');
   var tem = {};
   (j.permissions || []).forEach(function (p) {
@@ -609,7 +627,27 @@ function sincronizarEquipe() {
   Object.keys(querem).forEach(function (e) {
     if (!tem[e]) drive('post', id + '/permissions?sendNotificationEmail=false', { type: 'user', role: 'writer', emailAddress: e });
   });
-  return Object.keys(querem);
+}
+
+/* ---------- pasta de fotos do evento (botão da Ficha) ---------- */
+function criarPastaFotos(eid) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var ev = fsGet('eventos/' + eid);
+    if (!ev) throw new Error('Evento não encontrado.');
+    if (ev.pastaFotos && ev.pastaFotos.id) {
+      try { var f0 = DriveApp.getFolderById(ev.pastaFotos.id); if (!f0.isTrashed()) return { pastaFotos: ev.pastaFotos, jaExistia: true }; } catch (e) { }
+    }
+    var it = DriveApp.getFoldersByName(CFG.PASTA_FOTOS), nova = !it.hasNext();
+    var mae = nova ? DriveApp.createFolder(CFG.PASTA_FOTOS) : it.next();
+    if (nova) try { sincronizarEquipe(); } catch (e) { console.error('Equipe: ' + e); }
+    var nome = String(ev.nome || 'Evento') + (ev.data ? ' · ' + dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4) : '');
+    var pasta = mae.createFolder(nome);
+    var pf = { id: pasta.getId(), url: pasta.getUrl(), nome: nome, criadaEm: new Date().toISOString() };
+    fsPatch('eventos/' + eid, { pastaFotos: pf });
+    return { pastaFotos: pf };
+  } finally { lock.releaseLock(); }
 }
 function drive(metodo, caminho, corpo) {
   var o = { method: metodo, muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } };
