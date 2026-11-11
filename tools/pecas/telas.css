@@ -351,3 +351,5 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 .tchips [data-dica]{position:relative}
 .tchips [data-dica]:hover::after,.tchips [data-dica]:focus-visible::after{content:attr(data-dica);position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:max-content;max-width:min(260px,70vw);white-space:pre-line;text-align:left;background:var(--fg);color:var(--surface);font-family:var(--body);font-size:12.5px;line-height:1.45;font-weight:500;letter-spacing:0;text-transform:none;padding:8px 10px;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
 .tchips [data-dica]:nth-last-child(-n+2):hover::after,.tchips [data-dica]:nth-last-child(-n+2):focus-visible::after{left:auto;right:0}
+.fi-ext{display:grid;gap:6px;margin-top:10px}.fi-ext label{font-size:13px;font-weight:600}.fi-ext .fi-alerta{margin:0}
+.cchip{padding:4px 6px 4px 10px}.convsel #f-convchips{gap:6px}

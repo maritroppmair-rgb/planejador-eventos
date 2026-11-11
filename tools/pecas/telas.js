@@ -297,7 +297,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     if(dn){var tc=e.inscritos?Math.max(0,e.presentes-(+e.semInscricao||0))/e.inscritos:null;return tc==null?'<span class="chip neutral">realizado</span>':semaf(tc,'tc').replace('</span>',' vieram</span>');}
     if(e.data&&e.data<today)return '<span class="chip bad">falta finalizar</span>';
     var i=e.inscricao,cs=climaSelo(e);if(i&&i.formId)return (i.aberto===false?'<span class="chip neutral">inscrições fechadas</span>':'<span class="chip ok">inscrições abertas</span>')+cs;
-    return '<span class="chip neutral">'+(window.ROBO_URL?'sem Forms':'planejado')+'</span>'+cs;}
+    return '<span class="chip neutral">'+(e.ficha&&e.ficha.linkExterno?'link externo':window.ROBO_URL?'sem Forms':'planejado')+'</span>'+cs;}
   function insc(e){var dn=e.status==='realizado',meta=+e.inscritosMeta||0;
     if(dn)return e.inscritos!=null?'<b>'+e.inscritos+'</b> inscritos':'—';
     var n=e.inscricao&&e.inscricao.formId?(+e.inscricao.total||0):null;
@@ -612,16 +612,16 @@ function contexto(){var hoje=hojeIso();
   var fut=events.filter(function(e){return e.status!=='realizado'&&e.data>=hoje&&!teste(e);}).map(function(e){return {nome:e.nome,tipo:e.tipo,data:e.data,hora:e.hora};});
   return {hoje:hoje,diaDaSemanaHoje:DIAS[new Date().getDay()],janelaHorarioFEA:JANELA[0]+' às '+JANELA[1],tipos:tipos,convidados:conv,calendario:cal,eventosRealizados:real,eventosMarcados:fut};}
 /* roda o cálculo do Planejar sem mexer no que a pessoa está planejando */
-var CAMPOS=['f-nome','f-tipo','f-data','f-hora','f-dur','f-insc','f-conv','f-cpp'];
+var CAMPOS=['f-nome','f-tipo','f-data','f-hora','f-dur','f-insc','f-conv','f-convid','f-cpp'];
 function cppPadrao(){var l=events.filter(function(e){return e.form&&+e.form['f-cpp']>0;}).sort(function(a,b){return String(b.criadoEm||'').localeCompare(String(a.criadoEm||''));});return l.length?String(l[0].form['f-cpp']):'';}
 function preencher(o){$('f-nome').value=o.nome;$('f-tipo').value=o.tipo;$('f-data').value=o.data;$('f-hora').value=o.hora;
-  var dur=Math.max(30,Math.min(300,Math.round((+o.dur||90)/30)*30));$('f-dur').value=String(dur);$('f-insc').value=String(o.insc);$('f-conv').value=o.conv||'';if(!(+$('f-cpp').value>0))$('f-cpp').value=cppPadrao();}
+  var dur=Math.max(30,Math.min(300,Math.round((+o.dur||90)/30)*30));$('f-dur').value=String(dur);$('f-insc').value=String(o.insc);if(window.__planConvNome)__planConvNome(o.conv);else $('f-conv').value=o.conv||'';if(!(+$('f-cpp').value>0))$('f-cpp').value=cppPadrao();}
 function simular(o){var k=[o.tipo,o.data,o.hora,o.dur,o.insc].join('|');if(SIMC[k])return SIMC[k];
   var snap={};CAMPOS.forEach(function(id){snap[id]=$(id).value;});var sm=salaManual,cur=current,al=alertas,sid=savedId,r=null;
   try{salaManual=null;savedId=null;preencher(o);plan();var c=current;var h=history(o.tipo),p=totalPmf(Math.max(5,Math.min(600,+o.insc||0)),h,h.lam);
     r={p10:quant(p,.1),p90:quant(p,.9),m:c.presentesPrev,sala:c.sala,cap:c.capacidade,nota:c.notaData,cpp:(+$('f-cpp').value>0||!$('f-coffee').checked)?c.custoPorPresentePrev:null,externo:!!tcfg(o.tipo).externo,cur:Object.assign({},c)};}
   catch(e){r=null;}
-  CAMPOS.forEach(function(id){$(id).value=snap[id];});salaManual=sm;savedId=sid;
+  CAMPOS.forEach(function(id){$(id).value=snap[id];});if(window.__planConvSync)__planConvSync();salaManual=sm;savedId=sid;
   if(calcDone&&$('f-data').value){try{plan();}catch(e){}}else{current=cur;}alertas=al;
   SIMC[k]=r;return r;}
 function datasDe(e,tipo){var hoje=hojeIso(),vis={},l=[];(e.datas||[]).forEach(function(x){var d=String(x.data||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||d<=hoje||vis[d])return;vis[d]=1;l.push({d:d,motivo:x.motivo||'',s:scoreDate(D(d),tipo,null).s});});
