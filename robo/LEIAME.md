@@ -63,7 +63,7 @@ Depois de colar uma versão nova do `Codigo.gs`: **Implantar → Gerenciar impla
 
 - Usa o Gemini do Google no plano gratuito. A chave fica só no robô: em Configurações do projeto → Propriedades do script, propriedade `GEMINI_KEY` (criada em aistudio.google.com → Get API key, no Gmail dono do robô).
 - Para conferir a chave, rode `testarIA` no editor: 200 = funcionando.
-- O modelo fica em `CFG.IA_MODELO` (padrão `gemini-2.5-flash`). Se o Google trocar o modelo gratuito, mude aqui (veja os modelos em aistudio.google.com/rate-limit).
+- O modelo fica em `CFG.IA_MODELO` (padrão `gemini-3.8-flash`; o `gemini-2.5-flash` não vale mais para contas novas). Se o Google trocar o modelo gratuito, mude aqui (veja os modelos em aistudio.google.com/rate-limit).
 - Limite de `CFG.IA_LIMITE_DIA` (30) propostas por pessoa por dia.
 - O app manda para a IA a ideia escrita, os tipos de evento, os convidados (nome, empresa, cargo, temas, status e nota, sem e-mail nem telefone), o calendário, os eventos realizados e os já marcados. No plano gratuito o Google pode usar esses dados para melhorar os produtos dele.
 - A IA devolve tema, tipo, datas, convidados e riscos. Público, sala e custo são calculados pelo app, com o mesmo cálculo do Planejar.

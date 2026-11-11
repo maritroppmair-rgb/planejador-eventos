@@ -24,7 +24,7 @@ var CFG = {
   HORAS_AVISO: 48,          // lembrete por e-mail a partir de X horas antes
   FECHAR_HORAS_ANTES: 36,   // inscrições fecham X horas antes do início
   CARGOS_QUE_EDITAM: ['DEV', 'Diretor(a)', 'Coordenador(a)', 'Membro(a)', 'Trainee'],
-  IA_MODELO: 'gemini-2.5-flash', // troque aqui se o AI Studio mostrar outro modelo gratuito
+  IA_MODELO: 'gemini-3.8-flash', // troque aqui se o AI Studio mostrar outro modelo gratuito
   IA_LIMITE_DIA: 30              // pedidos de proposta por pessoa por dia
 };
 // ==========================================================
