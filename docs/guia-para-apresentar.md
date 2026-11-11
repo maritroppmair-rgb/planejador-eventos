@@ -26,7 +26,7 @@ Só entra quem está na lista de acesso, com a conta Google do e-mail USP. O que
 
 **Endereço:** [maritroppmair-rgb.github.io/planejador-eventos](https://maritroppmair-rgb.github.io/planejador-eventos/)
 
-**Esse link é temporário.** O app está hoje na conta do GitHub da Marília e numa conta de teste do Firebase. Com a ideia aprovada, criamos as duas contas no nome da Feashion e passamos o app para elas, com um endereço definitivo e com o nome da Feashion. Os dados vão junto (o app tem backup completo), então nada se perde na troca.
+**Esse link é temporário.** Os dados, o login e o robô de e-mails já estão na conta Google da diretoria de Eventos. Só o site ainda fica na conta do GitHub da Marília; com a ideia aprovada, ele passa para uma conta da Feashion, com um endereço definitivo e com o nome da Feashion. Os dados não mudam de lugar nessa troca.
 
 1. Abra o link e clique em **Entrar com Google**, usando o e-mail @usp.br.
 2. Se o e-mail não estiver na lista, aparece uma tela de acesso negado. A diretoria de Eventos ou a presidência libera em **Membros → Quem pode entrar**.
@@ -140,7 +140,7 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 - A previsão ainda tem poucos eventos de base; ela melhora a cada resultado registrado.
 - A previsão do tempo de verdade só existe para os próximos 16 dias; antes disso, a nota da data usa o histórico de chuva e temperatura da época. A atualização automática acontece na primeira vez que alguém da equipe abre o app depois de cada marco.
 - A Ideia de evento faz até 30 propostas por pessoa por dia e fica marcada como BETA até a Base ter pelo menos 8 eventos realizados de cada tipo principal, em 2 semestres, com erro médio da previsão abaixo de 15%. A própria tela mostra quanto falta.
-- O link do site é temporário: o app ainda está numa conta de teste. Com a ideia aprovada, ele passa para contas do GitHub e do Firebase da Feashion, com um link definitivo.
+- O link do site é temporário: os dados já estão na conta da diretoria, mas o site ainda fica no GitHub da Marília. Com a ideia aprovada, ele passa para uma conta do GitHub da Feashion, com um link definitivo.
 
 **Próximos passos:**
 
