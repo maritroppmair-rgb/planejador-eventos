@@ -290,8 +290,34 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var vista='';
   $('b-vista').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;vista=b.dataset.v;[].forEach.call(this.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});renderBase();});
   $('b-busca').addEventListener('input',function(){renderBase();});$('b-teste').addEventListener('change',function(){renderBase();});
-  var bReg=null;
-  window.aposRegistro=function(id){if(bReg===id)bReg=null;};
+  var bReg=null,bModo='ficha',andAberto={};
+  window.aposRegistro=function(id){if(bReg===id)bReg=null;if(bModo==='fin'&&TP&&TP.o.chave===id)painelFechar();};
+  /* ----- Andamento: as etapas de cada evento, da ficha ao pós-evento -----
+     Prazos contados a partir da data do evento (d = dias; negativo = antes). A Aprovação vence 48 h depois do orçamento validado.
+     Cada etapa concluída fica em e.etapas[chave] = {em, por}. A Ficha também conta como feita quando está completa. */
+  var ETAPAS=[{k:'ficha',n:'Ficha',a:'Eventos',d:-30},{k:'orcamento',n:'Orçamento',a:'Financeiro',d:-25},{k:'aprovacao',n:'Aprovação',a:'Presidência',h:48},
+    {k:'divulgacao',n:'Divulgação',a:'Marketing',d:-21},{k:'aex',n:'Dados AEX',a:'AEX',d:7},{k:'pos',n:'Pós-evento',a:'Eventos',d:7}];
+  function ddmm(x){return x?x.slice(8,10)+'/'+x.slice(5,7):'—';}
+  function somaDias(dt,n){var d=D(dt);d.setDate(d.getDate()+n);return iso(d);}
+  function etapasDe(e){var et=e.etapas||{},today=iso(new Date());
+    return ETAPAS.map(function(x){var r=et[x.k]||{},feita=!!r.em||(x.k==='ficha'&&window.__fichaCompleta&&__fichaCompleta(e)),prazo=null,txt='—';
+      if(x.h){var o=et.orcamento&&et.orcamento.em;if(o){var t=new Date(new Date(o).getTime()+x.h*36e5);prazo=iso(t);txt=ddmm(prazo);}else txt='48 h após o orçamento';}
+      else if(e.data){prazo=somaDias(e.data,x.d);txt=ddmm(prazo);}
+      return {k:x.k,n:x.n,a:x.a,feita:feita,em:r.em||'',por:r.por||'',prazo:prazo,ptxt:txt,atrasada:!feita&&prazo&&prazo<today};});}
+  function faltaTxt(prazo){if(!prazo)return '';var n=Math.round((D(prazo)-D(iso(new Date())))/864e5);
+    return n<0?'atrasada há '+(-n)+' dia'+(n===-1?'':'s'):n===0?'vence hoje':'falta'+(n===1?' 1 dia':'m '+n+' dias');}
+  function andamento(e){var dn=e.status==='realizado';
+    if(dn&&!e.etapas)return '<span class="note">Evento anterior ao andamento.</span>';
+    var l=etapasDe(e),n=l.filter(function(x){return x.feita;}).length,cur=l.filter(function(x){return !x.feita;})[0],ab=!!andAberto[e.id],id=esc(e.id);
+    var fim=!cur,ult=l[l.length-1];
+    var h='<div class="and'+(fim?' fim':'')+(ab?' on':'')+'" role="button" tabindex="0" data-eand="'+id+'" aria-expanded="'+ab+'" aria-label="Andamento: '+n+' de '+l.length+' etapas. '+(ab?'Fechar':'Ver')+' prazos e datas"><div class="and-t"><span>Andamento</span><span>'+n+' de '+l.length+'<span class="and-s" aria-hidden="true">'+(ab?'▲':'▼')+'</span></span></div>'+
+      '<ol aria-hidden="true">'+l.map(function(x){return '<li class="'+(x.feita?'ok':x===cur?(x.atrasada?'atr':'vez'):'')+'" title="'+esc(x.n+' · '+x.a+(x.feita?' · feita':x===cur?' · é a vez dela':''))+'"><i>'+(x.feita?'✓':'')+'</i></li>';}).join('')+'</ol>'+
+      '<div class="and-p">'+(fim?'<span><b>Tudo concluído</b></span>'+(ult.em?'<span class="and-d">em '+ddmm(ult.em.slice(0,10))+'</span>':''):
+        '<span>'+(cur.atrasada?'Atrasada: ':'Agora: ')+'<b>'+cur.n+'</b> · '+cur.a+'</span><span class="and-d'+(cur.atrasada?' atz':'')+'">'+(cur.prazo?'até '+cur.ptxt:cur.ptxt)+'</span>')+'</div>';
+    if(ab)h+='<ul>'+l.map(function(x){var c=x.feita?'ok':x===cur?(x.atrasada?'atr':'vez'):'';
+      var det='prazo '+x.ptxt+(x.feita?(x.em?' · concluída '+ddmm(x.em.slice(0,10))+(x.por?' por '+esc(String(x.por).split(' ')[0]):''):' · completa'):x===cur&&x.prazo?' · '+faltaTxt(x.prazo):'');
+      return '<li><span class="and-k '+c+'"></span><span><b>'+x.n+'</b> · '+x.a+'<small'+(x===cur&&x.atrasada?' class="atz"':'')+'>'+det+'</small></span></li>';}).join('')+'</ul>';
+    return h+'</div>';}
   function brl(v){return 'R$ '+(+v).toFixed(2).replace('.',',');}
   function situ(e,today){var dn=e.status==='realizado';
     if(dn){var tc=e.inscritos?Math.max(0,e.presentes-(+e.semInscricao||0))/e.inscritos:null;return tc==null?'<span class="chip neutral">realizado</span>':semaf(tc,'tc').replace('</span>',' vieram</span>');}
@@ -319,14 +345,23 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var nx=list.filter(function(e){return e.status!=='realizado'&&!(e.data&&e.data<today);}).sort(function(a,b){return (a.data||'9')<(b.data||'9')?-1:1;});
     var dn=list.filter(function(e){return e.status==='realizado';}).sort(function(a,b){return (a.data||'')<(b.data||'')?1:-1;});
     $('b-conta').textContent=list.length+(list.length===1?' evento':' eventos')+(pen.length?' · '+pen.length+' pendente'+(pen.length>1?'s':''):'');
-    function row(e){var d=e.data?e.data.slice(8,10)+'/'+e.data.slice(5,7):'—',dnn=e.status==='realizado',cp=dnn&&e.custo&&e.presentes?e.custo/e.presentes:null;
+    function row(e){var d=e.data?e.data.slice(8,10)+'/'+e.data.slice(5,7):'—',dnn=e.status==='realizado',cp=dnn&&e.custo&&e.presentes?e.custo/e.presentes:null,ed=pode('editar'),id=esc(e.id);
       var sub=[e.tipo,e.sala?(e.sala+(e.capacidade?' ('+e.capacidade+')':'')):'',e.hora,e.responsavel?'resp. '+String(e.responsavel).split(' ')[0]:''].filter(Boolean).join(' · ');
-      return '<tr data-eopen="'+esc(e.id)+'" tabindex="0"><td class="num"><b>'+d+'</b><span class="tsub">'+(e.data?e.data.slice(0,4):'')+'</span></td><td><span class="tn">'+esc(e.nome||'Sem nome')+'</span>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+'<span class="tsub"><span class="tmob">'+d+' · </span>'+esc(sub)+'</span>'+(window.__fichaSelo?'<span class="fi-selo">'+__fichaSelo(e)+'</span>':'')+'</td><td>'+insc(e)+'</td><td>'+situ(e,today)+'</td><td class="r">'+(cp!=null?semaf(cp,'cp'):'<span class="note">—</span>')+'</td><td class="r"><div class="tacoes"><button type="button" class="btn small ghost" data-egastos="'+esc(e.id)+'">'+(pode('editar')?'Registrar gastos':'Ver gastos')+'</button>'+(!dnn&&pode('editar')?'<button type="button" class="btn small'+(e.data&&e.data<=today?'':' ghost')+'" data-efin="'+esc(e.id)+'">Finalizar evento</button>':'')+'</div></td></tr>';}
-    var h='<thead><tr><th>Data</th><th>Evento</th><th>Inscrições</th><th>Situação</th><th class="r">Custo/presente</th><th class="r"><span class="sr">Ações</span></th></tr></thead><tbody>';
-    if(pen.length||nx.length)h+='<tr class="grp"><td colspan="6">Próximos e pendentes ('+(pen.length+nx.length)+')</td></tr>'+pen.concat(nx).map(row).join('');
-    if(dn.length)h+='<tr class="grp"><td colspan="6">Realizados ('+dn.length+')</td></tr>'+dn.map(row).join('');
-    if(!list.length)h+='<tr><td colspan="6" class="empty">Nenhum evento com esses filtros.</td></tr>';
-    $('etable').innerHTML=h+'</tbody>';$('etable').classList.add('tlist');
+      var pen=!dnn&&ed?'<button type="button" class="tpen" data-tplan="'+id+'" title="Abrir no Planejar" aria-label="Abrir '+esc(e.nome||'evento')+' no Planejar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>':'';
+      var acoes='<button type="button" class="btn small ghost" data-eficha="'+id+'">Ficha do evento</button>'+
+        '<button type="button" class="btn small ghost" data-egastos="'+id+'">'+(ed?'Registrar gastos':'Ver gastos')+'</button>'+
+        '<button type="button" class="btn small ghost" data-eavisos="'+id+'">Gerenciar avisos</button>'+
+        (ed?(dnn?'<button type="button" class="btn small ghost" data-efin="'+id+'">Editar resultado</button>':'<button type="button" class="btn small'+(e.data&&e.data<=today?'':' ghost')+'" data-efin="'+id+'">Finalizar evento</button>'):'');
+      return '<tbody class="evt" data-eopen="'+id+'" tabindex="0" aria-label="'+esc(e.nome||'Evento')+': abrir a ficha"><tr><td class="num tdata"><b>'+d+'</b><span class="tsub">'+(e.data?e.data.slice(0,4):'')+'</span>'+pen+'</td>'+
+        '<td><span class="tn">'+esc(e.nome||'Sem nome')+'</span>'+(e.excecao?' <span class="chip warn" title="'+esc(e.excecao.motivo||'')+'">exceção</span>':'')+'<span class="tsub">'+esc(sub)+'</span>'+(window.__fichaSelo?'<span class="fi-selo">'+__fichaSelo(e)+'</span>':'')+'</td>'+
+        '<td class="tins">'+insc(e)+'<div class="tsit">'+situ(e,today)+'</div></td><td class="tand">'+andamento(e)+'</td>'+
+        '<td class="r">'+(cp!=null?semaf(cp,'cp'):'<span class="note">—</span>')+'</td></tr>'+
+        '<tr class="evb"><td></td><td colspan="4"><div class="tacoes">'+acoes+'</div></td></tr></tbody>';}
+    var h='<thead><tr><th>Data</th><th>Evento</th><th>Inscrições</th><th>Etapas</th><th class="r">Custo/presente</th></tr></thead>';
+    if(pen.length||nx.length)h+='<tbody><tr class="grp"><td colspan="5">Próximos e pendentes ('+(pen.length+nx.length)+')</td></tr></tbody>'+pen.concat(nx).map(row).join('');
+    if(dn.length)h+='<tbody><tr class="grp"><td colspan="5">Realizados ('+dn.length+')</td></tr></tbody>'+dn.map(row).join('');
+    if(!list.length)h+='<tbody><tr><td colspan="5" class="empty">Nenhum evento com esses filtros.</td></tr></tbody>';
+    $('etable').innerHTML=h;$('etable').classList.add('tlist');
     painelAtualizar('view-base');
   };
   function fld(e,k,l,v,req,st){return '<div class="field"><label for="'+k+'-'+e.id+'">'+l+'</label><input id="'+k+'-'+e.id+'" type="number" min="0" inputmode="decimal"'+(st?' step="'+st+'"':'')+(req?' required':'')+' value="'+esc(v==null?'':v)+'"></div>';}
@@ -335,7 +370,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     return '<form class="tp-reg" data-regform="'+esc(e.id)+'" novalidate><div class="treg">'+fld(e,'ri','Inscritos',ins,1)+fld(e,'rp','Presentes (total)',g('presentes'),1)+fld(e,'rw','Vieram sem inscrição',g('semInscricao'))+fld(e,'rm','Membros presentes',g('membros'))+fld(e,'rpc','Porções compradas',g('porcoesCompradas'))+fld(e,'rpu','Porções consumidas',g('porcoesConsumidas'))+fld(e,'rd','Duração real (min)',g('duracaoReal'))+fld(e,'ra','Atraso (min)',g('atraso'))+
       '<p class="note" style="grid-column:1/-1;margin:2px 0">Os gastos e as notas fiscais ficam no botão <b>Registrar gastos</b>, na lista de eventos.</p>'+
       '<div class="field"><label for="rmt-'+esc(e.id)+'">Método de check-in</label><select id="rmt-'+esc(e.id)+'"><option value="">—</option><option value="papel"'+(e.metodoCheckin==='papel'?' selected':'')+'>Lista de papel</option><option value="qr"'+(e.metodoCheckin==='qr'?' selected':'')+'>QR</option></select></div></div>'+
-      '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">'+(dn?'Salvar resultado':'Finalizar evento')+'</button>'+(dn?'<button class="btn ghost" type="button" data-treg="">Cancelar</button>':'')+'</div></form>';}
+      '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">'+(dn?'Salvar resultado':'Finalizar evento')+'</button><button class="btn ghost" type="button" data-tclose>Cancelar</button></div></form>';}
   /* ----- e-mails para os inscritos ----- */
   var ETIPOS=[['confirmacao','Confirmação de inscrição','até 10 min depois de cada inscrição',true],['lembrete','Lembrete','a partir de 48 h antes',true],['dia','Aviso no dia','3 h antes do início',false],['agradecimento','Agradecimento','no dia seguinte ao evento',true]];
   var bEmail=null,rasc={},prevHtml={},emMsg={},emOcup={},alcance={},hist={},modelos=null;
@@ -375,26 +410,31 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function carregarModelos(){if(modelos)return Promise.resolve(modelos);return robo('modelos','x').then(function(j){modelos=j.modelos;return modelos;});}
   function montar(id){var e=events.filter(function(x){return x.id===id;})[0];if(!e)return null;
     if(bEmail&&bEmail.id===id)return editor(e,bEmail.tipo);
-    var today=iso(new Date()),dn=e.status==='realizado',late=!dn&&e.data&&e.data<today,reg=pode('editar')&&(bReg===id||late);
+    var today=iso(new Date()),dn=e.status==='realizado',late=!dn&&e.data&&e.data<today;
     var quando=e.data?D(e.data).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'sem data';
     var sub=quando+(e.hora?' · '+e.hora:'')+(e.sala?' · '+esc(e.sala):'')+' '+situ(e,today);
+    if(bModo==='fin'&&pode('editar'))return {titulo:(dn?'Editar resultado · ':'Finalizar · ')+(e.nome||'Evento'),sub:sub,corpo:blk('',(dn?'':'<p class="note" style="margin:0 0 10px">'+(late?'O evento já aconteceu. ':'')+'Preencha com a lista de presença: é isso que calibra os próximos. Ao finalizar, o evento passa para Realizados.</p>')+regForm(e)),rodape:''};
+    if(bModo==='avisos'){var temF=window.ROBO_URL&&e.inscricao&&e.inscricao.formId;
+      return {titulo:'Avisos · '+(e.nome||'Evento'),sub:sub,corpo:temF?emailsBlk(e):blk('','<p class="note" style="margin:0">Os avisos automáticos (confirmação, lembrete, aviso no dia e agradecimento) são enviados para quem se inscreveu pelo Google Forms. Crie o Forms na <b>Ficha do evento</b> para ligar os avisos deste evento.</p>'),rodape:''};}
     var corpo=window.__fichaBlk?'':blk('',pode('editar')?'<label class="tresp"><span>Responsável</span><select data-tresp="'+esc(id)+'"></select></label>':'<p class="tresp" style="margin:0"><span>Responsável</span><b>'+esc(e.responsavel||'—')+'</b></p>');
-    if(reg)corpo+=blk(dn?'Editar resultado':'Finalizar evento',(dn?'':'<p class="note" style="margin:0 0 10px">'+(late?'O evento já aconteceu. ':'')+'Preencha com a lista de presença: é isso que calibra os próximos. Ao finalizar, o evento passa para Realizados.</p>')+regForm(e));
     if(window.__fichaBlk)corpo+=window.__fichaBlk(e); /* ficha do evento (ficha.js) */
     if(dn||!window.__fichaBlk)corpo+=blk(dn?'Resultado e previsto × real':'Detalhes',detail(e,{ficha:!!window.__fichaBlk})); /* antes de acontecer, a ficha já mostra o que importa */
-    if(window.ROBO_URL&&e.inscricao&&e.inscricao.formId)corpo+=emailsBlk(e);
-    var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Finalizar evento</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
+    var rod=pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir evento</button>':'';
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
-  function abrir(id){
-    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;if(window.__fichaFechou)__fichaFechou(id);},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
+  function abrir(id,modo){bModo=modo||'ficha';bEmail=null;
+    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;bModo='ficha';if(window.__fichaFechou)__fichaFechou(id);},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
   /* gastos e notas fiscais (fin.js) num painel próprio, aberto pelo botão da lista */
   function abrirGastos(id){
     painelAbrir({sec:'view-base',chave:'gastos:'+id,montar:function(){var e=events.filter(function(x){return x.id===id;})[0];if(!e||!window.__gastosBlk)return null;
       var quando=e.data?D(e.data).toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'sem data';
       return {titulo:'Gastos · '+(e.nome||'Evento'),sub:quando+' '+situ(e,iso(new Date())),corpo:window.__gastosBlk(e),rodape:'<div class="btns"><button type="button" class="btn ghost" data-tabrir="'+esc(id)+'">Ver detalhes do evento</button></div>'};},
       foco:'#g-valor',depois:function(dr){if(window.__gastosLigar)window.__gastosLigar(dr,id);var b=dr.querySelector('[data-tabrir]');if(b)b.addEventListener('click',function(){abrir(id);});}});}
-  function clique(e){var bg=e.target.closest('[data-egastos]'),bf=e.target.closest('[data-efin]');
-    if(bg||bf){if(e.type!=='click')return;e.stopPropagation();if(bg){abrirGastos(bg.dataset.egastos);return;}bReg=bf.dataset.efin;abrir(bReg);return;}
+  function clique(e){var bg=e.target.closest('[data-egastos]'),bf=e.target.closest('[data-efin]'),bfi=e.target.closest('[data-eficha]'),bav=e.target.closest('[data-eavisos]'),ba=e.target.closest('[data-eand]');
+    if(e.target.closest('[data-tplan]'))return; /* a canetinha: tratada abaixo (leva ao Planejar) */
+    if(ba){if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();var ai=ba.dataset.eand;andAberto[ai]=!andAberto[ai];renderBase();var nb=e.type==='keydown'&&$('etable').querySelector('[data-eand="'+ai+'"]');if(nb)nb.focus();return;}
+    if(bg||bf||bfi||bav){if(e.type!=='click')return;e.stopPropagation();if(bg){abrirGastos(bg.dataset.egastos);return;}
+      if(bfi){abrir(bfi.dataset.eficha);return;}if(bav){abrir(bav.dataset.eavisos,'avisos');return;}bReg=bf.dataset.efin;abrir(bReg,'fin');return;}
+    if(e.type==='keydown'&&e.target.closest('button'))return;
     var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
   $('etable').addEventListener('click',clique);$('etable').addEventListener('keydown',clique);
   document.addEventListener('permissoes',function(){adiar('view-base',renderBase,function(){return regOpen!=null;});}); /* botões da lista dependem do cargo */

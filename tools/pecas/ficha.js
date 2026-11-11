@@ -32,6 +32,7 @@ function itens(e,r){var i=e.inscricao;return [
   ['Sala reservada',r.salaReservada==='sim'&&!!String(r.reservaNum).trim()],['Plano B',!!String(r.planoB).trim()]];}
 function situacao(e,r){var l=itens(e,r||base(e)),ok=l.filter(function(x){return x[1];}).length,d=dias(e);
   return {ok:ok,total:l.length,faltam:l.filter(function(x){return !x[1];}).map(function(x){return x[0];}),atrasada:ok<l.length&&d!=null&&d<30};}
+window.__fichaCompleta=function(e){var s=situacao(e);return s.ok===s.total;};
 window.__fichaSelo=function(e){if(e.status==='realizado')return '';var s=situacao(e);
   if(s.ok===s.total)return ' <span class="chip ok">ficha completa</span>';
   return ' <span class="chip '+(s.atrasada?'bad':'neutral')+'" title="Falta: '+esc(s.faltam.join(', '))+'">'+(s.atrasada?'ficha atrasada':'ficha: faltam '+(s.total-s.ok))+'</span>';};
@@ -136,7 +137,8 @@ sec.addEventListener('click',function(ev){var b=ev.target.closest('[data-fi-eqx]
     var f={equipe:r.equipe,objetivo:String(r.objetivo).trim().slice(0,200),metaSatisfacao:r.metaSatisfacao===''?null:+r.metaSatisfacao,publico:r.publico,semConvidado:!!r.semConvidado,salaReservada:r.salaReservada,reservaNum:String(r.reservaNum).trim().slice(0,60),
       levar:r.levar.filter(function(x){return x.item;}),brindes:r.brindes.filter(function(x){return x.item;}),planoB:String(r.planoB).trim().slice(0,800),fotos:fu,linkExterno:lxs};
     b.disabled=true;var m=b.parentNode.querySelector('.msg');if(m)m.textContent='Salvando…';
-    db.doc('eventos/'+id).update({ficha:f}).then(function(){delete SUJO[id];delete RASC[id];MSG[id]='Ficha salva.';redesenha();},function(){b.disabled=false;if(m)m.textContent='Não foi possível salvar a ficha.';});}});
+    var up={ficha:f},sc=situacao(e,r);if(sc.ok===sc.total&&!(e.etapas&&e.etapas.ficha&&e.etapas.ficha.em))up['etapas.ficha']={em:new Date().toISOString(),por:String(window.__meuNome||'').slice(0,80)}; /* Andamento: ficha concluída */
+    db.doc('eventos/'+id).update(up).then(function(){delete SUJO[id];delete RASC[id];MSG[id]='Ficha salva.';redesenha();},function(){b.disabled=false;if(m)m.textContent='Não foi possível salvar a ficha.';});}});
 /* Enter num campo de texto da ficha não fecha nada nem envia */
 sec.addEventListener('keydown',function(ev){if(ev.key!=='Enter')return;var k=ev.target.id;
   if(k==='fi-litem'||k==='fi-lquem'||k==='fi-bitem'||k==='fi-bquem'){ev.preventDefault();var b=sec.querySelector(k.charAt(3)==='l'?'[data-fi-ladd]':'[data-fi-badd]');if(b)b.click();}});
