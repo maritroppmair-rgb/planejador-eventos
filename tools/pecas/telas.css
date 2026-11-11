@@ -513,3 +513,24 @@ select.ck-s{cursor:pointer;padding-right:4px}
 .fc-ap .pg-l{margin-top:10px}
 .fc-ap li{cursor:pointer}.fc-ap li:hover{border-color:var(--wine)}
 @media (max-width:700px){.orc-r{grid-template-columns:1fr 1fr 24px;grid-template-areas:"t v x" "d d d" "f f f" "o o o" "g g g"}.orc-r .vb-in{justify-content:flex-start}}
+/* Briefing ao Marketing e Divulgação dos eventos (mkt.js) */
+.tbr-ok{border-color:color-mix(in srgb,var(--green) 45%,var(--line))!important;color:var(--green)!important}
+.br-artes{display:flex;flex-wrap:wrap;gap:6px 14px}
+.br-dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:0;font-size:13.5px}
+.br-dl dt{color:var(--muted)}.br-dl dd{margin:0;overflow-wrap:anywhere}
+.br-h5{margin:14px 0 6px;font-family:var(--label);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--wine)}
+.br-at{display:inline-block;margin:0 0 8px}
+.br-aut{display:flex;flex-wrap:wrap;gap:6px}
+.br-nao{margin:0;padding-left:18px;font-size:13px}
+.dv-canal{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 8px;background:var(--surface)}
+.dv-cab{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;justify-content:space-between}
+.dv-nome{flex:1;min-width:120px;font-weight:700;padding:5px 8px;font-size:13.5px}
+.dv-resp{display:flex;align-items:center;gap:6px;font-size:12px}.dv-resp span{color:var(--muted)}.dv-resp select{width:auto;padding:4px 8px;font-size:12.5px;min-height:0;height:auto}
+.dv-l{list-style:none;margin:8px 0 6px;padding:0;display:grid;gap:5px}
+.dv-p{display:grid;grid-template-columns:96px minmax(0,1fr) 128px auto 24px;gap:6px;align-items:center;font-size:13px}
+.dv-p select,.dv-p input:not([type=checkbox]){width:100%;min-width:0;padding:4px 6px;font-size:12.5px;min-height:0;height:auto}
+.dv-p.pub input[data-df="oque"]{color:var(--green)}
+.dv-pub{font-size:12px;white-space:nowrap}
+li.dv-p:not(:has(select)){grid-template-columns:auto minmax(0,1fr) auto auto}
+.dv-atr{color:var(--red);font-weight:700}
+@media (max-width:700px){.dv-p{grid-template-columns:1fr 1fr 24px}.dv-p input[data-df="oque"]{grid-column:1/-1;grid-row:2}.dv-p input[type=date]{grid-row:3}.dv-pub{grid-row:3}}

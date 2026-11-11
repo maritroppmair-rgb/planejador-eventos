@@ -647,6 +647,7 @@ function pontosFeitos(ev, convidados) {
       if (!ids.length && f.semConvidado) ok.conv = marcado(ck.conv);
       else { var cf = ev.convConfirmados || {}; ok.conv = ids.length > 0 && ids.every(function (i) { return !!cf[i]; }); } // check "Confirmado por escrito" da ficha
     }
+    else if (p.k === 'brief') ok.brief = !!(ev.briefing && ev.briefing.enviadoEm); // botão Enviar briefing (linha do evento)
     else if (p.k === 'lembrete' && ev.inscricao && ev.inscricao.formId) { var x = (ev.inscricao.emails || {}).lembrete; ok.lembrete = !!(x && x.enviados > 0); }
     else ok[p.k] = marcado(p.c ? et[p.c] : ck[p.k]);
   });
@@ -698,13 +699,13 @@ function mandar(para, m) {
   return true;
 }
 function diaCurto(ev) { return dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4); }
-/* o botão abre as Pendências; no orçamento, abre direto o orçamento do evento no Financeiro */
+/* o botão abre as Pendências; no orçamento e na divulgação, abre direto o evento na tela do Financeiro ou do Marketing */
 function moldura(txt, p, ev) {
-  var orc = p && p.k === 'orc' && ev;
-  var link = orc ? CFG.SITE + '#orcamento=' + encodeURIComponent(ev._id) : CFG.SITE + '#pendencias';
+  var orc = p && p.k === 'orc' && ev, dv = p && p.k === 'divulg' && ev;
+  var link = orc ? CFG.SITE + '#orcamento=' + encodeURIComponent(ev._id) : dv ? CFG.SITE + '#divulgacao=' + encodeURIComponent(ev._id) : CFG.SITE + '#pendencias';
   return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">' + txt +
-    '<p>' + (orc ? 'O ponto fica verde quando a diretoria do Financeiro clicar em <b>Validar orçamento</b> no Planejador.' : 'Quando terminar, marque o ponto como concluído no Planejador (tela Pendências).') + '</p>' +
-    '<p><a href="' + link + '" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">' + (orc ? 'Abrir o orçamento' : 'Abrir as pendências') + '</a></p>' +
+    '<p>' + (orc ? 'O ponto fica verde quando a diretoria do Financeiro clicar em <b>Validar orçamento</b> no Planejador.' : dv ? 'O briefing completo e o plano de divulgação estão no Planejador. O ponto fica verde quando a diretoria do Marketing clicar em <b>Divulgação feita</b>.' : 'Quando terminar, marque o ponto como concluído no Planejador (tela Pendências).') + '</p>' +
+    '<p><a href="' + link + '" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">' + (orc ? 'Abrir o orçamento' : dv ? 'Abrir a divulgação' : 'Abrir as pendências') + '</a></p>' +
     '<p style="color:#777;font-size:12px">Aviso automático do Planejador de Eventos da Feashion.</p></div>';
 }
 function emailVez(ev, p) {

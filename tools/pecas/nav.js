@@ -21,6 +21,7 @@ var I={
   'fin-custos':'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
   'fin-coffee':'<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/>',
   'fin-ana':'<path d="M5 20V11M12 20V5M19 20v-6"/>',
+  'mkt-div':'<path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12"/>',
   'mkt-posts':'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5-9 9"/>',
   'mkt-met':'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   'cd-cap':'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2.5 2 9.5 2 12 0v-5"/>',
@@ -36,7 +37,7 @@ var MENU={
              ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab'],['fin-coffee','Contatos de coffee','view']]],
              ['Ajustes',[['par','Parâmetros','tab']]]],
   'Financeiro':[['Financeiro',[['fin-custos','Orçamento por evento','view'],['fin-ana','Analytics','view']]]],
-  'Marketing':[['Marketing',[['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
+  'Marketing':[['Marketing',[['mkt-div','Divulgação dos eventos','view'],['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
@@ -45,6 +46,7 @@ var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],
   'fin-ana':['Analytics','Financeiro','Visão dos gastos dos eventos.'],
+  'mkt-div':['Divulgação dos eventos','Marketing','Briefing, plano de divulgação e autorização de imagem de cada evento.'],
   'mkt-posts':['Posts','Marketing','Do rascunho à publicação: ideia, produção, aprovação e publicado.'],
   'mkt-met':['Métricas','Marketing','Seguidores, alcance e engajamento, mês a mês.'],
   'cd-cap':['Capacitações','C&D','Treinamentos e aulas, com data, tema, quem dá e presença.'],

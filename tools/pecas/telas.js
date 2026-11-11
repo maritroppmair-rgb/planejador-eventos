@@ -325,6 +325,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       var sub=[e.tipo,e.sala?(e.sala+(e.capacidade?' ('+e.capacidade+')':'')):'',e.hora,e.responsavel?'resp. '+String(e.responsavel).split(' ')[0]:''].filter(Boolean).join(' · ');
       var pen=!dnn&&ed?'<button type="button" class="tpen" data-tplan="'+id+'" title="Abrir no Planejar" aria-label="Abrir '+esc(e.nome||'evento')+' no Planejar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>':'';
       var acoes='<button type="button" class="btn small ghost" data-eficha="'+id+'">Ficha do evento</button>'+
+        (window.__abrirBrief?'<button type="button" class="btn small ghost'+(window.__briefingEnviado&&__briefingEnviado(e)?' tbr-ok':'')+'" data-ebrief="'+id+'">Briefing ao Marketing</button>':'')+
         '<button type="button" class="btn small ghost" data-egastos="'+id+'">'+(ed?'Registrar gastos':'Ver gastos')+'</button>'+
         '<button type="button" class="btn small ghost" data-eavisos="'+id+'">Gerenciar avisos</button>'+
         (ed?(dnn?'<button type="button" class="btn small ghost" data-efin="'+id+'">Editar resultado</button>':'<button type="button" class="btn small'+(e.data&&e.data<=today?'':' ghost')+'" data-efin="'+id+'">Finalizar evento</button>'):'');
@@ -409,6 +410,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       foco:'#g-valor',depois:function(dr){if(window.__gastosLigar)window.__gastosLigar(dr,id);var b=dr.querySelector('[data-tabrir]');if(b)b.addEventListener('click',function(){abrir(id);});}});}
   function clique(e){var bg=e.target.closest('[data-egastos]'),bf=e.target.closest('[data-efin]'),bfi=e.target.closest('[data-eficha]'),bav=e.target.closest('[data-eavisos]'),ba=e.target.closest('[data-eand]');
     if(e.target.closest('[data-tplan]'))return; /* a canetinha: tratada abaixo (leva ao Planejar) */
+    var bbr=e.target.closest('[data-ebrief]');if(bbr){if(e.type!=='click')return;e.stopPropagation();window.__abrirBrief(bbr.dataset.ebrief);return;} /* briefing (mkt.js) */
     if(e.target.closest('.and-x'))return; /* checklist aberto: os seletores são tratados em etapas.js */
     if(ba){if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();var ai=ba.dataset.eand;andAberto[ai]=!andAberto[ai];renderBase();var nb=e.type==='keydown'&&$('etable').querySelector('[data-eand="'+ai+'"]');if(nb)nb.focus();return;}
     if(bg||bf||bfi||bav){if(e.type!=='click')return;e.stopPropagation();if(bg){abrirGastos(bg.dataset.egastos);return;}

@@ -12,7 +12,8 @@
    Por enquanto os pontos manuais se marcam na tela Pendências; depois, sozinhos, quando cada diretoria cumprir a sua tarefa no site.
    (O Responsável AEX ainda não se escolhe no site: por enquanto o Formulário da AEX é marcado por quem edita Eventos.)
    Quem marca: Aprovação, só Presidente, Vice-presidente e DEV (ficha pronta, evento futuro), no botão ao lado de "Salvar ficha";
-   Orçamento, sozinho, quando a diretoria do Financeiro clica em Validar orçamento (fin.js); Divulgação, a diretoria do Marketing; Formulário da AEX, o responsável AEX;
+   Orçamento, sozinho, quando a diretoria do Financeiro clica em Validar orçamento (fin.js); Briefing, quando Eventos envia o briefing,
+   e Divulgação, quando a diretoria do Marketing clica em Divulgação feita (mkt.js); Divulgação, a diretoria do Marketing; Formulário da AEX, o responsável AEX;
    o resto, quem edita Eventos. O acesso geral marca tudo, menos a Aprovação. */
 (function(){
 "use strict";
@@ -44,10 +45,10 @@ var PONTOS=[
   {k:'conv',n:'Convidado confirmado por escrito',b:30,d:33,a:'Eventos',auto:convOk},
   {k:'sala',n:'Sala reservada',b:30,d:33,a:'Eventos',auto:function(e){var f=e.ficha||{};return f.salaReservada==='sim'&&!!String(f.reservaNum||'').trim();}},
   {k:'orc',n:'Orçamento validado',b:30,d:33,a:'Financeiro',c:'etapas.orcamento',como:'ao validar o orçamento',auto:function(e){var v=e.etapas&&e.etapas.orcamento;return !!(v&&(v.s==='ok'||(v.em&&!v.s)));}},
-  {k:'brief',n:'Briefing ao Marketing',b:30,d:30,a:'Eventos'},
+  {k:'brief',n:'Briefing ao Marketing',b:30,d:30,a:'Eventos',como:'ao enviar o briefing',auto:function(e){return !!(e.briefing&&e.briefing.enviadoEm);}},
   {k:'forn',n:'Fornecedores confirmados',b:7,d:14,a:'Eventos'},
   {k:'aexform',n:'Formulário da AEX pronto',b:7,d:12,a:'AEX',c:'etapas.aex'},
-  {k:'divulg',n:'Divulgação feita',b:7,d:10,a:'Marketing',c:'etapas.divulgacao'},
+  {k:'divulg',n:'Divulgação feita',b:7,d:10,a:'Marketing',c:'etapas.divulgacao',como:'ao clicar em Divulgação feita',auto:function(e){var v=e.etapas&&e.etapas.divulgacao;return !!(v&&(v.s==='ok'||(v.em&&!v.s)));}},
   {k:'funcoes',n:'Funções do dia definidas',b:7,d:7,a:'Eventos'},
   {k:'reconf',n:'Reconfirmar convidado e sala',b:3,d:5,a:'Eventos'},
   {k:'roteiro',n:'Roteiro enviado à equipe',b:3,d:4,a:'Eventos'},
@@ -60,7 +61,8 @@ function pontosDe(e){var t=hoje(),fim=dn(e);
   return PONTOS.map(function(p){var au=p.auto?p.auto(e):null,g=gravado(e,p),s,em='',por='';
     if(au!=null){s=au?'ok':'';if(p.k==='ficha'&&e.etapas&&e.etapas.ficha){em=e.etapas.ficha.em||'';por=e.etapas.ficha.por||'';}
       if(p.k==='conv'&&au){var u=convUltimo(e);if(u){em=u.em;por=u.por||'';}}
-      if(p.c&&au){em=g.em||'';por=g.por||'';}}
+      if(p.c&&au){em=g.em||'';por=g.por||'';}
+      if(p.k==='brief'&&au){em=e.briefing.enviadoEm||'';por=e.briefing.enviadoPor||'';}}
     else{s=g.s==='ok'||g.s==='andamento'?g.s:g.em?'ok':'';em=g.em||'';por=g.por||'';}  /* marcas antigas {em,por} contam como concluídas */
     var prazo=e.data?somaDias(e.data,-p.d):null;
     return {p:p,k:p.k,n:p.n,a:p.a,b:p.b,s:s,feito:s==='ok',auto:au!=null,em:em,por:por,prazo:prazo,ptxt:ddmm(prazo),atrasado:s!=='ok'&&!fim&&!!prazo&&prazo<t};});}
@@ -117,7 +119,9 @@ function ligar(sec){if(!sec)return;
   sec.addEventListener('change',function(ev){var t=ev.target;
     if(t.dataset.et==='aprov'){gravar(t.dataset.eid,'aprov',t.checked?'ok':'');t.blur();return;}
     if(t.dataset.ck){gravar(t.dataset.eid,t.dataset.ck,t.value);t.className='ck-s '+(t.value||'nao');return;}});
-  sec.addEventListener('click',function(ev){var o=ev.target.closest('[data-pd-orc]');if(o&&window.__abrirOrc){__abrirOrc(o.dataset.pdOrc);return;}var b=ev.target.closest('[data-pd-abrir]');if(b&&window.__abrirFicha)__abrirFicha(b.dataset.pdAbrir);});}
+  sec.addEventListener('click',function(ev){var o=ev.target.closest('[data-pd-orc]');if(o&&window.__abrirOrc){__abrirOrc(o.dataset.pdOrc);return;}
+    var o2=ev.target.closest('[data-pd-brief]');if(o2&&window.__abrirBrief){__abrirBrief(o2.dataset.pdBrief);return;}
+    var o3=ev.target.closest('[data-pd-div]');if(o3&&window.__abrirDiv){__abrirDiv(o3.dataset.pdDiv);return;}var b=ev.target.closest('[data-pd-abrir]');if(b&&window.__abrirFicha)__abrirFicha(b.dataset.pdAbrir);});}
 ligar($('view-base'));
 
 /* ============ PENDÊNCIAS DA MINHA ÁREA ============ */
@@ -136,6 +140,8 @@ function pendencias(){var t=hoje(),lim=somaDias(t,14),out=[],tst=$('b-teste');
   return out.sort(function(a,b){return a.x.prazo<b.x.prazo?-1:a.x.prazo>b.x.prazo?1:0;});}
 function linhaPend(r){var e=r.e,x=r.x,id=esc(e.id),acao='',P0=P(),podeVer=!!P0&&!!P0.podeEm('Eventos').ver;
   if(x.k==='aprov'){if(pres()&&!bloqueioAprov(e))acao+='<label class="check et-ck"><input type="checkbox" data-et="aprov" data-eid="'+id+'">Aprovo esta ficha</label>';}
+  else if(x.k==='brief'){if(podeVer&&window.__abrirBrief)acao+='<button type="button" class="btn small" data-pd-brief="'+id+'">Abrir briefing</button>';}
+  else if(x.k==='divulg'){if(P0&&P0.podeEm('Marketing').ver&&window.__abrirDiv)acao+='<button type="button" class="btn small" data-pd-div="'+id+'">Abrir divulgação</button>';}
   else if(x.k==='orc'){if(P0&&P0.podeEm('Financeiro').ver&&window.__abrirOrc)acao+='<button type="button" class="btn small" data-pd-orc="'+id+'">Abrir orçamento</button>';}
   else if(podeMarcar(x.p,e))acao+=seletor(x,e.id);
   if(podeVer)acao+='<button type="button" class="btn small ghost" data-pd-abrir="'+id+'">Abrir ficha</button>';
