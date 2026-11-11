@@ -773,13 +773,14 @@ function ideia(b, u) {
   while (true) {
     r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, payload: JSON.stringify(corpo), muteHttpExceptions: true });
     var c = r.getResponseCode();
-    if ((c === 503 || c === 500) && tentativa < 1) { tentativa++; Utilities.sleep(2000); continue; }
+    if ((c === 503 || c === 500) && tentativa < 3) { tentativa++; Utilities.sleep(3000 * tentativa); continue; }
     break;
   }
   var code = r.getResponseCode();
   if (code === 429) throw new Error('A IA gratuita está no limite agora. Espere um minuto e tente de novo.');
   if (code === 404) throw new Error('O modelo ' + CFG.IA_MODELO + ' não está disponível. Troque IA_MODELO no robô.');
   if (code === 400 || code === 403) throw new Error('A chave da IA foi recusada (' + code + '). Confira a GEMINI_KEY.');
+  if (code === 503) throw new Error('A IA do Google está sobrecarregada agora. Tente de novo em alguns minutos.');
   if (code !== 200) throw new Error('A IA não respondeu (erro ' + code + '). Tente de novo.');
   var j = JSON.parse(r.getContentText()), cand = (j.candidates || [])[0];
   var txt = cand && cand.content && cand.content.parts && cand.content.parts.map(function (p) { return p.text || ''; }).join('');
