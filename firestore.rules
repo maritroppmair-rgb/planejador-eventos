@@ -225,7 +225,7 @@ service cloud.firestore {
 
     match /{colecao}/{documento=**} {
       allow read: if liberado();
-      allow create, update: if !reservada(colecao) && podeNa(colecao, EDITA()); && aprovacaoOk(colecao);
+      allow create, update: if !reservada(colecao) && podeNa(colecao, EDITA()) && aprovacaoOk(colecao);
       allow delete: if !reservada(colecao) && podeNa(colecao, EXCLUI());
     }
   }
