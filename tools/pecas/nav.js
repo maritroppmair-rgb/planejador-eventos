@@ -34,7 +34,7 @@ var MENU={
   'Eventos':[['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
              ['Recursos',[['conv','Convidados','tab'],['salas','Salas','tab']]],
              ['Ajustes',[['par','Parâmetros','tab']]]],
-  'Financeiro':[['Financeiro',[['fin-custos','Custos por evento','view'],['fin-coffee','Contatos de coffee','view'],['fin-ana','Analytics','view']]]],
+  'Financeiro':[['Financeiro',[['fin-custos','Verba por evento','view'],['fin-coffee','Contatos de coffee','view'],['fin-ana','Analytics','view']]]],
   'Marketing':[['Marketing',[['mkt-posts','Posts','view'],['mkt-met','Métricas','view']]]],
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
@@ -42,7 +42,7 @@ var MENU={
 var GERAL=['Geral',[['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
-  'fin-custos':['Custos por evento','Financeiro','Previsto e real de cada evento, com os comprovantes.'],
+  'fin-custos':['Verba por evento','Financeiro','Verba liberada para cada evento.'],
   'fin-ana':['Analytics','Financeiro','Visão dos gastos dos eventos.'],
   'mkt-posts':['Posts','Marketing','Do rascunho à publicação: ideia, produção, aprovação e publicado.'],
   'mkt-met':['Métricas','Marketing','Seguidores, alcance e engajamento, mês a mês.'],

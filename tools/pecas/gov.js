@@ -7,7 +7,7 @@
 function $(i){return document.getElementById(i);}
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var DIAS_LIXEIRA=30,DIAS_BACKUP=30,PASSO=200;
-var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro',fin_coffee:'Contato de coffee',fin_custos:'Gasto de evento'};
+var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro',fin_coffee:'Contato de coffee',fin_verbas:'Verba de evento'};
 var ACAO={criou:'criou',editou:'editou',excluiu:'excluiu',restaurou:'restaurou',exportou:'exportou',importou:'importou'};
 var CAMPO={areas:'cargos',presidencia:'presidência',responsavel:'responsável',responsavelId:'',hora:'horário',duracao:'duração',obs:'observações',inicio:'início',fim:'fim',penalidade:'penalidade',ativa:'ativa',potencial:'potencial'};
 function tipo(c){return TIPO[c]||c;}

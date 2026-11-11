@@ -1069,7 +1069,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 });
 function salvarRegistro(e){e.preventDefault();var f=e.target,id=f.dataset.regform;if(!id||!db)return;
   function v(p){var el=$(p+'-'+id);if(!el)return null;var x=el.value;return x===''?null:+x;}
-  var cb=null,cn=null; /* os gastos agora são lançados pelo Financeiro (Custos por evento) */
+  var cb=null,cn=null; /* os gastos agora são lançados no bloco Gastos do painel do evento (fin.js) */
   var erro=(function(){var pr=v('rp'),ins=v('ri'),sw=v('rw')||0,mb=v('rm'),pc=v('rpc'),pu=v('rpu');
     var campos=[['ri',ins],['rp',pr],['rw',v('rw')],['rm',mb],['rd',v('rd')],['rpc',pc],['rpu',pu],['rcb',cb],['rcn',cn]];
     for(var i=0;i<campos.length;i++){if(campos[i][1]!=null&&campos[i][1]<0)return 'Os números não podem ser negativos.';}

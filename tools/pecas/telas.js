@@ -304,7 +304,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function regForm(e){var dn=e.status==='realizado',g=function(k){return dn&&e[k]!=null?e[k]:'';};
     var ins=dn?e.inscritos:(e.inscricao&&e.inscricao.formId?e.inscricao.total:(e.inscritosMeta||''));
     return '<form class="tp-reg" data-regform="'+esc(e.id)+'" novalidate><div class="treg">'+fld(e,'ri','Inscritos',ins,1)+fld(e,'rp','Presentes (total)',g('presentes'),1)+fld(e,'rw','Vieram sem inscrição',g('semInscricao'))+fld(e,'rm','Membros presentes',g('membros'))+fld(e,'rpc','Porções compradas',g('porcoesCompradas'))+fld(e,'rpu','Porções consumidas',g('porcoesConsumidas'))+fld(e,'rd','Duração real (min)',g('duracaoReal'))+fld(e,'ra','Atraso (min)',g('atraso'))+
-      '<p class="note" style="grid-column:1/-1;margin:2px 0">Os gastos do evento são lançados pelo Financeiro, em <b>Custos por evento</b>.</p>'+
+      '<p class="note" style="grid-column:1/-1;margin:2px 0">Os gastos e as notas fiscais do evento são lançados no bloco <b>Gastos</b>, mais abaixo.</p>'+
       '<div class="field"><label for="rmt-'+esc(e.id)+'">Método de check-in</label><select id="rmt-'+esc(e.id)+'"><option value="">—</option><option value="papel"'+(e.metodoCheckin==='papel'?' selected':'')+'>Lista de papel</option><option value="qr"'+(e.metodoCheckin==='qr'?' selected':'')+'>QR</option></select></div></div>'+
       '<div class="btns" style="margin-top:12px"><button class="btn" type="submit">Salvar resultado</button>'+(dn?'<button class="btn ghost" type="button" data-treg="">Cancelar</button>':'')+'</div></form>';}
   /* ----- e-mails para os inscritos ----- */
@@ -352,11 +352,12 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var corpo=blk('',pode('editar')?'<label class="tresp"><span>Responsável</span><select data-tresp="'+esc(id)+'"></select></label>':'<p class="tresp" style="margin:0"><span>Responsável</span><b>'+esc(e.responsavel||'—')+'</b></p>');
     if(reg)corpo+=blk(dn?'Editar resultado':'Registrar resultado',(dn?'':'<p class="note" style="margin:0 0 10px">O evento já aconteceu. Preencha com a lista de presença: é isso que calibra os próximos.</p>')+regForm(e));
     corpo+=blk(dn?'Resultado e previsto × real':'Detalhes',detail(e));
+    if(window.__gastosBlk)corpo+=window.__gastosBlk(e); /* gastos e notas fiscais (fin.js) */
     if(window.ROBO_URL&&e.inscricao&&e.inscricao.formId)corpo+=emailsBlk(e);
     var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Registrar resultado</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
   function abrir(id){
-    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
+    painelAbrir({sec:'view-base',chave:id,montar:function(){return montar(id);},foco:'.tp-reg input',aoFechar:function(){bReg=null;bEmail=null;},depois:function(dr){var f=dr.querySelector('.tp-reg');if(f)f.addEventListener('submit',salvarRegistro);if(window.__gastosLigar)window.__gastosLigar(dr,id);var rs=dr.querySelector('[data-tresp]');if(rs){var ev=events.filter(function(x){return x.id===id;})[0];opcoesMembros(rs,ev&&ev.responsavel);}}});}
   function clique(e){var tr=e.target.closest('[data-eopen]');if(tr&&(e.type==='click'||e.key==='Enter'||e.key===' ')){if(e.type==='keydown')e.preventDefault();abrir(tr.dataset.eopen);}}
   $('etable').addEventListener('click',clique);$('etable').addEventListener('keydown',clique);
   var ultimoCampo=null;

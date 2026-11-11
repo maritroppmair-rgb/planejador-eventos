@@ -56,7 +56,7 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da 
 | --- | --- | --- |
 | **Ideia de evento** (BETA) | Descrever em texto corrido o evento ou a série que se quer; a IA propõe nome, formato, datas e convidados da nossa lista | Que público, sala e coffee da proposta são calculados pelo próprio Planejar, que dá para pedir ajustes ou trocar um evento da série, e o medidor "Para sair do BETA" |
 | **Planejar** | Montar um evento novo: tipo, data, inscrições esperadas e necessidades da sala | A faixa de público provável, a sala sugerida com 2 alternativas, as compras calculadas e a previsão do tempo na nota da data |
-| **Base** | Histórico de todos os eventos salvos, com o resultado real de cada um | Registrar resultado (inscritos, presentes, porções), os indicadores com semáforo e o selo ⚠ clima quando a previsão do tempo piora a data de um evento. O custo vem do que o Financeiro lançou |
+| **Base** | Histórico de todos os eventos salvos, com o resultado real de cada um | Registrar resultado (inscritos, presentes, porções), os indicadores com semáforo e o selo ⚠ clima quando a previsão do tempo piora a data de um evento. Dentro de cada evento, o bloco **Gastos**: a área de Eventos lança cada gasto (coffee com o local, material, sala ou outro) e anexa as notas fiscais, vendo previsto, verba liberada pelo Financeiro e quanto já gastou |
 | **Analytics** | Visão geral em gráficos, com filtro por semestre e tipo | Comparecimento por tipo, previsto × real e custo por presente contra a meta |
 | **Mailing** | Lista de quem pediu para receber os próximos eventos (marcado no Forms), sem e-mail repetido, e os convites programados | Que cada evento novo vira um convite automático no dia útil seguinte, e que o Analytics mostra quantas inscrições vieram do mailing e em que horário |
 | **Convidados** | Lista de palestrantes e contatos, com nota e status | A cobertura por tema, que mostra onde faltam nomes |
@@ -72,7 +72,7 @@ As telas das outras áreas já estão no menu, ainda em branco, para serem desen
 
 | Área | Telas |
 | --- | --- |
-| **Financeiro** | Custos por evento, Contatos de coffee e Analytics (prontas, veja abaixo) |
+| **Financeiro** | Verba por evento, Contatos de coffee e Analytics (prontas, veja abaixo) |
 | **Marketing** | Posts e Métricas |
 | **C&D** | Capacitações e Trilha do trainee |
 | **RH** | Visão geral (o conteúdo ainda será definido com a área) |
@@ -81,8 +81,8 @@ As telas das outras áreas já estão no menu, ainda em branco, para serem desen
 
 | Tela | Para que serve | O que vale mostrar |
 | --- | --- | --- |
-| **Custos por evento** | O previsto de cada evento (calculado no Planejar) ao lado do gasto real: coffee (com o local), material, sala e quantos gastos adicionais forem precisos, com as notas fiscais anexadas | A diferença em verde ou vermelho, os eventos já realizados sem gasto lançado no topo e que a nota anexada vai sozinha para a pasta do evento em Documentos |
-| **Analytics (Financeiro)** | Visão dos gastos, com filtro por semestre: gasto lançado, quanto ficou acima ou abaixo do previsto, custo médio por presente e quanto vai para o coffee | Os gráficos previsto × real, para onde vai o dinheiro, custo por presente contra a meta, gasto por local de coffee e mês a mês. É uma primeira proposta: a área escolhe quais ficam |
+| **Verba por evento** | A lista dos eventos com o custo previsto (calculado no Planejar) e um campo para o Financeiro preencher a verba liberada. Ao clicar num evento, abre a linha do tempo dos gastos: quando foi planejado, cada verba liberada ou ajustada, cada gasto lançado por Eventos com o acumulado, cada nota fiscal e o dia do evento | A situação de cada um (sem verba, verba liberada, gasto passou da verba), os próximos eventos ainda sem verba no topo e o acumulado ficando vermelho na linha do tempo quando passa da verba |
+| **Analytics (Financeiro)** | Visão dos gastos, com filtro por semestre: verba liberada, gasto lançado, quanto ficou acima ou abaixo do previsto, custo médio por presente e quanto vai para o coffee | Os gráficos previsto × verba × gasto, para onde vai o dinheiro, custo por presente contra a meta, gasto por local de coffee e mês a mês. É uma primeira proposta: a área escolhe quais ficam |
 | **Contatos de coffee** | Fornecedores de coffee e lanches: local, pessoa de contato, telefone, endereço e os itens com preço e unidade | O menor preço por pessoa de cada local, o botão de WhatsApp e em quantos eventos cada local já foi usado |
 
 Na **Base**, o comparecimento é calculado como (presentes − quem veio sem se inscrever) ÷ inscritos, para medir quantos inscritos de fato apareceram. Eventos marcados como \[teste\] ficam fora dos indicadores.
@@ -134,9 +134,9 @@ O app custa zero hoje, tem limites conhecidos e os próximos passos automatizam 
 - Arquivos anexados têm até 10 MB cada.
 - Por enquanto Eventos e Financeiro têm telas prontas. As telas de Marketing, C&D e RH já aparecem no menu, mas ainda em branco.
 - O Calendário aparece para todas as áreas, mas por enquanto só quem é de Eventos edita.
-- Os gastos reais agora são lançados só pelo Financeiro, em Custos por evento. Eventos antigos que tinham só o total registrado na Base continuam com esse total até o Financeiro lançar o detalhado. Eventos salvos antes desta versão mostram só o total previsto, sem a divisão por item.
+- Quem lança os gastos e as notas fiscais é a área de Eventos, na Base. O Financeiro só libera a verba e acompanha. Eventos antigos que tinham só o total registrado continuam com esse total; ao lançar o primeiro gasto, o total entra na lista como "Registrado antes". Eventos salvos antes desta versão mostram só o total previsto, sem a divisão por item.
 - Esconder as telas de outras áreas é feito no app; quem tem acesso ainda consegue ler os dados das outras áreas no banco. Editar e excluir, não.
-- A Lixeira guarda eventos, salas, calendário, convidados, documentos, contatos de coffee e gastos dos eventos. Perfis, lista de acesso e mailing ficam no Histórico, mas não vão para a Lixeira.
+- A Lixeira guarda eventos, salas, calendário, convidados, documentos, contatos de coffee e verbas dos eventos. Perfis, lista de acesso e mailing ficam no Histórico, mas não vão para a Lixeira.
 - A previsão ainda tem poucos eventos de base; ela melhora a cada resultado registrado.
 - A previsão do tempo de verdade só existe para os próximos 16 dias; antes disso, a nota da data usa o histórico de chuva e temperatura da época. A atualização automática acontece na primeira vez que alguém da equipe abre o app depois de cada marco.
 - A Ideia de evento faz até 30 propostas por pessoa por dia e fica marcada como BETA até a Base ter pelo menos 8 eventos realizados de cada tipo principal, em 2 semestres, com erro médio da previsão abaixo de 15%. A própria tela mostra quanto falta.

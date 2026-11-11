@@ -238,3 +238,41 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 .fc-nfadd input{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:7px 9px;font:inherit;font-size:14px;min-width:0}
 .fc-nfadd .btn{justify-self:start}
 @media (max-width:520px){.fc-nfadd{grid-template-columns:1fr}}
+/* gastos do evento (painel da Base) */
+.g-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.g-res>div{background:var(--surface-2);border-radius:6px;padding:8px 10px;display:grid;gap:2px}
+.g-res span{font-size:11.5px;color:var(--muted)}
+.g-res b{font-size:15px;font-variant-numeric:tabular-nums}
+.g-res em{font-style:normal;color:var(--muted);font-weight:600}
+.g-res .g-mais{background:var(--red-soft,rgba(180,30,40,.12))}.g-res .g-mais b{color:var(--red)}
+.g-res .g-ok b{color:var(--green,#2f7d4f)}
+.g-tab{width:100%;min-width:0!important;border-collapse:collapse;margin-top:10px}
+.g-tab td{padding:7px 4px;border:0!important;border-bottom:1px solid var(--line)!important;background:transparent!important;vertical-align:top}
+.g-tab td:first-child{width:72px;color:var(--muted)}.g-tab td:last-child{width:40px}
+.cf-x.sure{font-size:12px;font-weight:700;color:var(--red);white-space:nowrap}
+.g-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}
+.g-grid .g-wide{grid-column:1/-1}
+.g-grid input,.g-grid select{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:7px 9px;width:100%;min-width:0;font:inherit;font-size:14px}
+@media (max-width:520px){.g-grid{grid-template-columns:1fr 1fr}}
+/* verba na lista do Financeiro */
+.vb-in{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.vb-in span{color:var(--muted);font-size:13px}
+.vb-in input{width:110px;text-align:right;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:6px 8px;font:inherit;font-size:14px;font-variant-numeric:tabular-nums}
+.vb-in input:focus{outline:2px solid var(--wine);outline-offset:1px}
+#fc-ok{margin:10px 0 0}
+/* linha do tempo */
+.tl{list-style:none;margin:0;padding:0 0 0 4px;position:relative}
+.tl li{position:relative;display:grid;grid-template-columns:62px 1fr;gap:12px;padding:0 0 14px 18px}
+.tl li::before{content:"";position:absolute;left:0;top:5px;width:10px;height:10px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px var(--surface)}
+.tl li::after{content:"";position:absolute;left:4.5px;top:15px;bottom:-5px;width:1px;background:var(--line)}
+.tl li:last-child::after{display:none}
+.tl .tl-d{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:1px}
+.tl b{font-size:14px}
+.tl .tl-ac{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.tl .tl-a{display:inline-block;margin-top:2px;font-size:12.5px;color:var(--wine);font-weight:700}
+.tl li.tl-plan::before{background:var(--s-ins,#c08a1e)}
+.tl li.tl-verba::before{background:#4f7a8f}
+.tl li.tl-gasto::before{background:var(--wine)}
+.tl li.tl-passou::before{background:var(--red)}.tl li.tl-passou .tl-ac{color:var(--red);font-weight:700}
+.tl li.tl-nf::before{background:transparent;border:2px solid var(--wine);width:6px;height:6px}
+.tl li.tl-dia::before{border-radius:2px;background:var(--fg)}
