@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111125043"></script>
-<script src="plataforma.js?v=20261111125043"></script>
+<script src="config.js?v=20261111125623"></script>
+<script src="plataforma.js?v=20261111125623"></script>
 </head>
 <body>
 
@@ -846,6 +846,7 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 @media (max-width:700px){.fi-row{grid-template-columns:1fr}.fi-ro{grid-template-columns:1fr;gap:2px}}
 #etable .tsub{white-space:normal}
 #etable td:nth-child(2){min-width:200px}
+.pinsc{margin-top:18px;max-width:760px}.pinsc a{color:var(--wine);font-weight:700}.pinsc h4{margin-top:0}.pinsc-row input{flex:1;min-width:220px}
 </style>
 
 <script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
@@ -2017,7 +2018,7 @@ function connect(){
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
     if(typeof finLigar==='function')finLigar();
     db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});if(typeof finAplicar==='function')finAplicar();$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
-    db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}});},function(){});
+    db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}else if(x.id==='inscricoes'){window.__parInsc=x.data();if(window.__parInscDesenhar)window.__parInscDesenhar();}});},function(){});
     db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
     db.collection('salas').onSnapshot(function(s){CARR.sal=1;climaAgendar();salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
     db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();if(typeof finDocs==='function')finDocs();refresh();},function(){});
@@ -2278,6 +2279,22 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   gavAoFechar.parform=function(){if(parDirty){parDirty=false;renderPar();}$('parmsg').textContent='';};
   var sv=savePar;savePar=function(){sv();renderPar();setTimeout(function(){if(!parDirty)fecharGav('parform');},400);};
   renderPar();
+  /* Forms padrão de inscrição: o robô copia este Forms para cada evento (parametros/inscricoes) */
+  var PADRAO_FORM='https://docs.google.com/forms/d/1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8/edit';
+  var fb=el('<div class="tp-blk pinsc" id="par-insc"></div>');sec.appendChild(fb);var fsuj=false;
+  function formId(u){var m=/docs\.google\.com\/forms\/d\/(?!e\/)([A-Za-z0-9_-]{20,})/.exec(String(u||''));return m?m[1]:'';}
+  function podeF(){var p=window.__perm;return !!(p&&p.carregado()&&p.podeEm('Eventos').gerir);}
+  function desenhar(){if(fsuj)return;var d=window.__parInsc||{},u=safeUrl(d.modeloFormUrl)||PADRAO_FORM,ed=podeF();
+    fb.innerHTML='<h4>Forms padrão de inscrição</h4><p class="note" style="margin:0 0 8px">O robô copia este Forms para criar a inscrição de cada evento. Quem tem cargo em Eventos tem acesso de edição a ele e a todos os Forms criados (o acesso chega em até 10 min).</p>'+
+      (ed?'<div class="fi-add pinsc-row"><input id="pi-url" type="url" value="'+esc(u)+'" aria-label="Link do Forms padrão"><button type="button" class="btn small" id="pi-salvar">Salvar</button></div>':'')+
+      '<div class="btns" style="margin-top:6px"><a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão ↗</a><span class="msg" id="pi-msg" role="status"></span></div>';}
+  window.__parInscDesenhar=desenhar;document.addEventListener('permissoes',desenhar);desenhar();
+  fb.addEventListener('input',function(e){if(e.target.id==='pi-url')fsuj=true;});
+  fb.addEventListener('click',function(e){if(!e.target.closest('#pi-salvar'))return;var u=$('pi-url').value.trim(),id=formId(u),m=$('pi-msg');
+    if(!id){m.textContent='Cole o link de edição do Forms (docs.google.com/forms/d/…/edit).';return;}
+    if(!db){m.textContent='Sem conexão com a base.';return;}
+    m.textContent='Salvando…';db.doc('parametros/inscricoes').set({modeloFormUrl:'https://docs.google.com/forms/d/'+id+'/edit',modeloFormId:id,em:new Date().toISOString(),porNome:String(window.__meuNome||'').slice(0,80)},{merge:true})
+      .then(function(){fsuj=false;desenhar();$('pi-msg').textContent='Salvo. Os próximos Forms saem deste modelo.';},function(){m.textContent='Não foi possível salvar: só a diretoria altera.';});});
 })();
 
 /* ============================== BASE DE EVENTOS ============================== */
@@ -3147,7 +3164,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   /* pasta de fotos: o robô cria no Drive da diretoria (e.pastaFotos); quem já tem uma pasta pode colar o link */
   var pf=e.pastaFotos&&safeUrl(e.pastaFotos.url),fu=pf||safeUrl(r.fotos),abre=fu?'<a href="'+esc(fu)+'" target="_blank" rel="noopener" class="fi-link">Abrir pasta de fotos ↗</a>':'';
   if(!ed)b+=ro('Fotos',fu?'<a href="'+esc(fu)+'" target="_blank" rel="noopener">Abrir pasta ↗</a>':'—');
-  else if(pf)b+='<div class="field"><label>Pasta de fotos</label>'+abre+'<span class="note">Criada no Drive da diretoria. Quem tem cargo em Eventos pode subir as fotos.</span></div>';
+  else if(pf)b+='<div class="field"><label>Pasta de fotos</label>'+abre+'<span class="note">Criada no Drive da diretoria. Todos os membros do app podem ver e subir as fotos.</span></div>';
   else{var oc=FOC[e.id],fm2=FMSG[e.id];
     b+='<div class="field"><label for="fi-fotos">Pasta de fotos</label>'+
       (window.ROBO_URL&&!r.fotos?'<div class="btns" style="margin:0 0 6px"><button type="button" class="btn small" data-fi-pasta="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando a pasta…':'Criar pasta de fotos')+'</button>'+(fm2?'<span class="msg">'+esc(fm2)+'</span>':'')+'</div><span class="note">O robô cria a pasta no Drive da diretoria, com o nome e a data do evento. Já tem uma pasta? Cole o link:</span>':'')+

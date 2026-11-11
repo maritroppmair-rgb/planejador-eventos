@@ -88,7 +88,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
   /* pasta de fotos: o robô cria no Drive da diretoria (e.pastaFotos); quem já tem uma pasta pode colar o link */
   var pf=e.pastaFotos&&safeUrl(e.pastaFotos.url),fu=pf||safeUrl(r.fotos),abre=fu?'<a href="'+esc(fu)+'" target="_blank" rel="noopener" class="fi-link">Abrir pasta de fotos ↗</a>':'';
   if(!ed)b+=ro('Fotos',fu?'<a href="'+esc(fu)+'" target="_blank" rel="noopener">Abrir pasta ↗</a>':'—');
-  else if(pf)b+='<div class="field"><label>Pasta de fotos</label>'+abre+'<span class="note">Criada no Drive da diretoria. Quem tem cargo em Eventos pode subir as fotos.</span></div>';
+  else if(pf)b+='<div class="field"><label>Pasta de fotos</label>'+abre+'<span class="note">Criada no Drive da diretoria. Todos os membros do app podem ver e subir as fotos.</span></div>';
   else{var oc=FOC[e.id],fm2=FMSG[e.id];
     b+='<div class="field"><label for="fi-fotos">Pasta de fotos</label>'+
       (window.ROBO_URL&&!r.fotos?'<div class="btns" style="margin:0 0 6px"><button type="button" class="btn small" data-fi-pasta="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando a pasta…':'Criar pasta de fotos')+'</button>'+(fm2?'<span class="msg">'+esc(fm2)+'</span>':'')+'</div><span class="note">O robô cria a pasta no Drive da diretoria, com o nome e a data do evento. Já tem uma pasta? Cole o link:</span>':'')+

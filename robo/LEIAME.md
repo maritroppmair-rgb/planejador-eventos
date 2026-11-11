@@ -55,7 +55,8 @@ Depois de colar uma versão nova do `Codigo.gs`: **Implantar → Gerenciar impla
 
 - "Login expirado": recarregue o app.
 - "Seu cargo não permite": a pessoa está sem cargo na área Eventos (ou na presidência); a diretoria atribui em Membros. Diretoria de outra área não usa o robô.
-- Pasta de fotos: o botão da Ficha cria uma subpasta em "Feashion · Fotos de eventos". A rotina dá acesso de edição a essa pasta para quem tem cargo em Eventos, como já faz com a pasta de inscrições.
+- Forms padrão: o link fica em Parâmetros, no site, e o robô copia esse Forms para cada evento (o `MODELO_FORM_ID` do código só vale se Parâmetros estiver vazio). A rotina dá acesso de edição ao Forms padrão e à pasta de inscrições (com todos os Forms criados) para quem tem cargo em Eventos.
+- Pasta de fotos: o botão da Ficha cria uma subpasta em "Feashion · Fotos de eventos". A rotina dá acesso de edição a essa pasta para todos os membros cadastrados no app, de qualquer área.
 - Erro com "Firestore 403": a conta do script não é dona do projeto Firebase, ou a API do Firestore pede o projeto de cobrança; confira se `PROJETO` está certo.
 - Execuções e erros da rotina: no script.google.com, menu **Execuções**.
 

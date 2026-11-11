@@ -18,7 +18,7 @@
 var CFG = {
   PROJETO: 'planejador-de-eventos-261df',
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
-  MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8',
+  MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8', // reserva: o que vale é o link salvo em Parâmetros no site
   PASTA: 'Feashion · Inscrições',
   PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
   REMETENTE: 'Feashion · Diretoria de Eventos',
@@ -120,7 +120,7 @@ function criarForm(eid, u) {
     if (new Date() >= fechamento(ev)) throw new Error('As inscrições fecham ' + CFG.FECHAR_HORAS_ANTES + ' h antes do evento, e esse prazo já passou.');
     var pasta = pastaInscricoes();
     var nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
-    var copia = DriveApp.getFileById(CFG.MODELO_FORM_ID).makeCopy('Inscrição · ' + nomeArq, pasta), planilha = null;
+    var copia = DriveApp.getFileById(modeloFormId()).makeCopy('Inscrição · ' + nomeArq, pasta), planilha = null;
     try {
       var form = FormApp.openById(copia.getId());
       aplicarTextos(form, ev);
@@ -609,12 +609,26 @@ function sincronizarEquipe() {
     if (e && CFG.CARGOS_QUE_EDITAM.indexOf(cargoEventos(m)) >= 0) querem[e] = 1;
   });
   delete querem[dono];
+  /* inscrições (todos os Forms e planilhas criados herdam) e o Forms padrão: quem tem cargo em Eventos edita */
   permissoesPasta(id, querem);
+  try { permissoesPasta(modeloFormId(), querem); } catch (err) { console.error('Forms padrão: ' + err); }
+  /* fotos: todo membro cadastrado no app, de qualquer área, pode ver e subir fotos */
   var fotos = DriveApp.getFoldersByName(CFG.PASTA_FOTOS);
-  if (fotos.hasNext()) permissoesPasta(fotos.next().getId(), querem);
+  if (fotos.hasNext()) {
+    var todos = {};
+    fsList('membros').forEach(function (m) { var e = String(m.email || '').toLowerCase().trim(); if (e) todos[e] = 1; });
+    delete todos[dono];
+    try { permissoesPasta(fotos.next().getId(), todos); } catch (err) { console.error('Fotos: ' + err); }
+  }
   return Object.keys(querem);
 }
-/* deixa na pasta exatamente quem tem cargo (as subpastas herdam) */
+/* o Forms que o robô copia: o link salvo em Parâmetros (parametros/inscricoes) ou, sem ele, o do CFG */
+function modeloFormId() {
+  var d = null;
+  try { d = fsGet('parametros/inscricoes'); } catch (err) { console.error('Parâmetros: ' + err); }
+  return (d && d.modeloFormId) || CFG.MODELO_FORM_ID;
+}
+/* deixa na pasta (ou arquivo) exatamente quem está na lista, como editor (as subpastas herdam) */
 function permissoesPasta(id, querem) {
   var j = drive('get', id + '/permissions?fields=permissions(id,emailAddress,role,type)');
   var tem = {};
@@ -660,7 +674,7 @@ function drive(metodo, caminho, corpo) {
 
 /* ---------- instalação: rode uma vez pelo editor ---------- */
 function instalar() {
-  var f = FormApp.openById(CFG.MODELO_FORM_ID);
+  var f = FormApp.openById(modeloFormId());
   console.log('Modelo encontrado: ' + f.getTitle());
   console.log('Pasta: ' + pastaInscricoes().getUrl());
   console.log('Equipe com acesso de edição: ' + sincronizarEquipe().join(', '));

@@ -346,3 +346,4 @@ body:not(.fin-editar) .fin-ed{display:none!important}
 @media (max-width:700px){.fi-row{grid-template-columns:1fr}.fi-ro{grid-template-columns:1fr;gap:2px}}
 #etable .tsub{white-space:normal}
 #etable td:nth-child(2){min-width:200px}
+.pinsc{margin-top:18px;max-width:760px}.pinsc a{color:var(--wine);font-weight:700}.pinsc h4{margin-top:0}.pinsc-row input{flex:1;min-width:220px}
