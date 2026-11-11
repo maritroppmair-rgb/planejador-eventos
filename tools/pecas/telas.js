@@ -352,7 +352,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var corpo=window.__fichaBlk?'':blk('',pode('editar')?'<label class="tresp"><span>Responsável</span><select data-tresp="'+esc(id)+'"></select></label>':'<p class="tresp" style="margin:0"><span>Responsável</span><b>'+esc(e.responsavel||'—')+'</b></p>');
     if(reg)corpo+=blk(dn?'Editar resultado':'Finalizar evento',(dn?'':'<p class="note" style="margin:0 0 10px">'+(late?'O evento já aconteceu. ':'')+'Preencha com a lista de presença: é isso que calibra os próximos. Ao finalizar, o evento passa para Realizados.</p>')+regForm(e));
     if(window.__fichaBlk)corpo+=window.__fichaBlk(e); /* ficha do evento (ficha.js) */
-    corpo+=blk(dn?'Resultado e previsto × real':'Previsão e outros detalhes',detail(e,{ficha:!!window.__fichaBlk}));
+    if(dn||!window.__fichaBlk)corpo+=blk(dn?'Resultado e previsto × real':'Detalhes',detail(e,{ficha:!!window.__fichaBlk})); /* antes de acontecer, a ficha já mostra o que importa */
     if(window.ROBO_URL&&e.inscricao&&e.inscricao.formId)corpo+=emailsBlk(e);
     var rod='<div class="btns">'+(!dn?'<button type="button" class="btn'+(late?' ghost':'')+'" data-tplan="'+esc(id)+'">Abrir no Planejar</button>':'')+(pode('editar')&&dn&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Editar resultado</button>':'')+(pode('editar')&&!dn&&!late&&bReg!==id?'<button type="button" class="btn ghost" data-treg="'+esc(id)+'">Finalizar evento</button>':'')+'</div>'+(pode('excluir')?'<button type="button" class="btn small ghost tdanger" data-tdel="'+esc(id)+'">Excluir</button>':'');
     return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rod};}
