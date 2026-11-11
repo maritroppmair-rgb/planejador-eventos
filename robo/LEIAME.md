@@ -41,7 +41,7 @@ Cada tipo tem o botão **Texto** (editar, ver a prévia e mandar um teste para s
 
 ## E-mails das etapas do evento
 
-A cada rodada (10 minutos), o robô olha a etapa da vez de cada evento (a mesma da caixinha Andamento do site) e manda **um** e-mail quando chega a vez de uma área e **um** quando a etapa atrasa. Quem recebe: Diretor(a) e Coordenador(a) da área; na Presidência, Presidente e Vice-presidente; nos Dados AEX, o responsável AEX escolhido no evento (sem responsável, a diretoria de Eventos). A Ficha só avisa quando atrasa. Os avisos já mandados ficam em `eventos/{id}.etapasAvisos`, para não repetir. Eventos com "[teste]" no nome, realizados antes do Andamento ou que passaram há mais de 30 dias ficam de fora. O botão do e-mail abre a tela Pendências (`CFG.SITE`).
+A cada rodada (10 minutos), o robô olha os 14 pontos do checklist de cada evento (os mesmos prazos da caixinha Andamento do site). Manda **um** e-mail de "Sua vez" quando chega a vez de outra área: Presidência quando a ficha fica pronta, Financeiro quando a ficha é aprovada, Marketing quando o briefing é feito e responsável AEX a partir de 30 dias antes. Quando pontos passam do prazo, manda **um** e-mail de "Atrasado" por área, juntando os pontos dela. Quem recebe: Diretor(a) e Coordenador(a) da área; na Presidência, Presidente e Vice-presidente; no Formulário da AEX, o responsável AEX escolhido no evento (sem responsável, a diretoria de Eventos). Os avisos já mandados ficam em `eventos/{id}.etapasAvisos` (`aprov_vez`, `sala_atraso`...), para não repetir. Eventos realizados, que já passaram ou com "[teste]" no nome ficam de fora. O botão do e-mail abre a tela Pendências (`CFG.SITE`).
 
 ## Mailing de eventos
 

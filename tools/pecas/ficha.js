@@ -29,7 +29,7 @@ function rasc(e){if(!RASC[e.id]||!SUJO[e.id])RASC[e.id]=base(e);return RASC[e.id
 function itens(e,r){var i=e.inscricao;return [
   ['Responsável',!!e.responsavel],['Equipe envolvida',r.equipe.length>0],['Objetivo',!!String(r.objetivo).trim()],['Meta de satisfação',r.metaSatisfacao!=null&&r.metaSatisfacao!==''],
   ['Público-alvo',r.publico.length>0],['Inscrição',!!(i&&i.formId)||!!safeUrl(r.linkExterno)],['Convidado',r.semConvidado||convIds(e).length>0||!!String(e.convidado||'').trim()],
-  ['Sala reservada',r.salaReservada==='sim'&&!!String(r.reservaNum).trim()],['Plano B',!!String(r.planoB).trim()]];}
+  ['Plano B',!!String(r.planoB).trim()]];} /* a reserva da sala vem depois da aprovação: fica no checklist (06) */
 function situacao(e,r){var l=itens(e,r||base(e)),ok=l.filter(function(x){return x[1];}).length,d=dias(e);
   return {ok:ok,total:l.length,faltam:l.filter(function(x){return !x[1];}).map(function(x){return x[0];}),atrasada:ok<l.length&&d!=null&&d<30};}
 window.__fichaCompleta=function(e){var s=situacao(e);return s.ok===s.total;};
@@ -102,9 +102,10 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status=
     b+='<div class="field"><label for="fi-fotos">Pasta de fotos</label>'+
       (window.ROBO_URL&&!r.fotos?'<div class="btns" style="margin:0 0 6px"><button type="button" class="btn small" data-fi-pasta="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando a pasta…':'Criar pasta de fotos')+'</button>'+(fm2?'<span class="msg">'+esc(fm2)+'</span>':'')+'</div><span class="note">O robô cria a pasta no Drive da diretoria, com o nome e a data do evento. Já tem uma pasta? Cole o link:</span>':'')+
       '<input id="fi-fotos" data-fi="fotos" type="url" value="'+v(r.fotos)+'" placeholder="https://drive.google.com/...">'+abre+'</div>';}
-  if(ed)b+='<div class="btns fi-salvar"><button type="button" class="btn" data-fi-salvar="'+id+'"'+(SUJO[e.id]?'':' disabled')+'>Salvar ficha</button><span class="msg" role="status">'+(SUJO[e.id]?'Alterações não salvas.':(MSG[e.id]||''))+'</span></div>';
   h+=fblk('02 · Público e logística',b,'fi-sec');
-  if(window.__fichaEtapasBlk)h+=window.__fichaEtapasBlk(e); /* 06 checklist e 08 aprovação e etapas (etapas.js) */
+  if(window.__fichaEtapasBlk)h+=window.__fichaEtapasBlk(e); /* 06 checklist (etapas.js) */
+  /* salvar e, ao lado, a aprovação da Presidência */
+  if(ed)h+='<div class="btns fi-salvar"><button type="button" class="btn" data-fi-salvar="'+id+'"'+(SUJO[e.id]?'':' disabled')+'>Salvar ficha</button><span class="msg" role="status">'+(SUJO[e.id]?'Alterações não salvas.':(MSG[e.id]||''))+'</span>'+(window.__fichaAprovHtml?window.__fichaAprovHtml(e):'')+'</div>';
   return h;};
 
 /* ----- interação (delegada na seção da Base) ----- */

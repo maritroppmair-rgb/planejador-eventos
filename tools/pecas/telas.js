@@ -292,33 +292,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   $('b-busca').addEventListener('input',function(){renderBase();});$('b-teste').addEventListener('change',function(){renderBase();});
   var bReg=null,bModo='ficha',andAberto={};
   window.aposRegistro=function(id){if(bReg===id)bReg=null;if(bModo==='fin'&&TP&&TP.o.chave===id)painelFechar();};
-  /* ----- Andamento: as etapas de cada evento, da ficha ao pós-evento -----
-     Prazos contados a partir da data do evento (d = dias; negativo = antes). A Aprovação vence 48 h depois de a ficha ficar completa.
-     Cada etapa concluída fica em e.etapas[chave] = {em, por}. A Ficha também conta como feita quando está completa. */
-  var ETAPAS=[{k:'ficha',n:'Ficha',a:'Eventos',d:-30},{k:'aprovacao',n:'Aprovação',a:'Presidência',h:48},{k:'orcamento',n:'Orçamento',a:'Financeiro',d:-25},
-    {k:'divulgacao',n:'Divulgação',a:'Marketing',d:-21},{k:'aex',n:'Dados AEX',a:'AEX',d:7},{k:'pos',n:'Pós-evento',a:'Eventos',d:7}];
-  function ddmm(x){return x?x.slice(8,10)+'/'+x.slice(5,7):'—';}
-  function somaDias(dt,n){var d=D(dt);d.setDate(d.getDate()+n);return iso(d);}
-  function etapasDe(e){var et=e.etapas||{},today=iso(new Date());
-    return ETAPAS.map(function(x){var r=et[x.k]||{},feita=!!r.em||(x.k==='ficha'&&window.__fichaCompleta&&__fichaCompleta(e)),prazo=null,txt='—';
-      if(x.h){var o=et.ficha&&et.ficha.em;if(o){var t=new Date(new Date(o).getTime()+x.h*36e5);prazo=iso(t);txt=ddmm(prazo);}else txt='48 h após a ficha completa';}
-      else if(e.data){prazo=somaDias(e.data,x.d);txt=ddmm(prazo);}
-      return {k:x.k,n:x.n,a:x.a,feita:feita,em:r.em||'',por:r.por||'',prazo:prazo,ptxt:txt,atrasada:!feita&&prazo&&prazo<today};});}
-  function faltaTxt(prazo){if(!prazo)return '';var n=Math.round((D(prazo)-D(iso(new Date())))/864e5);
-    return n<0?'atrasada há '+(-n)+' dia'+(n===-1?'':'s'):n===0?'vence hoje':'falta'+(n===1?' 1 dia':'m '+n+' dias');}
-  window.__etapasDe=etapasDe;window.__faltaTxt=faltaTxt;
-  function andamento(e){var dn=e.status==='realizado';
-    if(dn&&!e.etapas)return '<span class="note">Evento anterior ao andamento.</span>';
-    var l=etapasDe(e),n=l.filter(function(x){return x.feita;}).length,cur=l.filter(function(x){return !x.feita;})[0],ab=!!andAberto[e.id],id=esc(e.id);
-    var fim=!cur,ult=l[l.length-1];
-    var h='<div class="and'+(fim?' fim':'')+(ab?' on':'')+'" role="button" tabindex="0" data-eand="'+id+'" aria-expanded="'+ab+'" aria-label="Andamento: '+n+' de '+l.length+' etapas. '+(ab?'Fechar':'Ver')+' prazos e datas"><div class="and-t"><span>Andamento</span><span>'+n+' de '+l.length+'<span class="and-s" aria-hidden="true">'+(ab?'▲':'▼')+'</span></span></div>'+
-      '<ol aria-hidden="true">'+l.map(function(x){return '<li class="'+(x.feita?'ok':x===cur?(x.atrasada?'atr':'vez'):'')+'" title="'+esc(x.n+' · '+x.a+(x.feita?' · feita':x===cur?' · é a vez dela':''))+'"><i>'+(x.feita?'✓':'')+'</i></li>';}).join('')+'</ol>'+
-      '<div class="and-p">'+(fim?'<span><b>Tudo concluído</b></span>'+(ult.em?'<span class="and-d">em '+ddmm(ult.em.slice(0,10))+'</span>':''):
-        '<span>'+(cur.atrasada?'Atrasada: ':'Agora: ')+'<b>'+cur.n+'</b> · '+cur.a+'</span><span class="and-d'+(cur.atrasada?' atz':'')+'">'+(cur.prazo?'até '+cur.ptxt:cur.ptxt)+'</span>')+'</div>';
-    if(ab)h+='<ul>'+l.map(function(x){var c=x.feita?'ok':x===cur?(x.atrasada?'atr':'vez'):'';
-      var det='prazo '+x.ptxt+(x.feita?(x.em?' · concluída '+ddmm(x.em.slice(0,10))+(x.por?' por '+esc(String(x.por).split(' ')[0]):''):' · completa'):x===cur&&x.prazo?' · '+faltaTxt(x.prazo):'');
-      return '<li><span class="and-k '+c+'"></span><span><b>'+x.n+'</b> · '+x.a+'<small'+(x===cur&&x.atrasada?' class="atz"':'')+'>'+det+'</small></span></li>';}).join('')+'</ul>';
-    return h+'</div>';}
+  /* ----- Andamento: os pontos do checklist de cada evento (desenhado pelo etapas.js) ----- */
+  function andamento(e){return window.__andamento?window.__andamento(e,!!andAberto[e.id]):'';}
   function brl(v){return 'R$ '+(+v).toFixed(2).replace('.',',');}
   function situ(e,today){var dn=e.status==='realizado';
     if(dn){var tc=e.inscritos?Math.max(0,e.presentes-(+e.semInscricao||0))/e.inscritos:null;return tc==null?'<span class="chip neutral">realizado</span>':semaf(tc,'tc').replace('</span>',' vieram</span>');}

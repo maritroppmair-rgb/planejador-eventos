@@ -452,3 +452,33 @@ select.ck-s{cursor:pointer;padding-right:4px}
 @media (max-width:700px){.pd-it{grid-template-columns:64px minmax(0,1fr)}.pd-a{grid-column:2;justify-self:start}.pd-ac{grid-column:1/-1;justify-content:flex-start}}
 
 .et-ck:has(input:disabled){opacity:.5;cursor:not-allowed}
+
+/* ===== Andamento com os pontos do checklist: três grupos (30 · 7 · 3 dias) ===== */
+.and{max-width:300px}
+.and-gs{display:flex;gap:8px;margin:8px 0 6px}
+.and .and-g{flex:1;margin:0;gap:0}
+.and .and-g li.and-gl{flex:0 0 auto;font-family:var(--label);font-size:9px;font-weight:800;color:var(--muted);margin-right:3px}
+.and .and-g li.and-gl::after{display:none}
+.and .and-g i{width:12px;height:12px;font-size:8px;border-width:2px}
+.and .and-g li::after{margin:0 1px}
+.and .and-g li.and i{border-color:var(--amber);background:var(--amber-bg)}
+.and .and-g li.atr2 i{border-color:var(--red)}
+.and-bl h5{margin:10px 0 4px;font-family:var(--label);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--wine)}
+.and-bl ul{margin:0;padding:0;border:0;gap:5px}
+.and-bl:first-of-type{border-top:1px solid var(--line);margin-top:10px}
+.and-k.atr2{border-color:var(--red)}
+.and-k.and{border-color:var(--amber);background:var(--amber-bg)}
+.ck-l small{display:block;color:var(--muted);font-size:11.5px}
+.ck-col li.atz .ck-l small{color:var(--red)}
+.tp-body>.fi-salvar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:14px}
+.fi-aprov{margin-left:auto;display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--wine);border-radius:12px;background:var(--wine-soft);cursor:pointer;color:var(--fg)}
+.fi-aprov input{width:20px;height:20px;accent-color:var(--wine);margin:0}
+.fi-aprov b{display:block;font-size:14.5px;color:var(--wine)}
+.fi-aprov small{display:block;font-size:11.5px;color:var(--muted)}
+.fi-aprov.on{border-color:var(--green);background:var(--green-bg)}
+.fi-aprov.on b{color:var(--green)}
+.fi-aprov.off{opacity:.6;cursor:not-allowed}
+.fi-aprov-st{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--muted)}
+.fi-aprov-st.ok{color:var(--green)}
+@media (max-width:520px){.fi-aprov,.fi-aprov-st{margin-left:0;width:100%}}
+.and .and-g li,.and-bl li{background:none!important}

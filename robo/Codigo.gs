@@ -602,38 +602,55 @@ function rotina() {
   try { avisosEtapas(); } catch (err) { console.error('Etapas: ' + err); }
 }
 
-/* ---------- etapas do evento: e-mail para a diretoria da área quando chega a vez dela e quando atrasa ----------
-   As mesmas etapas e prazos da caixinha Andamento do site (telas.js). Cada aviso sai uma vez só:
-   eventos/{id}.etapasAvisos = {orcamento_vez: data, orcamento_atraso: data, ...}. A Ficha não avisa a vez (quem cria o evento já sabe),
-   só o atraso. Quem recebe: Diretor(a) e Coordenador(a) da área; na Presidência, Presidente e Vice; na AEX, o responsável escolhido
-   no evento (sem responsável, a diretoria de Eventos). */
-var ETAPAS = [
-  { k: 'ficha', o: 'Completar a ficha', a: 'Eventos', d: -30 },
-  { k: 'aprovacao', o: 'Aprovar a ficha', a: 'Presidência', h: 48 },
-  { k: 'orcamento', o: 'Validar o orçamento', a: 'Financeiro', d: -25 },
-  { k: 'divulgacao', o: 'Planejar a divulgação', a: 'Marketing', d: -21 },
-  { k: 'aex', o: 'Enviar os dados à AEX', a: 'AEX', d: 7 },
-  { k: 'pos', o: 'Fechar o pós-evento', a: 'Eventos', d: 7 }
+/* ---------- checklist do evento: e-mail para a área quando chega a vez dela e quando um ponto atrasa ----------
+   Os mesmos 14 pontos e prazos do site (etapas.js). Cada aviso sai uma vez só: eventos/{id}.etapasAvisos = {orc_vez: data, ...}.
+   "Sua vez" vai só para as outras áreas, quando o ponto anterior fica pronto: Presidência quando a ficha fica pronta,
+   Financeiro quando a ficha é aprovada, Marketing quando o briefing é feito, responsável AEX quando começa o bloco de 7 dias.
+   "Atrasado" vai para a área do ponto, juntando num e-mail só os pontos que atrasaram na mesma rodada.
+   Quem recebe: Diretor(a) e Coordenador(a) da área; na Presidência, Presidente e Vice; na AEX, o responsável escolhido no evento
+   (sem responsável, a diretoria de Eventos). */
+var PONTOS = [
+  { k: 'ficha', n: 'Ficha do evento pronta', a: 'Eventos', d: 40 },
+  { k: 'aprov', n: 'Ficha aprovada pela Presidência', a: 'Presidência', d: 38, c: 'aprovacao', vez: function (ok, ev) { return ok.ficha; } },
+  { k: 'conv', n: 'Convidado confirmado por escrito', a: 'Eventos', d: 33 },
+  { k: 'sala', n: 'Sala reservada', a: 'Eventos', d: 33 },
+  { k: 'orc', n: 'Orçamento validado', a: 'Financeiro', d: 33, c: 'orcamento', vez: function (ok, ev) { return ok.aprov; } },
+  { k: 'brief', n: 'Briefing ao Marketing', a: 'Eventos', d: 30 },
+  { k: 'forn', n: 'Fornecedores confirmados', a: 'Eventos', d: 14 },
+  { k: 'aexform', n: 'Formulário da AEX pronto', a: 'AEX', d: 12, c: 'aex', vez: function (ok, ev) { return hojeIso() >= somaDiasIso(ev.data, -30); } },
+  { k: 'divulg', n: 'Divulgação feita', a: 'Marketing', d: 10, c: 'divulgacao', vez: function (ok, ev) { return ok.brief; } },
+  { k: 'funcoes', n: 'Funções do dia definidas', a: 'Eventos', d: 7 },
+  { k: 'reconf', n: 'Reconfirmar convidado e sala', a: 'Eventos', d: 5 },
+  { k: 'roteiro', n: 'Roteiro enviado à equipe', a: 'Eventos', d: 4 },
+  { k: 'planob', n: 'Plano B revisado', a: 'Eventos', d: 3 },
+  { k: 'lembrete', n: 'Lembrete aos inscritos', a: 'Eventos', d: 2 }
 ];
 function hojeIso() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
 function somaDiasIso(iso, n) { var p = partes(iso), d = new Date(p.a, p.m - 1, p.d + n); return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
-/* a ficha está completa? (os mesmos itens do site: ficha.js) */
+/* a ficha está pronta? (os mesmos itens do site: ficha.js; a reserva da sala fica no checklist) */
 function fichaCompleta(ev) {
   var f = ev.ficha || {}, i = ev.inscricao || {};
   var temConv = (ev.convidadoIds && ev.convidadoIds.length) || ev.convidadoId || String(ev.convidado || '').trim();
   return !!ev.responsavel && (f.equipe ? f.equipe.length > 0 : true) && !!String(f.objetivo || '').trim()
     && f.metaSatisfacao !== '' && (f.publico || []).length > 0 && (!!i.formId || /^https:\/\//.test(String(f.linkExterno || '')))
-    && (!!f.semConvidado || !!temConv)
-    && f.salaReservada === 'sim' && !!String(f.reservaNum || '').trim() && !!String(f.planoB || '').trim();
+    && (!!f.semConvidado || !!temConv) && !!String(f.planoB || '').trim();
 }
-function etapasDoEvento(ev) {
-  var et = ev.etapas || {}, hoje = hojeIso(), tz = Session.getScriptTimeZone();
-  return ETAPAS.map(function (x) {
-    var r = et[x.k] || {}, feita = !!r.em || (x.k === 'ficha' && fichaCompleta(ev)), prazo = null;
-    if (x.h) { if (et.ficha && et.ficha.em) prazo = Utilities.formatDate(new Date(new Date(et.ficha.em).getTime() + x.h * 3600e3), tz, 'yyyy-MM-dd'); }
-    else prazo = somaDiasIso(ev.data, x.d);
-    return { k: x.k, o: x.o, a: x.a, feita: feita, prazo: prazo, atrasada: !feita && !!prazo && prazo < hoje };
+/* quais pontos estão feitos (os automáticos são calculados como no site) */
+function pontosFeitos(ev, convidados) {
+  var et = ev.etapas || {}, ck = ev.checklist || {}, f = ev.ficha || {}, ok = {};
+  var marcado = function (v) { return !!v && (v.s === 'ok' || (!!v.em && !v.s)); };
+  PONTOS.forEach(function (p) {
+    if (p.k === 'ficha') ok.ficha = fichaCompleta(ev);
+    else if (p.k === 'sala') ok.sala = f.salaReservada === 'sim' && !!String(f.reservaNum || '').trim();
+    else if (p.k === 'conv') {
+      var ids = (ev.convidadoIds && ev.convidadoIds.length) ? ev.convidadoIds : ev.convidadoId ? [ev.convidadoId] : [];
+      if (!ids.length && f.semConvidado) ok.conv = marcado(ck.conv);
+      else { var gs = ids.map(function (i) { return convidados[i]; }).filter(Boolean); ok.conv = gs.length > 0 && gs.every(function (g) { return g.status === 'Confirmado' || g.status === 'Palestrou'; }); }
+    }
+    else if (p.k === 'lembrete' && ev.inscricao && ev.inscricao.formId) { var x = (ev.inscricao.emails || {}).lembrete; ok.lembrete = !!(x && x.enviados > 0); }
+    else ok[p.k] = marcado(p.c ? et[p.c] : ck[p.k]);
   });
+  return ok;
 }
 function emailsDaArea(area, ev, membros) {
   var dir = ['Diretor(a)', 'Coordenador(a)'], out = {};
@@ -648,39 +665,53 @@ function emailsDaArea(area, ev, membros) {
   return Object.keys(out);
 }
 function avisosEtapas() {
-  var hoje = hojeIso(), membros = null;
+  var hoje = hojeIso(), membros = null, convidados = null;
   fsList('eventos').forEach(function (ev) {
     try {
-      if (!ev.data || /\[teste\]/i.test(ev.nome || '')) return;
-      if (ev.status === 'realizado' && !ev.etapas) return;            // evento anterior ao andamento
-      if (ev.data < somaDiasIso(hoje, -30)) return;                    // passou há mais de 30 dias
-      var cur = etapasDoEvento(ev).filter(function (x) { return !x.feita; })[0];
-      if (!cur) return;
-      var av = ev.etapasAvisos || {}, novo = false;
-      [['vez', cur.k !== 'ficha'], ['atraso', cur.atrasada]].forEach(function (t) {
-        var chave = cur.k + '_' + t[0];
-        if (!t[1] || av[chave]) return;
+      if (!ev.data || ev.status === 'realizado' || ev.data < hoje || /\[teste\]/i.test(ev.nome || '')) return;
+      if (!convidados) { convidados = {}; fsList('convidados').forEach(function (g) { convidados[g._id] = g; }); }
+      var ok = pontosFeitos(ev, convidados), av = ev.etapasAvisos || {}, novo = false, atrasos = {};
+      PONTOS.forEach(function (p) {
+        if (ok[p.k]) return;
+        if (p.vez && !av[p.k + '_vez'] && p.vez(ok, ev)) {
+          if (!membros) membros = fsList('membros');
+          if (!mandar(emailsDaArea(p.a, ev, membros), emailVez(ev, p))) return;
+          av[p.k + '_vez'] = new Date().toISOString(); novo = true;
+        }
+        var prazo = somaDiasIso(ev.data, -p.d);
+        if (prazo < hoje && !av[p.k + '_atraso']) (atrasos[p.a] = atrasos[p.a] || []).push(p);
+      });
+      Object.keys(atrasos).forEach(function (a) {
         if (!membros) membros = fsList('membros');
-        var para = emailsDaArea(cur.a, ev, membros);
-        if (para.length && MailApp.getRemainingDailyQuota() < para.length + 5) return; // sem cota: tenta na próxima rodada
-        if (para.length) { var m = emailEtapa(ev, cur, t[0]); MailApp.sendEmail({ to: para.join(','), subject: m.assunto, htmlBody: m.html, name: CFG.REMETENTE }); }
-        av[chave] = new Date().toISOString(); novo = true;
+        if (!mandar(emailsDaArea(a, ev, membros), emailAtraso(ev, a, atrasos[a]))) return;
+        atrasos[a].forEach(function (p) { av[p.k + '_atraso'] = new Date().toISOString(); }); novo = true;
       });
       if (novo) fsPatch('eventos/' + ev._id, { etapasAvisos: av });
     } catch (err) { console.error('Etapas ' + ev._id + ': ' + err); }
   });
 }
-function emailEtapa(ev, x, tipo) {
-  var dia = dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4), prazo = x.prazo ? dataCurta(x.prazo) : 'a definir';
-  var assunto = (tipo === 'atraso' ? 'Atrasado: ' : 'Sua vez: ') + x.o + ' · ' + (ev.nome || 'Evento') + ' (' + dia + ')';
-  var txt = tipo === 'atraso'
-    ? 'O prazo para <b>' + esc(x.o.toLowerCase()) + '</b> do evento <b>' + esc(ev.nome || '') + '</b> era ' + prazo + ', e a etapa ainda não foi marcada como feita.'
-    : 'Chegou a vez da área <b>' + esc(x.a) + '</b> no evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '): <b>' + esc(x.o.toLowerCase()) + '</b>, até ' + prazo + '.';
-  var html = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">' +
-    '<p>' + txt + '</p><p>Quando terminar, marque a etapa como feita no Planejador (tela Pendências ou na ficha do evento).</p>' +
+/* manda (ou, sem destinatário, só marca como avisado); sem cota, deixa para a próxima rodada */
+function mandar(para, m) {
+  if (!para.length) return true;
+  if (MailApp.getRemainingDailyQuota() < para.length + 5) return false;
+  MailApp.sendEmail({ to: para.join(','), subject: m.assunto, htmlBody: m.html, name: CFG.REMETENTE });
+  return true;
+}
+function diaCurto(ev) { return dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4); }
+function moldura(txt) {
+  return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">' + txt +
+    '<p>Quando terminar, marque o ponto como concluído no Planejador (tela Pendências ou no checklist da ficha do evento).</p>' +
     '<p><a href="' + CFG.SITE + '#pendencias" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">Abrir as pendências</a></p>' +
     '<p style="color:#777;font-size:12px">Aviso automático do Planejador de Eventos da Feashion.</p></div>';
-  return { assunto: assunto, html: html };
+}
+function emailVez(ev, p) {
+  return { assunto: 'Sua vez: ' + p.n + ' · ' + (ev.nome || 'Evento') + ' (' + diaCurto(ev) + ')',
+    html: moldura('<p>Chegou a vez da área <b>' + esc(p.a) + '</b> no evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '): <b>' + esc(p.n) + '</b>, até ' + dataCurta(somaDiasIso(ev.data, -p.d)) + '.</p>') };
+}
+function emailAtraso(ev, area, ps) {
+  var lista = '<ul>' + ps.map(function (p) { return '<li><b>' + esc(p.n) + '</b>: prazo ' + dataCurta(somaDiasIso(ev.data, -p.d)) + '</li>'; }).join('') + '</ul>';
+  return { assunto: 'Atrasado: ' + (ps.length === 1 ? ps[0].n : ps.length + ' pontos do checklist') + ' · ' + (ev.nome || 'Evento') + ' (' + diaCurto(ev) + ')',
+    html: moldura('<p>No evento <b>' + esc(ev.nome || '') + '</b> (' + esc(quando(ev)) + '), ' + (ps.length === 1 ? 'este ponto da área ' : 'estes pontos da área ') + '<b>' + esc(area) + '</b> passaram do prazo:</p>' + lista) };
 }
 
 /* ---------- equipe: quem tem cargo no app edita a pasta (Forms e planilhas herdam) ---------- */
