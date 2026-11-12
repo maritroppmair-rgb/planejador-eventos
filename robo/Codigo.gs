@@ -22,6 +22,7 @@ var CFG = {
   MODELO_FEEDBACK_ID: '1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg', // reserva: o que vale é o link salvo em Parâmetros no site
   FEEDBACK_DIAS: 30,        // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
   PASTA: 'Feashion · Inscrições',
+  PASTA_FEEDBACK: 'Feashion · Feedbacks', // Forms de feedback e planilhas de respostas (mesmo acesso de edição da pasta das inscrições)
   PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
   REMETENTE: 'Feashion · Diretoria de Eventos',
   SITE: 'https://maritroppmair-rgb.github.io/planejador-eventos/', // link dos e-mails de etapas (abre em Pendências)
@@ -206,9 +207,13 @@ function pastaInscricoes() {
   var it = DriveApp.getFoldersByName(CFG.PASTA);
   return it.hasNext() ? it.next() : DriveApp.createFolder(CFG.PASTA);
 }
+function pastaFeedbacks() {
+  var it = DriveApp.getFoldersByName(CFG.PASTA_FEEDBACK);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(CFG.PASTA_FEEDBACK);
+}
 
 /* ---------- Forms de feedback de um evento ----------
-   Igual à inscrição: o robô copia o Forms padrão de feedback (Parâmetros no site) para a mesma pasta, troca título, descrição
+   Igual à inscrição: o robô copia o Forms padrão de feedback (Parâmetros no site) para a pasta "Feashion · Feedbacks", troca título, descrição
    e mensagens pelos dados do evento e cria a planilha de respostas. Nas perguntas, {evento}, {convidado}, {data} e {sala}
    viram os dados do evento. Nasce quando alguém marca "Forms de feedback" nos avisos do evento; o botão "Avaliar o evento"
    do agradecimento passa a abrir este Forms. eventos/{id}.feedback = {formId, url, editUrl, planilhaUrl, ligado, total,
@@ -229,7 +234,7 @@ function criarFeedback(eid, u) {
       return { feedback: ev.feedback, jaExistia: true };
     }
     if (!ev.data) throw new Error('O evento precisa ter data antes do Forms de feedback.');
-    var pasta = pastaInscricoes(), nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
+    var pasta = pastaFeedbacks(), nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
     var copia = DriveApp.getFileById(modeloFeedbackId()).makeCopy('Feedback · ' + nomeArq, pasta), planilha = null;
     try {
       var form = FormApp.openById(copia.getId());
@@ -861,6 +866,7 @@ function sincronizarEquipe() {
   delete querem[dono];
   /* inscrições (todos os Forms e planilhas criados herdam) e o Forms padrão: quem tem cargo em Eventos edita */
   permissoesPasta(id, querem);
+  try { permissoesPasta(pastaFeedbacks().getId(), querem); } catch (err) { console.error('Pasta de feedbacks: ' + err); }
   try { permissoesPasta(modeloFormId(), querem); } catch (err) { console.error('Forms padrão: ' + err); }
   try { permissoesPasta(modeloFeedbackId(), querem); } catch (err) { console.error('Forms padrão de feedback: ' + err); }
   /* fotos: todo membro cadastrado no app, de qualquer área, pode ver e subir fotos */
@@ -929,6 +935,7 @@ function instalar() {
   console.log('Modelo encontrado: ' + f.getTitle());
   try { console.log('Modelo de feedback: ' + FormApp.openById(modeloFeedbackId()).getTitle()); } catch (err) { console.error('Forms padrão de feedback: ' + err); }
   console.log('Pasta: ' + pastaInscricoes().getUrl());
+  console.log('Pasta de feedbacks: ' + pastaFeedbacks().getUrl());
   console.log('Equipe com acesso de edição: ' + sincronizarEquipe().join(', '));
   console.log('Firestore ok, DEV: ' + ((fsGet('config/dev') || {}).email || '(ninguém ainda)'));
   console.log('Cota de e-mails hoje: ' + MailApp.getRemainingDailyQuota());
