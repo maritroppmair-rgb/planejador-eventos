@@ -36,6 +36,10 @@ function publicoUsp(e){var i=e.inscricao;if(!i||!i.formId)return null;var u=+i.u
   var inst=Object.keys(i.institutos||{}).map(function(k){return [k,+i.institutos[k]||0];}).sort(function(a,b){return b[1]-a[1]||(a[0]<b[0]?-1:1);});
   return {usp:u,nao:n,total:u+n,inst:inst};}
 window.__publicoUsp=publicoUsp;
+/* feedback dos participantes (Forms de feedback do app, lido pelo robô): null sem Forms */
+function fbDe(e){var f=e.feedback;if(!f||!f.formId)return null;
+  return {total:+f.total||0,satisfacao:num(f.satisfacao),perguntas:(f.perguntas||[]).filter(function(q){return q&&q.t;}),comentarios:(f.comentarios||[]).filter(function(c){return c&&c.txt;})};}
+function nota(v){return v==null?'—':(Math.round(v*10)/10).toFixed(1).replace('.',',');}
 /* os números do resultado (os mesmos de antes do pós-evento) */
 var RES=[['presentes','Presentes (total)',1],['membros','Membros presentes'],['duracaoReal','Duração real (min)'],['atraso','Atraso (min)']];
 var COM=[['','—'],['certo','Porções certas'],['faltou','Faltou comida'],['sobrou','Sobrou comida']];
@@ -81,6 +85,11 @@ function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=insDe(e),pr=v.presentes,s
     h+='<h5 class="br-h5">Divulgação</h5>'+dl([['Posts publicados',po.filter(function(p){return p.pub;}).length+' de '+po.length],
       ['Por canal',mk.canais.filter(function(c){return c.posts.length;}).map(function(c){return esc(c.nome)+' '+c.posts.filter(function(p){return p.pub;}).length+'/'+c.posts.length;}).join(' · ')||'—'],
       ['Divulgação feita',mk.feita?'em '+ddmm(dia(mk.feita.em))+(mk.feita.por?' por '+esc(prim(mk.feita.por)):''):'não marcada']]);}
+  var fb=fbDe(e),ms=num((e.ficha||{}).metaSatisfacao);
+  if(fb)h+='<h5 class="br-h5">Feedback dos participantes</h5>'+(fb.total?dl([['Respostas',fb.total+(ins?' <span class="note">'+pct(fb.total/ins)+' dos inscritos</span>':'')],
+      ['Satisfação',pct(fb.satisfacao)+' <span class="note">notas 4 e 5'+(ms!=null?' · meta '+ms+'%':'')+'</span>'+(ms!=null&&fb.satisfacao!=null?(fb.satisfacao*100>=ms?' <span class="chip ok">bateu a meta</span>':' <span class="chip warn">abaixo da meta</span>'):'')]]
+    .concat(fb.perguntas.map(function(q){return [esc(q.t),nota(q.media)+' <span class="note">de '+q.max+' · '+q.n+' respostas</span>'];}))
+    .concat([['Comentários',fb.comentarios.length?fb.comentarios.length+' <span class="note">entram no relatório final</span>':'nenhum']])):'<p class="note" style="margin:0">O Forms de feedback ainda não tem respostas.</p>');
   return h+'<p class="note" style="margin:8px 0 0">O resumo usa os números do resultado já salvos e o que cada área registrou. Tudo isso entra no relatório final.</p>';}
 
 /* ----- painel ----- */
@@ -237,6 +246,12 @@ function pdfRelatorio(e,aut,q){var f=e.ficha||{},pe=e.posEvento||{},nome=e.nome|
   if(pu){doc.sub('Público USP (inscritos pelo Forms)');
     doc.kv([['Alunos USP',pu.usp+' de '+pu.total+' inscritos ('+pct(pu.usp/pu.total)+')'],['Fora da USP',pu.nao+' ('+pct(pu.nao/pu.total)+')']]);
     doc.tabela(['Instituto','Inscritos','% dos alunos USP'],pu.inst.map(function(x){return [x[0],String(x[1]),pu.usp?pct(x[1]/pu.usp):'—'];}),[.5,.25,.25]);}
+  /* feedback dos participantes */
+  var fbk=fbDe(e),mts=num(f.metaSatisfacao);doc.secao('Feedback dos participantes');
+  if(fbk&&fbk.total){doc.kv([['Respostas',fbk.total+(ins?' ('+pct(fbk.total/ins)+' dos inscritos)':'')],['Satisfação',pct(fbk.satisfacao)+' das notas foram 4 ou 5'+(mts!=null?' (meta '+mts+'%)':'')]]);
+    doc.tabela(['Pergunta','Média','Respostas','Notas (da menor à maior)'],fbk.perguntas.map(function(q){return [q.t,nota(q.media)+' de '+q.max,String(q.n),(q.dist||[]).join(' · ')];}),[.5,.14,.13,.23]);
+    if(fbk.comentarios.length){doc.sub('Comentários');fbk.comentarios.forEach(function(c){doc.par('“'+c.txt+'”','F4',9.5);});}}
+  else doc.par(fbk?'O Forms de feedback não teve respostas.':'Evento sem o Forms de feedback do app.','F4',9.5,CINZA);
   /* Financeiro */
   var fr=window.__finRel?__finRel(e):null;doc.secao('Financeiro');
   if(fr){var cp=fr.gasto!=null&&pr?fr.gasto/pr:null,meta=typeof P!=='undefined'&&P&&P.metaPresente;

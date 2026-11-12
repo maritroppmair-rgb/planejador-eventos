@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111222909"></script>
-<script src="plataforma.js?v=20261111222909"></script>
+<script src="config.js?v=20261111225752"></script>
+<script src="plataforma.js?v=20261111225752"></script>
 </head>
 <body>
 
@@ -1350,6 +1350,8 @@ li.dv-p:not(:has(select)){grid-template-columns:auto minmax(0,1fr) auto auto}
       <article class="acard"><h3>Ocupação das salas</h3><p class="sub">Presentes ÷ capacidade da sala.</p><div id="a-c5"></div></article>
       <article class="acard"><h3>Alunos USP</h3><p class="sub">Inscritos que responderam Sim em "Aluno USP" no Forms, por evento.</p><div id="a-c7"></div></article>
       <article class="acard"><h3>Inscritos por instituto</h3><p class="sub">Alunos USP inscritos de cada instituto, somando os eventos do filtro.</p><div id="a-c8"></div></article>
+      <article class="acard"><h3>Satisfação (feedback)</h3><p class="sub">Parte das notas do Forms de feedback que foram 4 ou 5, por evento. Em dourado, abaixo da meta da ficha.</p><div id="a-c9"></div></article>
+      <article class="acard"><h3>Nota média por pergunta</h3><p class="sub">Média de cada pergunta do Forms de feedback (1 a 5), somando os eventos do filtro.</p><div id="a-c10"></div></article>
       <article class="acard full"><h3>Funil de convidados</h3><p class="sub">Quantos convidados estão em cada etapa hoje (não depende do filtro).</p><div id="a-c6"></div></article>
     </div>
   </section>
@@ -2211,7 +2213,7 @@ function connect(){
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
     if(typeof finLigar==='function')finLigar();
     db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});if(typeof finAplicar==='function')finAplicar();$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
-    db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}else if(x.id==='inscricoes'){window.__parInsc=x.data();if(window.__parInscDesenhar)window.__parInscDesenhar();}});},function(){});
+    db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}else if(x.id==='inscricoes'){window.__parInsc=x.data();if(window.__parInscDesenhar)window.__parInscDesenhar();}else if(x.id==='feedback'){window.__parFeedback=x.data();if(window.__parFeedbackDesenhar)window.__parFeedbackDesenhar();}});},function(){});
     db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
     db.collection('salas').onSnapshot(function(s){CARR.sal=1;climaAgendar();salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
     db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();if(typeof finDocs==='function')finDocs();refresh();},function(){});
@@ -2501,6 +2503,20 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     if(!db){m.textContent='Sem conexão com a base.';return;}
     m.textContent='Salvando…';db.doc('parametros/inscricoes').set({modeloFormUrl:'https://docs.google.com/forms/d/'+id+'/edit',modeloFormId:id,em:new Date().toISOString(),porNome:String(window.__meuNome||'').slice(0,80)},{merge:true})
       .then(function(){fsuj=false;desenhar();$('pi-msg').textContent='Salvo. Os próximos Forms saem deste modelo.';},function(){m.textContent='Não foi possível salvar: só a diretoria altera.';});});
+  /* Forms padrão de feedback: o robô copia este Forms quando alguém marca "Forms de feedback" nos avisos do evento (parametros/feedback) */
+  var PADRAO_FB='https://docs.google.com/forms/d/1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg/edit';
+  var fbk=el('<div class="tp-blk pinsc" id="par-fb"></div>');sec.appendChild(fbk);var fbsuj=false;
+  function desenharFb(){if(fbsuj)return;var d=window.__parFeedback||{},u=safeUrl(d.modeloFormUrl)||PADRAO_FB,ed=podeF();
+    fbk.innerHTML='<h4>Forms padrão de feedback</h4><p class="note" style="margin:0 0 8px">O robô copia este Forms quando alguém marca <b>Forms de feedback</b> nos avisos do evento. Perguntas de escala (1 a 5) viram média e satisfação; perguntas abertas viram comentários. Nas perguntas, {evento}, {convidado}, {data} e {sala} viram os dados do evento.</p>'+
+      (ed?'<div class="fi-add pinsc-row"><input id="pf-url" type="url" value="'+esc(u)+'" aria-label="Link do Forms padrão de feedback"><button type="button" class="btn small" id="pf-salvar">Salvar</button></div>':'')+
+      '<div class="btns" style="margin-top:6px"><a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão de feedback ↗</a><span class="msg" id="pf-msg" role="status"></span></div>';}
+  window.__parFeedbackDesenhar=desenharFb;document.addEventListener('permissoes',desenharFb);desenharFb();
+  fbk.addEventListener('input',function(e){if(e.target.id==='pf-url')fbsuj=true;});
+  fbk.addEventListener('click',function(e){if(!e.target.closest('#pf-salvar'))return;var u=$('pf-url').value.trim(),id=formId(u),m=$('pf-msg');
+    if(!id){m.textContent='Cole o link de edição do Forms (docs.google.com/forms/d/…/edit).';return;}
+    if(!db){m.textContent='Sem conexão com a base.';return;}
+    m.textContent='Salvando…';db.doc('parametros/feedback').set({modeloFormUrl:'https://docs.google.com/forms/d/'+id+'/edit',modeloFormId:id,em:new Date().toISOString(),porNome:String(window.__meuNome||'').slice(0,80)},{merge:true})
+      .then(function(){fbsuj=false;desenharFb();$('pf-msg').textContent='Salvo. Os próximos Forms de feedback saem deste modelo.';},function(){m.textContent='Não foi possível salvar: só a diretoria altera.';});});
 })();
 
 /* ============================== BASE DE EVENTOS ============================== */
@@ -2586,6 +2602,11 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     ETIPOS.forEach(function(T){var t=T[0],c=cfg[t]||{},auto=c.auto!=null?!!c.auto:T[3];
       h+='<div class="temr"><div class="temr-t"><b>'+T[1]+'</b>'+(c.corpo?' <span class="ttag">texto próprio</span>':'')+'<span class="tsub">'+(auto?'automático: '+T[2]:'desligado')+'</span><span class="tsub">'+estado(i,t)+'</span></div>'+
         (ed?'<div class="temr-a"><label class="tsw"><input type="checkbox" data-em-auto="'+t+'"'+(auto?' checked':'')+'> automático</label><button type="button" class="btn small ghost" data-em-txt="'+t+'">Texto</button><button type="button" class="btn small ghost" data-em-env="'+t+'"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';});
+    /* Forms de feedback: marcar cria a cópia do Forms padrão de feedback (robô) e o agradecimento passa a levar para ele */
+    var fb=e.feedback||{},fl=!!(fb.formId&&fb.ligado!==false),nfb=+fb.total||0,lk=function(u,t){u=safeUrl(u);return u?' · <a href="'+esc(u)+'" target="_blank" rel="noopener">'+t+' ↗</a>':'';};
+    h+='<div class="temr"><div class="temr-t"><b>Forms de feedback</b><span class="tsub">'+(fb.formId?(fl?'ligado: o botão “Avaliar o evento” do agradecimento abre este Forms':'desligado: o agradecimento usa o link escrito no texto dele'):'marque para o robô criar o Forms de feedback deste evento, a partir do Forms padrão de feedback')+'</span>'+
+      (fb.formId?'<span class="tsub">'+nfb+' resposta'+(nfb===1?'':'s')+(fb.satisfacao!=null?' · satisfação '+Math.round(fb.satisfacao*100)+'%':'')+lk(fb.url,'abrir')+(ed?lk(fb.editUrl,'editar')+lk(fb.planilhaUrl,'planilha'):'')+'</span>':'')+'</div>'+
+      (ed?'<div class="temr-a"><label class="tsw"><input type="checkbox" data-fb-lig="1"'+(fl?' checked':'')+(oc?' disabled':'')+'> '+(oc&&!fb.formId?'criando…':'Forms de feedback')+'</label></div>':'')+'</div>';
     if(i.mudanca&&!i.mudanca.pendente)h+='<div class="temr"><div class="temr-t"><b>Aviso de mudança</b><span class="tsub">'+esc(i.mudanca.texto||'')+'</span><span class="tsub">'+estado(i,'mudanca')+'</span></div>'+(ed?'<div class="temr-a"><button type="button" class="btn small ghost" data-em-txt="mudanca">Texto</button><button type="button" class="btn small ghost" data-em-env="mudanca"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';
     h+='<div class="btns temr-f"><span class="note">'+(i.cota!=null?'Cota de e-mails hoje: <b>'+i.cota+'</b> restantes (Gmail comum: 100 por dia).':'Gmail comum: até 100 e-mails por dia; o que passar fica na fila.')+'</span><button type="button" class="btn small ghost" data-em-hist="1">'+(hist[e.id]?'Atualizar lista':'Ver quem recebeu')+'</button></div>';
     if(hist[e.id])h+=histTab(hist[e.id]);
@@ -2602,7 +2623,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var corpo=blk('',(e.inscricao&&e.inscricao.mudanca&&t==='mudanca'?'<p class="note" style="margin:0 0 10px">O que mudou: '+esc(e.inscricao.mudanca.texto||'')+'</p>':'')+
       '<div class="field"><label for="ed-assunto">Assunto</label><input id="ed-assunto" data-ed="assunto" value="'+esc(r.assunto)+'"></div>'+
       '<div class="field" style="margin-top:10px"><label for="ed-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ed-corpo" data-ed="corpo" rows="10">'+esc(r.corpo)+'</textarea></div>'+
-      (t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
+      (t==='agradecimento'&&e.feedback&&e.feedback.formId&&e.feedback.ligado!==false?'<p class="note" style="margin:10px 0 0">O botão “Avaliar o evento” abre o <b>Forms de feedback</b> deste evento (ligado nos avisos).</p>':
+       t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
       '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='mailing');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" "'+dica(c[0])+'>'+c[0]+'</button>';}).join('')+'</div>')+
       blk('Prévia',ph?'<iframe class="tprev" sandbox="" srcdoc="'+esc(ph)+'" title="Prévia do e-mail"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia” para ver o e-mail como chega, com o nome de exemplo.</p>')+
       (emMsg[e.id]?'<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>':'');
@@ -2650,6 +2672,9 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var ultimoCampo=null;
   sec.addEventListener('input',function(e){var f=e.target.dataset&&e.target.dataset.ed;if(!f||!bEmail)return;var k=bEmail.id+'|'+bEmail.tipo;rasc[k][f]=e.target.value;});
   sec.addEventListener('focusin',function(e){if(e.target.dataset&&(e.target.dataset.ed==='assunto'||e.target.dataset.ed==='corpo'))ultimoCampo=e.target;});
+  sec.addEventListener('change',function(e){var a=e.target.closest('[data-fb-lig]');if(!a||!TP||!db)return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;
+    if(a.checked&&!(ev.feedback&&ev.feedback.formId)){emAcao(id,'criarFeedback',{},function(){return 'Forms de feedback criado. O agradecimento já leva para ele.';});return;}
+    db.doc('eventos/'+id).update({'feedback.ligado':a.checked}).catch(function(){alertMsg('Não foi possível salvar.');});});
   sec.addEventListener('change',function(e){var a=e.target.closest('[data-em-auto]');if(!a||!TP||!db)return;var id=TP.o.chave,up={};up['emails.'+a.dataset.emAuto+'.auto']=a.checked;
     db.doc('eventos/'+id).update(up).catch(function(){alertMsg('Não foi possível salvar.');});});
   sec.addEventListener('click',function(e){if(!TP||TP.o.sec!=='view-base')return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;var b;
@@ -4058,6 +4083,10 @@ function publicoUsp(e){var i=e.inscricao;if(!i||!i.formId)return null;var u=+i.u
   var inst=Object.keys(i.institutos||{}).map(function(k){return [k,+i.institutos[k]||0];}).sort(function(a,b){return b[1]-a[1]||(a[0]<b[0]?-1:1);});
   return {usp:u,nao:n,total:u+n,inst:inst};}
 window.__publicoUsp=publicoUsp;
+/* feedback dos participantes (Forms de feedback do app, lido pelo robô): null sem Forms */
+function fbDe(e){var f=e.feedback;if(!f||!f.formId)return null;
+  return {total:+f.total||0,satisfacao:num(f.satisfacao),perguntas:(f.perguntas||[]).filter(function(q){return q&&q.t;}),comentarios:(f.comentarios||[]).filter(function(c){return c&&c.txt;})};}
+function nota(v){return v==null?'—':(Math.round(v*10)/10).toFixed(1).replace('.',',');}
 /* os números do resultado (os mesmos de antes do pós-evento) */
 var RES=[['presentes','Presentes (total)',1],['membros','Membros presentes'],['duracaoReal','Duração real (min)'],['atraso','Atraso (min)']];
 var COM=[['','—'],['certo','Porções certas'],['faltou','Faltou comida'],['sobrou','Sobrou comida']];
@@ -4103,6 +4132,11 @@ function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=insDe(e),pr=v.presentes,s
     h+='<h5 class="br-h5">Divulgação</h5>'+dl([['Posts publicados',po.filter(function(p){return p.pub;}).length+' de '+po.length],
       ['Por canal',mk.canais.filter(function(c){return c.posts.length;}).map(function(c){return esc(c.nome)+' '+c.posts.filter(function(p){return p.pub;}).length+'/'+c.posts.length;}).join(' · ')||'—'],
       ['Divulgação feita',mk.feita?'em '+ddmm(dia(mk.feita.em))+(mk.feita.por?' por '+esc(prim(mk.feita.por)):''):'não marcada']]);}
+  var fb=fbDe(e),ms=num((e.ficha||{}).metaSatisfacao);
+  if(fb)h+='<h5 class="br-h5">Feedback dos participantes</h5>'+(fb.total?dl([['Respostas',fb.total+(ins?' <span class="note">'+pct(fb.total/ins)+' dos inscritos</span>':'')],
+      ['Satisfação',pct(fb.satisfacao)+' <span class="note">notas 4 e 5'+(ms!=null?' · meta '+ms+'%':'')+'</span>'+(ms!=null&&fb.satisfacao!=null?(fb.satisfacao*100>=ms?' <span class="chip ok">bateu a meta</span>':' <span class="chip warn">abaixo da meta</span>'):'')]]
+    .concat(fb.perguntas.map(function(q){return [esc(q.t),nota(q.media)+' <span class="note">de '+q.max+' · '+q.n+' respostas</span>'];}))
+    .concat([['Comentários',fb.comentarios.length?fb.comentarios.length+' <span class="note">entram no relatório final</span>':'nenhum']])):'<p class="note" style="margin:0">O Forms de feedback ainda não tem respostas.</p>');
   return h+'<p class="note" style="margin:8px 0 0">O resumo usa os números do resultado já salvos e o que cada área registrou. Tudo isso entra no relatório final.</p>';}
 
 /* ----- painel ----- */
@@ -4259,6 +4293,12 @@ function pdfRelatorio(e,aut,q){var f=e.ficha||{},pe=e.posEvento||{},nome=e.nome|
   if(pu){doc.sub('Público USP (inscritos pelo Forms)');
     doc.kv([['Alunos USP',pu.usp+' de '+pu.total+' inscritos ('+pct(pu.usp/pu.total)+')'],['Fora da USP',pu.nao+' ('+pct(pu.nao/pu.total)+')']]);
     doc.tabela(['Instituto','Inscritos','% dos alunos USP'],pu.inst.map(function(x){return [x[0],String(x[1]),pu.usp?pct(x[1]/pu.usp):'—'];}),[.5,.25,.25]);}
+  /* feedback dos participantes */
+  var fbk=fbDe(e),mts=num(f.metaSatisfacao);doc.secao('Feedback dos participantes');
+  if(fbk&&fbk.total){doc.kv([['Respostas',fbk.total+(ins?' ('+pct(fbk.total/ins)+' dos inscritos)':'')],['Satisfação',pct(fbk.satisfacao)+' das notas foram 4 ou 5'+(mts!=null?' (meta '+mts+'%)':'')]]);
+    doc.tabela(['Pergunta','Média','Respostas','Notas (da menor à maior)'],fbk.perguntas.map(function(q){return [q.t,nota(q.media)+' de '+q.max,String(q.n),(q.dist||[]).join(' · ')];}),[.5,.14,.13,.23]);
+    if(fbk.comentarios.length){doc.sub('Comentários');fbk.comentarios.forEach(function(c){doc.par('“'+c.txt+'”','F4',9.5);});}}
+  else doc.par(fbk?'O Forms de feedback não teve respostas.':'Evento sem o Forms de feedback do app.','F4',9.5,CINZA);
   /* Financeiro */
   var fr=window.__finRel?__finRel(e):null;doc.secao('Financeiro');
   if(fr){var cp=fr.gasto!=null&&pr?fr.gasto/pr:null,meta=typeof P!=='undefined'&&P&&P.metaPresente;
@@ -5179,10 +5219,24 @@ function g8(L){
   barrasH($('a-c8'),rows,{titulo:'Inscritos por instituto',vazio:'Sem respostas de instituto neste filtro.',cab:['Instituto','Inscritos','% dos alunos USP']});
 }
 
+/* 9. satisfação por evento e 10. nota média por pergunta (Forms de feedback do app, lido pelo robô) */
+function fbk(e){var f=e.feedback;return f&&f.formId&&+f.total>0?f:null;}
+function g9(L){
+  var rows=L.map(function(e){var f=fbk(e);if(!f||f.satisfacao==null)return null;var ms=num((e.ficha||{}).metaSatisfacao),v=+f.satisfacao;
+    return {l:e.nome||'Evento',v:v,t:pct(v),cor:ms!=null&&v*100<ms?'var(--s-ins)':null,tip:'<b>'+esc(e.nome||'Evento')+'</b>'+esc(dm(e.data))+'<br>'+f.total+' respostas · '+pct(v)+' de notas 4 e 5'+(ms!=null?' · meta '+ms+'%':''),linha:[e.nome||'',dm(e.data),f.total,pct(v),ms!=null?ms+'%':'']};}).filter(Boolean);
+  barrasH($('a-c9'),rows,{titulo:'Satisfação por evento',vazio:'Sem respostas do Forms de feedback neste filtro.',max:1,cab:['Evento','Data','Respostas','Satisfação','Meta']});
+}
+function g10(L){
+  var t={};L.forEach(function(e){var f=fbk(e);if(!f)return;(f.perguntas||[]).forEach(function(q){if(!q||!q.t||q.media==null||!q.n)return;var k=q.t;t[k]=t[k]||{s:0,n:0,max:q.max,ev:0};t[k].s+=q.media*q.n;t[k].n+=q.n;t[k].ev++;});});
+  var rows=Object.keys(t).map(function(k){var x=t[k],m=x.s/x.n,tx=(Math.round(m*10)/10).toFixed(1).replace('.',',');
+    return {l:k,v:m,t:tx,tip:'<b>'+esc(k)+'</b>média '+tx+' de '+x.max+' · '+x.n+' respostas em '+x.ev+' evento'+(x.ev===1?'':'s'),linha:[k,tx,x.n,x.ev]};}).sort(function(a,b){return b.v-a.v;});
+  barrasH($('a-c10'),rows,{titulo:'Nota média por pergunta',vazio:'Sem respostas do Forms de feedback neste filtro.',max:5,cab:['Pergunta','Média','Respostas','Eventos']});
+}
+
 function render(){
   if(!visivel()||!pronto)return;
   opcoes();var L=filtrados();
-  kpis(L);g1(L);g2(L);g3(L);g4(L);g5(L);g6();g7(L);g8(L);
+  kpis(L);g1(L);g2(L);g3(L);g4(L);g5(L);g6();g7(L);g8(L);g9(L);g10(L);
 }
 
 /* dica ao passar o mouse ou tocar */

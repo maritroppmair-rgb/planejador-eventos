@@ -19,6 +19,8 @@ var CFG = {
   PROJETO: 'planejador-de-eventos-261df',
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
   MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8', // reserva: o que vale é o link salvo em Parâmetros no site
+  MODELO_FEEDBACK_ID: '1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg', // reserva: o que vale é o link salvo em Parâmetros no site
+  FEEDBACK_DIAS: 30,        // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
   PASTA: 'Feashion · Inscrições',
   PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
   REMETENTE: 'Feashion · Diretoria de Eventos',
@@ -50,6 +52,8 @@ function doPost(e) {
       else if (!b.evento) throw new Error('Evento não informado.');
       else if (b.acao === 'criarForm') out = criarForm(b.evento, u);
       else if (b.acao === 'criarPastaFotos') out = criarPastaFotos(b.evento);
+      else if (b.acao === 'criarFeedback') out = criarFeedback(b.evento, u);
+      else if (b.acao === 'sincronizarFeedback') out = sincronizarFeedback(b.evento);
       else if (b.acao === 'sincronizar') out = sincronizarEvento(b.evento);
       else if (b.acao === 'atualizarForm') out = sincronizarEvento(b.evento, null, true);
       else if (b.acao === 'enviarAviso') out = enviarTipo(b.evento, 'lembrete');
@@ -203,6 +207,115 @@ function pastaInscricoes() {
   return it.hasNext() ? it.next() : DriveApp.createFolder(CFG.PASTA);
 }
 
+/* ---------- Forms de feedback de um evento ----------
+   Igual à inscrição: o robô copia o Forms padrão de feedback (Parâmetros no site) para a mesma pasta, troca título, descrição
+   e mensagens pelos dados do evento e cria a planilha de respostas. Nas perguntas, {evento}, {convidado}, {data} e {sala}
+   viram os dados do evento. Nasce quando alguém marca "Forms de feedback" nos avisos do evento; o botão "Avaliar o evento"
+   do agradecimento passa a abrir este Forms. eventos/{id}.feedback = {formId, url, editUrl, planilhaUrl, ligado, total,
+   satisfacao (parte das notas que foram as duas mais altas), perguntas: [{t, min, max, rot, n, media, dist}], comentarios: [{p, txt, em}]} */
+function modeloFeedbackId() {
+  var d = null;
+  try { d = fsGet('parametros/feedback'); } catch (err) { console.error('Parâmetros: ' + err); }
+  return (d && d.modeloFormId) || CFG.MODELO_FEEDBACK_ID;
+}
+function criarFeedback(eid, u) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var ev = fsGet('eventos/' + eid);
+    if (!ev) throw new Error('Evento não encontrado.');
+    if (ev.feedback && ev.feedback.formId) {
+      if (ev.feedback.ligado === false) { ev.feedback.ligado = true; fsPatch('eventos/' + eid, { feedback: ev.feedback }); }
+      return { feedback: ev.feedback, jaExistia: true };
+    }
+    if (!ev.data) throw new Error('O evento precisa ter data antes do Forms de feedback.');
+    var pasta = pastaInscricoes(), nomeArq = ev.nome + ' · ' + dataCurta(ev.data);
+    var copia = DriveApp.getFileById(modeloFeedbackId()).makeCopy('Feedback · ' + nomeArq, pasta), planilha = null;
+    try {
+      var form = FormApp.openById(copia.getId());
+      trocarCampos(form, ev);
+      aplicarTextosFeedback(form, ev);
+      publicar(form);
+      form.setAcceptingResponses(true);
+      planilha = SpreadsheetApp.create('Respostas feedback · ' + nomeArq);
+      DriveApp.getFileById(planilha.getId()).moveTo(pasta);
+      form.setDestination(FormApp.DestinationType.SPREADSHEET, planilha.getId());
+      var url = form.getPublishedUrl(), curta = url;
+      try { curta = form.shortenFormUrl(url); } catch (e) { }
+    } catch (err) {
+      try { copia.setTrashed(true); } catch (e) { }
+      try { if (planilha) DriveApp.getFileById(planilha.getId()).setTrashed(true); } catch (e) { }
+      throw err;
+    }
+    var agora = new Date().toISOString();
+    var fb = {
+      formId: form.getId(), url: curta, editUrl: form.getEditUrl(), planilhaUrl: planilha.getUrl(), assinatura: assinatura(ev),
+      criadoEm: agora, criadoPor: u.email, ligado: true, total: 0, satisfacao: null, perguntas: [], comentarios: [], sincronizadoEm: agora, aberto: true
+    };
+    fsPatch('eventos/' + eid, { feedback: fb });
+    return { feedback: fb };
+  } finally {
+    lock.releaseLock();
+  }
+}
+/** {evento}, {convidado}, {data} e {sala} nas perguntas do Forms padrão viram os dados do evento (só na criação). */
+function trocarCampos(form, ev) {
+  var v = { evento: ev.nome || '', convidado: ev.convidado || 'o convidado', data: ev.data ? dataCurta(ev.data) : '', sala: ev.sala || '' };
+  var re = /\{(evento|convidado|data|sala)\}/g, tr = function (s) { return String(s || '').replace(re, function (m, k) { return v[k]; }); };
+  form.getItems().forEach(function (it) {
+    var t = it.getTitle(), h = it.getHelpText();
+    if (t && t.indexOf('{') >= 0) it.setTitle(tr(t));
+    if (h && h.indexOf('{') >= 0) it.setHelpText(tr(h));
+  });
+}
+function aplicarTextosFeedback(form, ev) {
+  form.setTitle('Feedback · ' + ev.nome);
+  form.setDescription('Obrigado por ter vindo ao evento ' + ev.nome + ' (' + quando(ev) + (ev.convidado ? ', com ' + ev.convidado : '') + ').\n\n' +
+    'Sua opinião ajuda a gente a fazer eventos cada vez melhores. Leva menos de 2 minutos.');
+  try { form.setCustomClosedFormMessage('O feedback de ' + ev.nome + ' já foi encerrado. Obrigado! Fique de olho no Instagram da Feashion para os próximos eventos.'); } catch (e) { }
+  form.setConfirmationMessage('Obrigado pelo feedback! Fique de olho no Instagram da Feashion para os próximos eventos.');
+}
+/** Lê as respostas: perguntas de escala (escala linear ou classificação) viram média e distribuição; as abertas, comentários. */
+function sincronizarFeedback(eid, ev) {
+  ev = ev || fsGet('eventos/' + eid);
+  if (!ev || !ev.feedback || !ev.feedback.formId) throw new Error('Esse evento ainda não tem Forms de feedback.');
+  var fb = ev.feedback, form = FormApp.openById(fb.formId), agora = new Date(), T = FormApp.ItemType;
+  if (fb.assinatura !== assinatura(ev)) {
+    aplicarTextosFeedback(form, ev);
+    try { DriveApp.getFileById(fb.formId).setName('Feedback · ' + ev.nome + ' · ' + dataCurta(ev.data)); } catch (e) { }
+    fb.assinatura = assinatura(ev);
+  }
+  var esc1 = [], porId = {}, abId = {};
+  form.getItems().forEach(function (it) {
+    var tp = it.getType(), q = null;
+    if (tp === T.SCALE) { var s = it.asScaleItem(); q = { min: s.getLowerBound(), max: s.getUpperBound(), rot: [s.getLeftLabel() || '', s.getRightLabel() || ''] }; }
+    else if (T.RATING && tp === T.RATING) { try { q = { min: 1, max: it.asRatingItem().getRatingScaleLevel(), rot: ['', ''] }; } catch (e) { } }
+    else if (tp === T.PARAGRAPH_TEXT || tp === T.TEXT) abId[it.getId()] = it.getTitle();
+    if (q) { q.t = it.getTitle(); q.soma = 0; q.n = 0; q.dist = {}; porId[it.getId()] = q; esc1.push(q); }
+  });
+  var n = 0, top = 0, tot = 0, coment = [];
+  form.getResponses().forEach(function (r) {
+    n++;
+    r.getItemResponses().forEach(function (ir) {
+      var id = ir.getItem().getId(), v = ir.getResponse(), q = porId[id];
+      if (q) { var x = +v; if (!isNaN(x) && String(v) !== '') { q.soma += x; q.n++; q.dist[x] = (q.dist[x] || 0) + 1; tot++; if (x >= q.max - 1) top++; } }
+      else if (abId[id] != null) { var s = String(v == null ? '' : v).trim(); if (s) coment.push({ p: String(abId[id]).slice(0, 200), txt: s.slice(0, 800), em: r.getTimestamp().toISOString() }); }
+    });
+  });
+  fb.total = n;
+  fb.satisfacao = tot ? Math.round(top / tot * 1000) / 1000 : null;
+  fb.perguntas = esc1.map(function (q) {
+    var d = []; for (var k = q.min; k <= q.max; k++) d.push(q.dist[k] || 0);
+    return { t: String(q.t).slice(0, 300), min: q.min, max: q.max, rot: q.rot, n: q.n, media: q.n ? Math.round(q.soma / q.n * 100) / 100 : null, dist: d };
+  });
+  fb.comentarios = coment.slice(-150);
+  fb.sincronizadoEm = agora.toISOString();
+  if (ev.data && agora >= new Date(inicio(ev).getTime() + CFG.FEEDBACK_DIAS * 864e5) && form.isAcceptingResponses()) form.setAcceptingResponses(false);
+  fb.aberto = form.isAcceptingResponses();
+  fsPatch('eventos/' + eid, { feedback: fb });
+  return { feedback: fb };
+}
+
 /* ---------- ler respostas ---------- */
 function sincronizarEvento(eid, ev, forcarTextos) {
   ev = ev || fsGet('eventos/' + eid);
@@ -291,7 +404,9 @@ function render(tipo, ev, r, txt, extra) {
   extra = extra || {};
   var base = MODELOS[tipo], prop = extra.texto || (ev.emails && ev.emails[tipo]) || {};
   var t = { assunto: (txt && txt.assunto) || prop.assunto || base.assunto, corpo: (txt && txt.corpo) || prop.corpo || base.corpo };
-  var insc = ev.inscricao || {}, linkAval = (txt && txt.linkAvaliacao != null) ? txt.linkAvaliacao : (ev.linkAvaliacao || '');
+  var insc = ev.inscricao || {};
+  var fbUrl = ev.feedback && ev.feedback.formId && ev.feedback.ligado !== false ? ev.feedback.url : ''; // Forms de feedback do app ligado: vale ele
+  var linkAval = fbUrl || ((txt && txt.linkAvaliacao != null) ? txt.linkAvaliacao : (ev.linkAvaliacao || ''));
   var v = {
     nome: String((r && r.nome) || '').trim().split(/\s+/)[0] || 'pessoal', evento: ev.nome || '', data_curta: ev.data ? dataCurta(ev.data) : '',
     hora: ev.hora ? horaBR(ev.hora) : '', quando: quando(ev), sala: ev.sala || 'a confirmar', convidado: ev.convidado || '',
@@ -590,6 +705,10 @@ function rotina() {
   fsList('eventos').forEach(function (ev) {
     if (!ev.inscricao || !ev.inscricao.formId || !ev.data) return;
     var ini = inicio(ev), fim = new Date(ini.getTime() + (+ev.duracao || 120) * 60e3);
+    /* feedback: lê as respostas até FEEDBACK_DIAS depois do evento (e fecha o Forms nessa hora) */
+    if (ev.feedback && ev.feedback.formId && agora < new Date(ini.getTime() + (CFG.FEEDBACK_DIAS + 1) * 864e5)) {
+      try { ev.feedback = sincronizarFeedback(ev._id, ev).feedback; } catch (e) { console.error(ev._id + ' feedback: ' + e); }
+    }
     if (agora > new Date(fim.getTime() + 6 * 24 * H)) return; // evento antigo: nada a fazer
     try {
       if (agora < new Date(ini.getTime() + 36 * H) && ev.status !== 'realizado') ev.inscricao = sincronizarEvento(ev._id, ev).inscricao;
@@ -743,6 +862,7 @@ function sincronizarEquipe() {
   /* inscrições (todos os Forms e planilhas criados herdam) e o Forms padrão: quem tem cargo em Eventos edita */
   permissoesPasta(id, querem);
   try { permissoesPasta(modeloFormId(), querem); } catch (err) { console.error('Forms padrão: ' + err); }
+  try { permissoesPasta(modeloFeedbackId(), querem); } catch (err) { console.error('Forms padrão de feedback: ' + err); }
   /* fotos: todo membro cadastrado no app, de qualquer área, pode ver e subir fotos */
   var fotos = DriveApp.getFoldersByName(CFG.PASTA_FOTOS);
   if (fotos.hasNext()) {
@@ -807,6 +927,7 @@ function drive(metodo, caminho, corpo) {
 function instalar() {
   var f = FormApp.openById(modeloFormId());
   console.log('Modelo encontrado: ' + f.getTitle());
+  try { console.log('Modelo de feedback: ' + FormApp.openById(modeloFeedbackId()).getTitle()); } catch (err) { console.error('Forms padrão de feedback: ' + err); }
   console.log('Pasta: ' + pastaInscricoes().getUrl());
   console.log('Equipe com acesso de edição: ' + sincronizarEquipe().join(', '));
   console.log('Firestore ok, DEV: ' + ((fsGet('config/dev') || {}).email || '(ninguém ainda)'));

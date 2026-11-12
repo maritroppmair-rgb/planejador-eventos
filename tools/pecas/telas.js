@@ -279,6 +279,20 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     if(!db){m.textContent='Sem conexão com a base.';return;}
     m.textContent='Salvando…';db.doc('parametros/inscricoes').set({modeloFormUrl:'https://docs.google.com/forms/d/'+id+'/edit',modeloFormId:id,em:new Date().toISOString(),porNome:String(window.__meuNome||'').slice(0,80)},{merge:true})
       .then(function(){fsuj=false;desenhar();$('pi-msg').textContent='Salvo. Os próximos Forms saem deste modelo.';},function(){m.textContent='Não foi possível salvar: só a diretoria altera.';});});
+  /* Forms padrão de feedback: o robô copia este Forms quando alguém marca "Forms de feedback" nos avisos do evento (parametros/feedback) */
+  var PADRAO_FB='https://docs.google.com/forms/d/1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg/edit';
+  var fbk=el('<div class="tp-blk pinsc" id="par-fb"></div>');sec.appendChild(fbk);var fbsuj=false;
+  function desenharFb(){if(fbsuj)return;var d=window.__parFeedback||{},u=safeUrl(d.modeloFormUrl)||PADRAO_FB,ed=podeF();
+    fbk.innerHTML='<h4>Forms padrão de feedback</h4><p class="note" style="margin:0 0 8px">O robô copia este Forms quando alguém marca <b>Forms de feedback</b> nos avisos do evento. Perguntas de escala (1 a 5) viram média e satisfação; perguntas abertas viram comentários. Nas perguntas, {evento}, {convidado}, {data} e {sala} viram os dados do evento.</p>'+
+      (ed?'<div class="fi-add pinsc-row"><input id="pf-url" type="url" value="'+esc(u)+'" aria-label="Link do Forms padrão de feedback"><button type="button" class="btn small" id="pf-salvar">Salvar</button></div>':'')+
+      '<div class="btns" style="margin-top:6px"><a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão de feedback ↗</a><span class="msg" id="pf-msg" role="status"></span></div>';}
+  window.__parFeedbackDesenhar=desenharFb;document.addEventListener('permissoes',desenharFb);desenharFb();
+  fbk.addEventListener('input',function(e){if(e.target.id==='pf-url')fbsuj=true;});
+  fbk.addEventListener('click',function(e){if(!e.target.closest('#pf-salvar'))return;var u=$('pf-url').value.trim(),id=formId(u),m=$('pf-msg');
+    if(!id){m.textContent='Cole o link de edição do Forms (docs.google.com/forms/d/…/edit).';return;}
+    if(!db){m.textContent='Sem conexão com a base.';return;}
+    m.textContent='Salvando…';db.doc('parametros/feedback').set({modeloFormUrl:'https://docs.google.com/forms/d/'+id+'/edit',modeloFormId:id,em:new Date().toISOString(),porNome:String(window.__meuNome||'').slice(0,80)},{merge:true})
+      .then(function(){fbsuj=false;desenharFb();$('pf-msg').textContent='Salvo. Os próximos Forms de feedback saem deste modelo.';},function(){m.textContent='Não foi possível salvar: só a diretoria altera.';});});
 })();
 
 /* ============================== BASE DE EVENTOS ============================== */
@@ -364,6 +378,11 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     ETIPOS.forEach(function(T){var t=T[0],c=cfg[t]||{},auto=c.auto!=null?!!c.auto:T[3];
       h+='<div class="temr"><div class="temr-t"><b>'+T[1]+'</b>'+(c.corpo?' <span class="ttag">texto próprio</span>':'')+'<span class="tsub">'+(auto?'automático: '+T[2]:'desligado')+'</span><span class="tsub">'+estado(i,t)+'</span></div>'+
         (ed?'<div class="temr-a"><label class="tsw"><input type="checkbox" data-em-auto="'+t+'"'+(auto?' checked':'')+'> automático</label><button type="button" class="btn small ghost" data-em-txt="'+t+'">Texto</button><button type="button" class="btn small ghost" data-em-env="'+t+'"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';});
+    /* Forms de feedback: marcar cria a cópia do Forms padrão de feedback (robô) e o agradecimento passa a levar para ele */
+    var fb=e.feedback||{},fl=!!(fb.formId&&fb.ligado!==false),nfb=+fb.total||0,lk=function(u,t){u=safeUrl(u);return u?' · <a href="'+esc(u)+'" target="_blank" rel="noopener">'+t+' ↗</a>':'';};
+    h+='<div class="temr"><div class="temr-t"><b>Forms de feedback</b><span class="tsub">'+(fb.formId?(fl?'ligado: o botão “Avaliar o evento” do agradecimento abre este Forms':'desligado: o agradecimento usa o link escrito no texto dele'):'marque para o robô criar o Forms de feedback deste evento, a partir do Forms padrão de feedback')+'</span>'+
+      (fb.formId?'<span class="tsub">'+nfb+' resposta'+(nfb===1?'':'s')+(fb.satisfacao!=null?' · satisfação '+Math.round(fb.satisfacao*100)+'%':'')+lk(fb.url,'abrir')+(ed?lk(fb.editUrl,'editar')+lk(fb.planilhaUrl,'planilha'):'')+'</span>':'')+'</div>'+
+      (ed?'<div class="temr-a"><label class="tsw"><input type="checkbox" data-fb-lig="1"'+(fl?' checked':'')+(oc?' disabled':'')+'> '+(oc&&!fb.formId?'criando…':'Forms de feedback')+'</label></div>':'')+'</div>';
     if(i.mudanca&&!i.mudanca.pendente)h+='<div class="temr"><div class="temr-t"><b>Aviso de mudança</b><span class="tsub">'+esc(i.mudanca.texto||'')+'</span><span class="tsub">'+estado(i,'mudanca')+'</span></div>'+(ed?'<div class="temr-a"><button type="button" class="btn small ghost" data-em-txt="mudanca">Texto</button><button type="button" class="btn small ghost" data-em-env="mudanca"'+(oc?' disabled':'')+'>Enviar agora</button></div>':'')+'</div>';
     h+='<div class="btns temr-f"><span class="note">'+(i.cota!=null?'Cota de e-mails hoje: <b>'+i.cota+'</b> restantes (Gmail comum: 100 por dia).':'Gmail comum: até 100 e-mails por dia; o que passar fica na fila.')+'</span><button type="button" class="btn small ghost" data-em-hist="1">'+(hist[e.id]?'Atualizar lista':'Ver quem recebeu')+'</button></div>';
     if(hist[e.id])h+=histTab(hist[e.id]);
@@ -380,7 +399,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     var corpo=blk('',(e.inscricao&&e.inscricao.mudanca&&t==='mudanca'?'<p class="note" style="margin:0 0 10px">O que mudou: '+esc(e.inscricao.mudanca.texto||'')+'</p>':'')+
       '<div class="field"><label for="ed-assunto">Assunto</label><input id="ed-assunto" data-ed="assunto" value="'+esc(r.assunto)+'"></div>'+
       '<div class="field" style="margin-top:10px"><label for="ed-corpo">Texto <span class="rq opt">parágrafos separados por uma linha em branco</span></label><textarea id="ed-corpo" data-ed="corpo" rows="10">'+esc(r.corpo)+'</textarea></div>'+
-      (t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
+      (t==='agradecimento'&&e.feedback&&e.feedback.formId&&e.feedback.ligado!==false?'<p class="note" style="margin:10px 0 0">O botão “Avaliar o evento” abre o <b>Forms de feedback</b> deste evento (ligado nos avisos).</p>':
+       t==='agradecimento'?'<div class="field" style="margin-top:10px"><label for="ed-link">Link do formulário de avaliação</label><input id="ed-link" data-ed="link" type="url" placeholder="https://forms.gle/..." value="'+esc(r.link||'')+'"><span class="note">Sem link, o botão de avaliação não aparece.</span></div>':'')+
       '<p class="note" style="margin:10px 0 6px">Campos (clique para inserir onde está o cursor):</p><div class="tchips">'+CAMPOS.filter(function(c){return (c[0]!=='{link_avaliacao}'||t==='agradecimento')&&(c[0]!=='{mudanca}'||t==='mudanca')&&(c[0]!=='{link_inscricao}'||t==='mailing');}).map(function(c){return '<button type="button" data-ed-ins="'+c[0]+'" "'+dica(c[0])+'>'+c[0]+'</button>';}).join('')+'</div>')+
       blk('Prévia',ph?'<iframe class="tprev" sandbox="" srcdoc="'+esc(ph)+'" title="Prévia do e-mail"></iframe>':'<p class="note" style="margin:0">Clique em “Ver prévia” para ver o e-mail como chega, com o nome de exemplo.</p>')+
       (emMsg[e.id]?'<div class="imsg'+(emMsg[e.id].erro?' err':'')+'">'+esc(emMsg[e.id].t)+'</div>':'');
@@ -428,6 +448,9 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var ultimoCampo=null;
   sec.addEventListener('input',function(e){var f=e.target.dataset&&e.target.dataset.ed;if(!f||!bEmail)return;var k=bEmail.id+'|'+bEmail.tipo;rasc[k][f]=e.target.value;});
   sec.addEventListener('focusin',function(e){if(e.target.dataset&&(e.target.dataset.ed==='assunto'||e.target.dataset.ed==='corpo'))ultimoCampo=e.target;});
+  sec.addEventListener('change',function(e){var a=e.target.closest('[data-fb-lig]');if(!a||!TP||!db)return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;
+    if(a.checked&&!(ev.feedback&&ev.feedback.formId)){emAcao(id,'criarFeedback',{},function(){return 'Forms de feedback criado. O agradecimento já leva para ele.';});return;}
+    db.doc('eventos/'+id).update({'feedback.ligado':a.checked}).catch(function(){alertMsg('Não foi possível salvar.');});});
   sec.addEventListener('change',function(e){var a=e.target.closest('[data-em-auto]');if(!a||!TP||!db)return;var id=TP.o.chave,up={};up['emails.'+a.dataset.emAuto+'.auto']=a.checked;
     db.doc('eventos/'+id).update(up).catch(function(){alertMsg('Não foi possível salvar.');});});
   sec.addEventListener('click',function(e){if(!TP||TP.o.sec!=='view-base')return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;var b;

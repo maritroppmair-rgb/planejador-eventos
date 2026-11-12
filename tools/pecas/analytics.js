@@ -165,10 +165,24 @@ function g8(L){
   barrasH($('a-c8'),rows,{titulo:'Inscritos por instituto',vazio:'Sem respostas de instituto neste filtro.',cab:['Instituto','Inscritos','% dos alunos USP']});
 }
 
+/* 9. satisfação por evento e 10. nota média por pergunta (Forms de feedback do app, lido pelo robô) */
+function fbk(e){var f=e.feedback;return f&&f.formId&&+f.total>0?f:null;}
+function g9(L){
+  var rows=L.map(function(e){var f=fbk(e);if(!f||f.satisfacao==null)return null;var ms=num((e.ficha||{}).metaSatisfacao),v=+f.satisfacao;
+    return {l:e.nome||'Evento',v:v,t:pct(v),cor:ms!=null&&v*100<ms?'var(--s-ins)':null,tip:'<b>'+esc(e.nome||'Evento')+'</b>'+esc(dm(e.data))+'<br>'+f.total+' respostas · '+pct(v)+' de notas 4 e 5'+(ms!=null?' · meta '+ms+'%':''),linha:[e.nome||'',dm(e.data),f.total,pct(v),ms!=null?ms+'%':'']};}).filter(Boolean);
+  barrasH($('a-c9'),rows,{titulo:'Satisfação por evento',vazio:'Sem respostas do Forms de feedback neste filtro.',max:1,cab:['Evento','Data','Respostas','Satisfação','Meta']});
+}
+function g10(L){
+  var t={};L.forEach(function(e){var f=fbk(e);if(!f)return;(f.perguntas||[]).forEach(function(q){if(!q||!q.t||q.media==null||!q.n)return;var k=q.t;t[k]=t[k]||{s:0,n:0,max:q.max,ev:0};t[k].s+=q.media*q.n;t[k].n+=q.n;t[k].ev++;});});
+  var rows=Object.keys(t).map(function(k){var x=t[k],m=x.s/x.n,tx=(Math.round(m*10)/10).toFixed(1).replace('.',',');
+    return {l:k,v:m,t:tx,tip:'<b>'+esc(k)+'</b>média '+tx+' de '+x.max+' · '+x.n+' respostas em '+x.ev+' evento'+(x.ev===1?'':'s'),linha:[k,tx,x.n,x.ev]};}).sort(function(a,b){return b.v-a.v;});
+  barrasH($('a-c10'),rows,{titulo:'Nota média por pergunta',vazio:'Sem respostas do Forms de feedback neste filtro.',max:5,cab:['Pergunta','Média','Respostas','Eventos']});
+}
+
 function render(){
   if(!visivel()||!pronto)return;
   opcoes();var L=filtrados();
-  kpis(L);g1(L);g2(L);g3(L);g4(L);g5(L);g6();g7(L);g8(L);
+  kpis(L);g1(L);g2(L);g3(L);g4(L);g5(L);g6();g7(L);g8(L);g9(L);g10(L);
 }
 
 /* dica ao passar o mouse ou tocar */
