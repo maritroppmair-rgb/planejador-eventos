@@ -21,7 +21,7 @@ Pronto: na Base, abrindo um evento (▸), aparece **Inscrições → Criar Forms
 ## Como usar
 
 - **Criar Forms de inscrição:** copia o modelo para a pasta "Feashion · Inscrições" do Drive, troca título, descrição (data, horário, sala, convidado) e mensagem de confirmação, e cria a planilha de respostas. O app mostra o link para divulgar. Vale conferir o texto em "Editar Forms" antes de divulgar.
-- **A cada 10 minutos:** o total de inscritos e quem quer receber novidades são atualizados no app. As respostas ficam em `inscricoes/{id do evento}` no Firestore. Quando o evento começa, o Forms fecha sozinho.
+- **A cada 10 minutos:** o total de inscritos, quem quer receber novidades e o público USP são atualizados no app. O público USP vem das perguntas "Aluno USP" (Sim/Não) e "Se sim, qual instituto?" do Forms padrão: o robô reconhece a pergunta pelo título (tem "aluno" e "usp"; tem "instituto" ou "unidade") e grava `inscricao.usp`, `inscricao.naoUsp` e `inscricao.institutos` (`{sigla: inscritos}`), usados no relatório final e no Analytics. As respostas ficam em `inscricoes/{id do evento}` no Firestore. Quando o evento começa, o Forms fecha sozinho.
 - **Lembrete:** sai sozinho a partir de 48 h antes do evento para cada inscrito, uma vez por pessoa. Quem se inscreve depois recebe na rodada seguinte. "Enviar lembrete agora" manda na hora para quem ainda não recebeu.
 - **Limite:** Gmail comum manda no máximo **100 e-mails por dia** por script. O que passar disso fica na fila e sai no dia seguinte (o app mostra "N na fila"). Para eventos grandes, aumente `HORAS_AVISO` (por exemplo, 72).
 

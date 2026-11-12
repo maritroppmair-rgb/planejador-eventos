@@ -30,6 +30,11 @@ function convIds(e){return e.convidadoIds&&e.convidadoIds.length?e.convidadoIds:
 function gDe(id){return guests.filter(function(g){return g.id===id;})[0]||null;}
 function dataLonga(e){return e.data?D(e.data).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'sem data';}
 
+/* público USP dos inscritos pelo Forms do app (o robô conta "Aluno USP" e "qual instituto"): null sem dados */
+function publicoUsp(e){var i=e.inscricao;if(!i||!i.formId)return null;var u=+i.usp||0,n=+i.naoUsp||0;if(!u&&!n)return null;
+  var inst=Object.keys(i.institutos||{}).map(function(k){return [k,+i.institutos[k]||0];}).sort(function(a,b){return b[1]-a[1]||(a[0]<b[0]?-1:1);});
+  return {usp:u,nao:n,total:u+n,inst:inst};}
+window.__publicoUsp=publicoUsp;
 /* os números do resultado (os mesmos de antes do pós-evento) */
 var RES=[['inscritos','Inscritos',1],['presentes','Presentes (total)',1],['semInscricao','Vieram sem inscrição'],['membros','Membros presentes'],
   ['porcoesCompradas','Porções compradas'],['porcoesConsumidas','Porções consumidas'],['duracaoReal','Duração real (min)'],['atraso','Atraso (min)']];
@@ -60,7 +65,10 @@ function lerRes(r,exigir){var v={};RES.forEach(function(x){var s=String(r.res[x[
 function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=v.inscritos,pr=v.presentes,sw=v.semInscricao||0;
   var tc=ins&&pr!=null?Math.max(0,pr-sw)/ins:null,f=window.__finRel?__finRel(e):null,mk=window.__mktRel?__mktRel(e):null;
   var pub=[{l:'Inscritos',p:num(e.inscritosMeta),r:ins},{l:'Presentes',p:num(e.presentesPrev),r:pr}];
-  var h='<h5 class="br-h5">Público</h5>'+dl(pub.map(function(x){return [x.l,(x.r!=null?x.r:'—')+' <span class="note">previsto '+(x.p!=null?x.p:'—')+'</span>'];}).concat([['Comparecimento',pct(tc)+' <span class="note">dos inscritos vieram</span>']]));
+  var pu=publicoUsp(e);
+  var h='<h5 class="br-h5">Público</h5>'+dl(pub.map(function(x){return [x.l,(x.r!=null?x.r:'—')+' <span class="note">previsto '+(x.p!=null?x.p:'—')+'</span>'];}).concat([['Comparecimento',pct(tc)+' <span class="note">dos inscritos vieram</span>']])
+    .concat(pu?[['Alunos USP',pu.usp+' de '+pu.total+' inscritos ('+pct(pu.usp/pu.total)+')'+(pu.nao?' <span class="note">'+pu.nao+' de fora da USP</span>':'')],['Institutos',pu.inst.length?esc(pu.inst.map(function(x){return x[0]+' '+x[1];}).join(' · ')):'—']]
+      :e.inscricao&&e.inscricao.formId?[['Alunos USP','<span class="note">o Forms deste evento não tem a pergunta Aluno USP</span>']]:[]));
   if(f){var cp=f.gasto!=null&&pr?f.gasto/pr:null,meta=typeof P!=='undefined'&&P&&P.metaPresente;
     h+='<h5 class="br-h5">Custo</h5>'+dl([['Previsto',reais(f.previsto)],['Verba liberada',reais(f.verba)],['Gasto',reais(f.gasto)+(f.verba!=null&&f.gasto!=null&&f.gasto>f.verba+0.005?' <span class="chip bad">passou da verba</span>':'')],
       ['Custo por presente',reais(cp)+(meta?' <span class="note">meta '+reais(meta)+'</span>':'')]]);}
@@ -174,7 +182,7 @@ function criarPdf(rodapeTxt){
       cabe(h+4);txt(r[0],ML,y,'F1',9,CINZA);ls.forEach(function(s,i){txt(s,ML+LK,y-i*13.5,'F1',10);});y-=h+4;});y-=4;},
     tabela:function(cab,linhas,fr){if(!linhas.length){api.par('Nada registrado.','F4',9.5,CINZA);return;}
       var ws=fr.map(function(f){return f*LW;}),xs=[],x=ML;ws.forEach(function(w){xs.push(x);x+=w;});
-      function topo(){cabe(22);ret(ML,y-5,LW,17,CLARO);cab.forEach(function(c,i){txt(c,xs[i]+4,y,'F2',8,CINZA);});y-=18;}
+      function topo(){cabe(44);ret(ML,y-5,LW,17,CLARO);cab.forEach(function(c,i){txt(c,xs[i]+4,y,'F2',8,CINZA);});y-=18;}
       topo();
       linhas.forEach(function(row){var cl=row.map(function(c,i){return quebra(c==null||c===''?'—':c,'F1',9,ws[i]-8);}),n=Math.max.apply(null,cl.map(function(c){return c.length;})),h=n*11.5+5;
         if(y-h<MB){pag();topo();}
@@ -217,6 +225,10 @@ function pdfRelatorio(e,aut,q){var f=e.ficha||{},pe=e.posEvento||{},nome=e.nome|
   doc.tabela(['Indicador','Previsto','Real'],[['Inscritos',v(num(e.inscritosMeta)),v(ins)],['Presentes',v(num(e.presentesPrev)),v(pr)],['Comparecimento (inscritos que vieram)','',pct(tc)],
     ['Vieram sem inscrição',v(num(e.semInscricaoPrev)),v(num(e.semInscricao))],['Membros presentes','',v(num(e.membros))],['Porções compradas / consumidas','',num(e.porcoesCompradas)==null&&num(e.porcoesConsumidas)==null?'':(v(num(e.porcoesCompradas))||'—')+' / '+(v(num(e.porcoesConsumidas))||'—')],
     ['Duração (min)',v(num(e.duracao)),v(num(e.duracaoReal))],['Atraso (min)','',v(num(e.atraso))],['Check-in','',(CHK.filter(function(o){return o[0]===(e.metodoCheckin||'');})[0]||CHK[0])[1]]],[.5,.25,.25]);
+  var pu=publicoUsp(e);
+  if(pu){doc.sub('Público USP (inscritos pelo Forms)');
+    doc.kv([['Alunos USP',pu.usp+' de '+pu.total+' inscritos ('+pct(pu.usp/pu.total)+')'],['Fora da USP',pu.nao+' ('+pct(pu.nao/pu.total)+')']]);
+    doc.tabela(['Instituto','Inscritos','% dos alunos USP'],pu.inst.map(function(x){return [x[0],String(x[1]),pu.usp?pct(x[1]/pu.usp):'—'];}),[.5,.25,.25]);}
   /* Financeiro */
   var fr=window.__finRel?__finRel(e):null;doc.secao('Financeiro');
   if(fr){var cp=fr.gasto!=null&&pr?fr.gasto/pr:null,meta=typeof P!=='undefined'&&P&&P.metaPresente;

@@ -234,6 +234,12 @@ function sincronizarEvento(eid, ev, forcarTextos) {
   fsPatch('inscricoes/' + eid, { evento: eid, respostas: lista, atualizadoEm: agora.toISOString() });
   insc.total = lista.length;
   insc.novidades = lista.filter(function (x) { return x.novidades === true; }).length;
+  // público USP: quantos inscritos são alunos da USP e de qual instituto (relatório final e Analytics do site)
+  insc.usp = lista.filter(function (x) { return x.usp === true; }).length;
+  insc.naoUsp = lista.filter(function (x) { return x.usp === false; }).length;
+  var inst = {};
+  lista.forEach(function (x) { if (x.usp !== false && x.instituto) { var k = String(x.instituto).trim().slice(0, 40); inst[k] = (inst[k] || 0) + 1; } });
+  insc.institutos = inst;
   insc.sincronizadoEm = agora.toISOString();
   // fecha sozinho FECHAR_HORAS_ANTES antes do início (não reabre um Forms fechado à mão)
   if (agora >= fechamento(ev) && form.isAcceptingResponses()) form.setAcceptingResponses(false);
@@ -244,12 +250,14 @@ function sincronizarEvento(eid, ev, forcarTextos) {
 }
 
 function lerResposta(r) {
-  var x = { em: r.getTimestamp().toISOString(), email: '', nome: '', telefone: '', comoSoube: '', imagem: null, novidades: null, extras: {} };
+  var x = { em: r.getTimestamp().toISOString(), email: '', nome: '', telefone: '', comoSoube: '', imagem: null, novidades: null, usp: null, instituto: '', extras: {} };
   try { x.email = String(r.getRespondentEmail() || '').toLowerCase().trim(); } catch (e) { }
   r.getItemResponses().forEach(function (ir) {
     var t = ir.getItem().getTitle(), tl = semAcento(t), v = ir.getResponse();
     var txt = Array.isArray(v) ? v.join(', ') : String(v == null ? '' : v);
-    if (/nome/.test(tl) && !x.nome) x.nome = txt;
+    if (/aluno/.test(tl) && /usp/.test(tl)) x.usp = /^sim/i.test(txt); // "Aluno USP" (Sim/Não)
+    else if (/instituto|unidade/.test(tl)) x.instituto = txt.trim(); // "Se sim, qual instituto?" (sigla)
+    else if (/nome/.test(tl) && !x.nome) x.nome = txt;
     else if (/telefone|celular|whats/.test(tl) && !/sabendo/.test(tl)) x.telefone = txt;
     else if (/sabendo|soube/.test(tl)) x.comoSoube = txt;
     else if (/imagem/.test(tl)) x.imagem = /^sim/i.test(txt);

@@ -152,10 +152,23 @@ function g6(){
   barrasH($('a-c6'),rows,{titulo:'Funil de convidados',vazio:'Nenhum convidado cadastrado.',cab:['Status','Convidados']});
 }
 
+/* 7. alunos USP por evento e 8. inscritos por instituto (respostas do Forms do app, contadas pelo robô) */
+function usp(e){var i=e.inscricao;if(!i||!i.formId)return null;var u=+i.usp||0,n=+i.naoUsp||0;return u+n?{u:u,n:n,inst:i.institutos||{}}:null;}
+function g7(L){
+  var rows=L.map(function(e){var x=usp(e);if(!x)return null;var v=x.u/(x.u+x.n);
+    return {l:e.nome||'Evento',v:v,t:pct(v),tip:'<b>'+esc(e.nome||'Evento')+'</b>'+esc(dm(e.data))+'<br>'+x.u+' alunos USP · '+x.n+' de fora',linha:[e.nome||'',dm(e.data),x.u,x.n,pct(v)]};}).filter(Boolean);
+  barrasH($('a-c7'),rows,{titulo:'Alunos USP por evento',vazio:'Sem eventos com a pergunta Aluno USP no Forms neste filtro.',max:1,cab:['Evento','Data','Alunos USP','Fora da USP','% USP']});
+}
+function g8(L){
+  var t={},tot=0,n=0;L.forEach(function(e){var x=usp(e);if(!x)return;n++;Object.keys(x.inst).forEach(function(k){var v=+x.inst[k]||0;t[k]=(t[k]||0)+v;tot+=v;});});
+  var rows=Object.keys(t).map(function(k){return {l:k,v:t[k],t:String(t[k]),tip:'<b>'+esc(k)+'</b>'+t[k]+' inscrito'+(t[k]===1?'':'s')+' ('+pct(t[k]/tot)+' dos alunos USP)',linha:[k,t[k],pct(t[k]/tot)]};}).sort(function(a,b){return b.v-a.v;});
+  barrasH($('a-c8'),rows,{titulo:'Inscritos por instituto',vazio:'Sem respostas de instituto neste filtro.',cab:['Instituto','Inscritos','% dos alunos USP']});
+}
+
 function render(){
   if(!visivel()||!pronto)return;
   opcoes();var L=filtrados();
-  kpis(L);g1(L);g2(L);g3(L);g4(L);g5(L);g6();
+  kpis(L);g1(L);g2(L);g3(L);g4(L);g5(L);g6();g7(L);g8(L);
 }
 
 /* dica ao passar o mouse ou tocar */
