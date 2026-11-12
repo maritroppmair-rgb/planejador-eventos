@@ -119,11 +119,11 @@ function bastBlk(e,ed){var b=planoDe(e.id).bastidores||{};
     :tabela([['Quem grava',esc(nomeMembro(b.quem)||'a definir')],['Convidado posta no LinkedIn',(LKD.filter(function(x){return x[0]===(b.linkedin||'?');})[0]||LKD[0])[1]]]);}
 var DM={};
 function rodDiv(e){var d=planoDe(e.id),f=feitaDe(e.id),a=antes(d),falta=!a.length||a.some(function(p){return !p.pub;});
-  if(!podeFeita())return f?'<p class="note" style="margin:0">Divulgação feita, marcada por '+esc(prim(f.por))+' em '+ddmm(f.em)+'.</p>':'';
+  if(!podeFeita()||(window.__travado&&__travado(e)))return f?'<p class="note" style="margin:0">Divulgação feita, marcada por '+esc(prim(f.por))+' em '+ddmm(f.em)+'.</p>':'';
   var bt=f?'<button type="button" class="btn ghost" id="dv-desf">Desfazer “Divulgação feita”</button>':'<button type="button" class="btn" id="dv-feita"'+(falta?' disabled':'')+'>Divulgação feita</button>';
   var dica=DM[e.id]||(f?'Marcada por '+prim(f.por)+' em '+ddmm(f.em)+'.':!brOk(e)?'Aguardando o briefing de Eventos.':!a.length?'Planeje ao menos um post de antes do evento.':falta?'Libera quando todos os posts de antes estiverem publicados.':'');
   return '<div class="btns">'+bt+'<span class="msg" id="dv-m" role="status">'+esc(dica)+'</span></div>';}
-function montarDiv(id){var e=evDe(id);if(!e)return null;carregarAut(id);var ed=pode('Marketing','editar')&&!feitaDe(id),s=situDiv(e);
+function montarDiv(id){var e=evDe(id);if(!e)return null;carregarAut(id);var ed=pode('Marketing','editar')&&!feitaDe(id)&&!(window.__travado&&__travado(e)),s=situDiv(e);
   var sub=dataLonga(e)+(e.sala?' · '+esc(e.sala):'')+' <span class="chip '+s[1]+'">'+esc(s[0])+'</span>';
   var corpo=blk('Briefing',briefCompleto(e))+blk('Plano de divulgação',(pode('Marketing','editar')&&feitaDe(id)?'<p class="note" style="margin:0 0 8px">Com a divulgação feita, o plano fica fechado. Para mudar, a diretoria desfaz o “Divulgação feita”.</p>':'')+planoBlk(e,ed))+blk('Bastidores',bastBlk(e,ed))+blk('Autorização de imagem',autBlk(e));
   return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rodDiv(e)};}

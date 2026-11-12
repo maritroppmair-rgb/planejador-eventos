@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111211057"></script>
-<script src="plataforma.js?v=20261111211057"></script>
+<script src="config.js?v=20261111215532"></script>
+<script src="plataforma.js?v=20261111215532"></script>
 </head>
 <body>
 
@@ -2511,6 +2511,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   $('b-vista').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;vista=b.dataset.v;[].forEach.call(this.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});renderBase();});
   $('b-busca').addEventListener('input',function(){renderBase();});$('b-teste').addEventListener('change',function(){renderBase();});
   var bReg=null,bModo='ficha',andAberto={};
+  /* evento com relatório final gerado: fechado, ninguém muda mais nada (ficha, orçamento, pagamentos, divulgação, pós-evento) */
+  window.__travado=function(e){return !!(e&&e.relatorio&&e.relatorio.em);};
   window.aposRegistro=function(id){if(bReg===id)bReg=null;if(bModo==='fin'&&TP&&TP.o.chave===id)painelFechar();};
   /* ----- Andamento: os pontos do checklist de cada evento (desenhado pelo etapas.js) ----- */
   function andamento(e){return window.__andamento?window.__andamento(e,!!andAberto[e.id]):'';}
@@ -3079,7 +3081,7 @@ function linhaGasto(g,ed){var loc=g.local?fin.coffee.filter(function(x){return x
   var comp=u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" class="g-comp">comprovante ↗</a>':(g.tipo==='antigo'?'':'<span class="chip warn g-semc">sem comprovante</span>');
   return '<tr><td class="num">'+dataBR(g.data)+'</td><td><span class="tn" style="font-weight:600">'+esc(g.desc||tipoNome(g.tipo))+'</span><span class="tsub">'+esc(tipoNome(g.tipo)+(loc?' · '+loc.nome:'')+(g.porNome?' · '+g.porNome:''))+'</span>'+comp+'</td><td class="r num"><b>'+reais(g.valor)+'</b></td>'+
     (ed?'<td class="r"><button type="button" class="cf-x" data-gdel="'+esc(g.id)+'" aria-label="Excluir gasto" title="Excluir gasto">&times;</button></td>':'')+'</tr>';}
-window.__gastosBlk=function(e){var ed=epode('editar'),l=gastosDe(e).slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
+window.__gastosBlk=function(e){var ed=epode('editar')&&!(window.__travado&&__travado(e)),l=gastosDe(e).slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
   var h=resumoGasto(e);
   if(!l.length&&e.custo!=null)h+='<p class="note" style="margin:8px 0 0">Registrado antes, só com o total: <b>'+reais(e.custo)+'</b>. Ao registrar o primeiro gasto, esse total entra na lista como “Registrado antes”.</p>';
   h+=l.length?'<table class="g-tab"><tbody>'+l.map(function(g){return linhaGasto(g,ed&&epode('excluir'));}).join('')+'</tbody></table>':'<p class="note" style="margin:10px 0 0">Nenhum gasto registrado ainda.</p>';
@@ -3163,7 +3165,7 @@ function validadoDe(e){var o=orcDe(e.id);return o&&o.validado&&o.validado.em?o.v
 function estadoOrc(e){var o=orcDe(e.id);if(validadoDe(e))return 'val';if(o&&o.itens&&o.itens.length)return 'prep';return 'sem';}
 var EORC={sem:['Sem orçamento','warn'],prep:['A validar','neutral'],val:['Validado','ok']};
 /* pode mexer no orçamento deste evento? (validado: só quem valida) */
-function podeOrc(e){return fpode('editar')&&(!validadoDe(e)||podeValidar());}
+function podeOrc(e){return fpode('editar')&&!(window.__travado&&__travado(e))&&(!validadoDe(e)||podeValidar());} /* relatório final gerado: fechado */
 function itensIniciais(e){var o=orcDe(e.id);if(o&&o.itens)return JSON.parse(JSON.stringify(o.itens));
   var pi=e.custoPrevItens,l=[];
   if(pi)[['coffee','Coffee',pi.coffee],['material','Material impresso',pi.material],['sala','Sala',pi.sala],['outro','Outros',pi.outros]].forEach(function(r){if(+r[2]>0)l.push({id:novoId(),tipo:r[0],desc:r[1],fornecedor:'',local:null,valor:arred(+r[2]),fonte:''});});
@@ -3233,7 +3235,7 @@ function ligarOrc(dr){
 function pagDe(eid,gid){var p=fin.pag[eid];return p&&p.g&&p.g[gid]||null;}
 function sitDe(eid,g){var p=pagDe(eid,g.id);return p&&p.sit?p.sit:((g.em||'')>=PAG_DESDE?'apagar':'');}
 function pagNome(s){for(var i=0;i<PAGS.length;i++)if(PAGS[i][0]===s)return PAGS[i];return ['Antes do controle de pagamento','neutral'];}
-function pagBlk(e){var l=gastosDe(e).filter(function(g){return g.tipo!=='antigo';}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;}),ed=fpode('editar');
+function pagBlk(e){var l=gastosDe(e).filter(function(g){return g.tipo!=='antigo';}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;}),ed=fpode('editar')&&!(window.__travado&&__travado(e));
   if(!l.length)return '<p class="note" style="margin:0">Nenhum gasto registrado pela área de Eventos ainda.</p>';
   return '<ul class="pg-l">'+l.map(function(g){var p=pagDe(e.id,g.id)||{},s=sitDe(e.id,g),pn=pagNome(s),a='data-pg="'+esc(g.id)+'" data-pf=';
     var ctl=ed?'<select '+a+'"sit" aria-label="Situação do pagamento">'+(s?'':'<option value="" selected>Antes do controle</option>')+PAGS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===s?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'+
@@ -3316,7 +3318,7 @@ function timeline(e){var it=[],acum=0;
     return '<li class="tl-'+x.k+'"><span class="tl-d">'+dataBR(x.d)+'</span><div><b>'+esc(x.t)+'</b>'+(x.s?'<span class="tsub">'+esc(x.s)+'</span>':'')+(x.u?'<a href="'+esc(x.u)+'" target="_blank" rel="noopener" class="tl-a">Abrir nota ↗</a>':'')+'</div></li>';}).join('')+'</ol>';}
 var vbAberto=null;
 function montarVerba(id){var e=events.filter(function(x){return x.id===id;})[0];if(!e)return null;
-  var ed=fpode('editar'),vb=fin.verbas[id]||{},pi=e.custoPrevItens;
+  var ed=fpode('editar')&&!(window.__travado&&__travado(e)),vb=fin.verbas[id]||{},pi=e.custoPrevItens;
   var prev=pi?'<table class="fc-prev"><tbody>'+[['Coffee',pi.coffee,pi.porcoes?pi.porcoes+' porções':''],['Material impresso',pi.material,''],['Sala',pi.sala,''],['Outros',pi.outros,'']].filter(function(r){return +r[1];}).map(function(r){return '<tr><td>'+r[0]+(r[2]?' <span class="note">'+r[2]+'</span>':'')+'</td><td class="r num">'+reais(r[1])+'</td></tr>';}).join('')+'<tr class="tot"><td>Total previsto</td><td class="r num">'+reais(e.custoPrev)+'</td></tr></tbody></table>':
     (e.custoPrev!=null?'<p class="fin-ro"><span>Total previsto</span><b>'+reais(e.custoPrev)+'</b></p>':'<p class="note" style="margin:0">Este evento não foi planejado no app, então não tem previsão.</p>');
   var corpo=blk('',resumoGasto(e))+blk('Orçamento',orcBlk(e))+blk('Pagamento dos gastos',pagBlk(e))+blk('Previsto no Planejar',prev)+blk('Linha do tempo dos gastos',timeline(e));
@@ -3482,7 +3484,7 @@ window.__fichaSelo=function(e){if(e.status==='realizado')return '';var s=situaca
 /* ----- painel ----- */
 function v(x){return esc(x==null?'':x);}
 function ro(l,h){return '<div class="fi-ro"><span>'+l+'</span><b>'+h+'</b></div>';}
-window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status==='realizado',s=situacao(e,r),d=dias(e),h='';
+window.__fichaBlk=function(e){var r=rasc(e),ed=fpode()&&!(window.__travado&&__travado(e)),id=esc(e.id),dn=e.status==='realizado',s=situacao(e,r),d=dias(e),h='';
   /* progresso */
   if(!dn)h+='<div class="fi-prog'+(s.atrasada?' late':'')+'"><div class="fi-pt"><b>Ficha '+s.ok+' de '+s.total+'</b>'+(s.ok===s.total?' · completa':'')+(d!=null&&d>=0?' <span class="note">· evento em '+d+' dia'+(d===1?'':'s')+'</span>':'')+'</div><span class="tbar"><i style="width:'+Math.round(s.ok/s.total*100)+'%"></i></span>'+
     (s.faltam.length?'<div class="note">'+(s.atrasada?'<b>Faltam menos de 30 dias.</b> ':'')+'Falta: '+esc(s.faltam.join(', '))+'.</div>':'')+'</div>';
@@ -3941,11 +3943,11 @@ function bastBlk(e,ed){var b=planoDe(e.id).bastidores||{};
     :tabela([['Quem grava',esc(nomeMembro(b.quem)||'a definir')],['Convidado posta no LinkedIn',(LKD.filter(function(x){return x[0]===(b.linkedin||'?');})[0]||LKD[0])[1]]]);}
 var DM={};
 function rodDiv(e){var d=planoDe(e.id),f=feitaDe(e.id),a=antes(d),falta=!a.length||a.some(function(p){return !p.pub;});
-  if(!podeFeita())return f?'<p class="note" style="margin:0">Divulgação feita, marcada por '+esc(prim(f.por))+' em '+ddmm(f.em)+'.</p>':'';
+  if(!podeFeita()||(window.__travado&&__travado(e)))return f?'<p class="note" style="margin:0">Divulgação feita, marcada por '+esc(prim(f.por))+' em '+ddmm(f.em)+'.</p>':'';
   var bt=f?'<button type="button" class="btn ghost" id="dv-desf">Desfazer “Divulgação feita”</button>':'<button type="button" class="btn" id="dv-feita"'+(falta?' disabled':'')+'>Divulgação feita</button>';
   var dica=DM[e.id]||(f?'Marcada por '+prim(f.por)+' em '+ddmm(f.em)+'.':!brOk(e)?'Aguardando o briefing de Eventos.':!a.length?'Planeje ao menos um post de antes do evento.':falta?'Libera quando todos os posts de antes estiverem publicados.':'');
   return '<div class="btns">'+bt+'<span class="msg" id="dv-m" role="status">'+esc(dica)+'</span></div>';}
-function montarDiv(id){var e=evDe(id);if(!e)return null;carregarAut(id);var ed=pode('Marketing','editar')&&!feitaDe(id),s=situDiv(e);
+function montarDiv(id){var e=evDe(id);if(!e)return null;carregarAut(id);var ed=pode('Marketing','editar')&&!feitaDe(id)&&!(window.__travado&&__travado(e)),s=situDiv(e);
   var sub=dataLonga(e)+(e.sala?' · '+esc(e.sala):'')+' <span class="chip '+s[1]+'">'+esc(s[0])+'</span>';
   var corpo=blk('Briefing',briefCompleto(e))+blk('Plano de divulgação',(pode('Marketing','editar')&&feitaDe(id)?'<p class="note" style="margin:0 0 8px">Com a divulgação feita, o plano fica fechado. Para mudar, a diretoria desfaz o “Divulgação feita”.</p>':'')+planoBlk(e,ed))+blk('Bastidores',bastBlk(e,ed))+blk('Autorização de imagem',autBlk(e));
   return {titulo:e.nome||'Evento',sub:sub,corpo:corpo,rodape:rodDiv(e)};}
@@ -4025,7 +4027,8 @@ renderDiv();
    "Gerar relatório final" monta um PDF com o que todas as diretorias registraram do evento, guarda o arquivo (arquivos/, como
    qualquer arquivo enviado) e um documento tipo PDF ligado ao evento (pasta do evento em Documentos). Só então o evento passa
    para Realizados: eventos/{id}.relatorio = {docId, assetId, em, por, versao} e status 'realizado'.
-   Gerar de novo atualiza o mesmo documento (nova versão). O ponto "Relatório final gerado" do checklist (7 dias depois) fica
+   Depois de gerado, o evento fica fechado: a ficha, o orçamento, os pagamentos, a divulgação e o pós-evento
+   passam a ser só leitura (por isso o prazo do relatório é 7 dias depois do evento: dá tempo de chegar nota e comprovante). O ponto "Relatório final gerado" do checklist (7 dias depois) fica
    verde sozinho. Eventos realizados mostram só "Relatório final" e "Relatório feedback convidado" (este, por enquanto, sem ação). */
 (function(){
 "use strict";
@@ -4091,11 +4094,11 @@ function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=v.inscritos,pr=v.presente
   return h+'<p class="note" style="margin:8px 0 0">O resumo usa os números do resultado já salvos e o que cada área registrou. Tudo isso entra no relatório final.</p>';}
 
 /* ----- painel ----- */
-function montarPos(id){var e=evDe(id);if(!e)return null;var ed=podeEd(),r=rasc(e),dn=e.status==='realizado',rel=e.relatorio&&e.relatorio.em?e.relatorio:null,id2=esc(id);
+function montarPos(id){var e=evDe(id);if(!e)return null;var r=rasc(e),dn=e.status==='realizado',rel=e.relatorio&&e.relatorio.em?e.relatorio:null,ed=podeEd()&&!rel; /* com o relatório gerado, o evento fica fechado */
   var sub=dataLonga(e)+(e.hora?' · '+esc(e.hora):'')+(e.sala?' · '+esc(e.sala):'')+' '+(rel?'<span class="chip ok">Relatório gerado em '+ddmm(dia(rel.em))+'</span>':dn?'<span class="chip warn">Sem relatório final</span>':'<span class="chip neutral">Pós-evento</span>');
   var c='';
   if(rel)c+=blk('Relatório final','<p style="margin:0">Gerado em '+ddmmaa(dia(rel.em))+(rel.por?' por '+esc(prim(rel.por)):'')+(rel.versao>1?' (versão '+rel.versao+')':'')+'. '+
-    (rel.assetId?'<a href="/_blob/'+esc(rel.assetId)+'" class="pos-pdf">Abrir o PDF</a>':'')+'</p><p class="note" style="margin:6px 0 0">O PDF também fica em Documentos, na pasta do evento.</p>');
+    (rel.assetId?'<a href="/_blob/'+esc(rel.assetId)+'" class="pos-pdf">Abrir o PDF</a>':'')+'</p><p class="note" style="margin:6px 0 0">O PDF também fica em Documentos, na pasta do evento. Com o relatório gerado, o evento está fechado: nada mais muda.</p>');
   else if(dn)c+=blk('','<p class="note" style="margin:0">Este evento foi finalizado antes do relatório final. '+(ed?'Confira os dados e gere o relatório.':'Ainda não tem relatório.')+'</p>');
   else c+='<p class="note" style="margin:0 0 10px">Registre o resultado, confira o resumo e escreva o pós-evento. O evento só passa para <b>Realizados</b> quando o relatório final é gerado.</p>';
   /* 1. resultado */
@@ -4117,7 +4120,7 @@ function montarPos(id){var e=evDe(id);if(!e)return null;var ed=podeEd(),r=rasc(e
       :(r.outros?'<h5 class="br-h5">Outros contatos</h5><p style="margin:0;white-space:pre-wrap">'+esc(r.outros)+'</p>':''));
   c+=blk('Pós-evento',ph);
   var rod='';
-  if(ed)rod='<div class="btns"><button type="button" class="btn ghost" id="pos-salvar"'+(r.ocup?' disabled':'')+'>Salvar</button><button type="button" class="btn" id="pos-gerar"'+(r.ocup?' disabled':'')+'>'+(rel?'Gerar de novo':'Gerar relatório final')+'</button>'+
+  if(ed)rod='<div class="btns"><button type="button" class="btn ghost" id="pos-salvar"'+(r.ocup?' disabled':'')+'>Salvar</button><button type="button" class="btn" id="pos-gerar"'+(r.ocup?' disabled':'')+'>'+'Gerar relatório final'+'</button>'+
     '<span class="msg" id="pos-m" role="status">'+esc(r.msg||(r.sujo?'Alterações não salvas.':''))+'</span></div>';
   return {titulo:(dn?'Relatório final · ':'Pós-evento · ')+(e.nome||'Evento'),sub:sub,corpo:c,rodape:rod};}
 function redesenha(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.closest('#view-base .tpanel'))a.blur();painelAtualizar('view-base');}
@@ -4125,6 +4128,7 @@ function redesenha(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.clo
 /* ----- salvar e gerar ----- */
 function salvar(id,gerar){var e=evDe(id);if(!e||!db)return;var r=rasc(e),q=quem();
   var lr=lerRes(r,gerar);if(lr.erro){r.msg=lr.erro;redesenha();return;}
+  if(window.__travado&&__travado(e)){r.msg='O relatório final já foi gerado: o evento está fechado.';redesenha();return;}
   if(gerar){var falta=TXT.filter(function(t){return !String(r[t[0]]).trim();});
     if(falta.length){r.msg='Preencha: '+falta.map(function(t){return t[1].toLowerCase();}).join('; ')+'.';redesenha();return;}
     if(e.data&&e.data>hoje()){r.msg='O relatório final só pode ser gerado depois do dia do evento.';redesenha();return;}}

@@ -291,6 +291,8 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   $('b-vista').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;vista=b.dataset.v;[].forEach.call(this.children,function(x){var on=x===b;x.className=on?'on':'';x.setAttribute('aria-pressed',on);});renderBase();});
   $('b-busca').addEventListener('input',function(){renderBase();});$('b-teste').addEventListener('change',function(){renderBase();});
   var bReg=null,bModo='ficha',andAberto={};
+  /* evento com relatório final gerado: fechado, ninguém muda mais nada (ficha, orçamento, pagamentos, divulgação, pós-evento) */
+  window.__travado=function(e){return !!(e&&e.relatorio&&e.relatorio.em);};
   window.aposRegistro=function(id){if(bReg===id)bReg=null;if(bModo==='fin'&&TP&&TP.o.chave===id)painelFechar();};
   /* ----- Andamento: os pontos do checklist de cada evento (desenhado pelo etapas.js) ----- */
   function andamento(e){return window.__andamento?window.__andamento(e,!!andAberto[e.id]):'';}

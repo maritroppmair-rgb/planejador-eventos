@@ -128,7 +128,7 @@ function linhaGasto(g,ed){var loc=g.local?fin.coffee.filter(function(x){return x
   var comp=u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" class="g-comp">comprovante ↗</a>':(g.tipo==='antigo'?'':'<span class="chip warn g-semc">sem comprovante</span>');
   return '<tr><td class="num">'+dataBR(g.data)+'</td><td><span class="tn" style="font-weight:600">'+esc(g.desc||tipoNome(g.tipo))+'</span><span class="tsub">'+esc(tipoNome(g.tipo)+(loc?' · '+loc.nome:'')+(g.porNome?' · '+g.porNome:''))+'</span>'+comp+'</td><td class="r num"><b>'+reais(g.valor)+'</b></td>'+
     (ed?'<td class="r"><button type="button" class="cf-x" data-gdel="'+esc(g.id)+'" aria-label="Excluir gasto" title="Excluir gasto">&times;</button></td>':'')+'</tr>';}
-window.__gastosBlk=function(e){var ed=epode('editar'),l=gastosDe(e).slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
+window.__gastosBlk=function(e){var ed=epode('editar')&&!(window.__travado&&__travado(e)),l=gastosDe(e).slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
   var h=resumoGasto(e);
   if(!l.length&&e.custo!=null)h+='<p class="note" style="margin:8px 0 0">Registrado antes, só com o total: <b>'+reais(e.custo)+'</b>. Ao registrar o primeiro gasto, esse total entra na lista como “Registrado antes”.</p>';
   h+=l.length?'<table class="g-tab"><tbody>'+l.map(function(g){return linhaGasto(g,ed&&epode('excluir'));}).join('')+'</tbody></table>':'<p class="note" style="margin:10px 0 0">Nenhum gasto registrado ainda.</p>';
@@ -212,7 +212,7 @@ function validadoDe(e){var o=orcDe(e.id);return o&&o.validado&&o.validado.em?o.v
 function estadoOrc(e){var o=orcDe(e.id);if(validadoDe(e))return 'val';if(o&&o.itens&&o.itens.length)return 'prep';return 'sem';}
 var EORC={sem:['Sem orçamento','warn'],prep:['A validar','neutral'],val:['Validado','ok']};
 /* pode mexer no orçamento deste evento? (validado: só quem valida) */
-function podeOrc(e){return fpode('editar')&&(!validadoDe(e)||podeValidar());}
+function podeOrc(e){return fpode('editar')&&!(window.__travado&&__travado(e))&&(!validadoDe(e)||podeValidar());} /* relatório final gerado: fechado */
 function itensIniciais(e){var o=orcDe(e.id);if(o&&o.itens)return JSON.parse(JSON.stringify(o.itens));
   var pi=e.custoPrevItens,l=[];
   if(pi)[['coffee','Coffee',pi.coffee],['material','Material impresso',pi.material],['sala','Sala',pi.sala],['outro','Outros',pi.outros]].forEach(function(r){if(+r[2]>0)l.push({id:novoId(),tipo:r[0],desc:r[1],fornecedor:'',local:null,valor:arred(+r[2]),fonte:''});});
@@ -282,7 +282,7 @@ function ligarOrc(dr){
 function pagDe(eid,gid){var p=fin.pag[eid];return p&&p.g&&p.g[gid]||null;}
 function sitDe(eid,g){var p=pagDe(eid,g.id);return p&&p.sit?p.sit:((g.em||'')>=PAG_DESDE?'apagar':'');}
 function pagNome(s){for(var i=0;i<PAGS.length;i++)if(PAGS[i][0]===s)return PAGS[i];return ['Antes do controle de pagamento','neutral'];}
-function pagBlk(e){var l=gastosDe(e).filter(function(g){return g.tipo!=='antigo';}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;}),ed=fpode('editar');
+function pagBlk(e){var l=gastosDe(e).filter(function(g){return g.tipo!=='antigo';}).sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;}),ed=fpode('editar')&&!(window.__travado&&__travado(e));
   if(!l.length)return '<p class="note" style="margin:0">Nenhum gasto registrado pela área de Eventos ainda.</p>';
   return '<ul class="pg-l">'+l.map(function(g){var p=pagDe(e.id,g.id)||{},s=sitDe(e.id,g),pn=pagNome(s),a='data-pg="'+esc(g.id)+'" data-pf=';
     var ctl=ed?'<select '+a+'"sit" aria-label="Situação do pagamento">'+(s?'':'<option value="" selected>Antes do controle</option>')+PAGS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===s?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'+
@@ -365,7 +365,7 @@ function timeline(e){var it=[],acum=0;
     return '<li class="tl-'+x.k+'"><span class="tl-d">'+dataBR(x.d)+'</span><div><b>'+esc(x.t)+'</b>'+(x.s?'<span class="tsub">'+esc(x.s)+'</span>':'')+(x.u?'<a href="'+esc(x.u)+'" target="_blank" rel="noopener" class="tl-a">Abrir nota ↗</a>':'')+'</div></li>';}).join('')+'</ol>';}
 var vbAberto=null;
 function montarVerba(id){var e=events.filter(function(x){return x.id===id;})[0];if(!e)return null;
-  var ed=fpode('editar'),vb=fin.verbas[id]||{},pi=e.custoPrevItens;
+  var ed=fpode('editar')&&!(window.__travado&&__travado(e)),vb=fin.verbas[id]||{},pi=e.custoPrevItens;
   var prev=pi?'<table class="fc-prev"><tbody>'+[['Coffee',pi.coffee,pi.porcoes?pi.porcoes+' porções':''],['Material impresso',pi.material,''],['Sala',pi.sala,''],['Outros',pi.outros,'']].filter(function(r){return +r[1];}).map(function(r){return '<tr><td>'+r[0]+(r[2]?' <span class="note">'+r[2]+'</span>':'')+'</td><td class="r num">'+reais(r[1])+'</td></tr>';}).join('')+'<tr class="tot"><td>Total previsto</td><td class="r num">'+reais(e.custoPrev)+'</td></tr></tbody></table>':
     (e.custoPrev!=null?'<p class="fin-ro"><span>Total previsto</span><b>'+reais(e.custoPrev)+'</b></p>':'<p class="note" style="margin:0">Este evento não foi planejado no app, então não tem previsão.</p>');
   var corpo=blk('',resumoGasto(e))+blk('Orçamento',orcBlk(e))+blk('Pagamento dos gastos',pagBlk(e))+blk('Previsto no Planejar',prev)+blk('Linha do tempo dos gastos',timeline(e));

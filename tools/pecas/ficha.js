@@ -46,7 +46,7 @@ window.__fichaSelo=function(e){if(e.status==='realizado')return '';var s=situaca
 /* ----- painel ----- */
 function v(x){return esc(x==null?'':x);}
 function ro(l,h){return '<div class="fi-ro"><span>'+l+'</span><b>'+h+'</b></div>';}
-window.__fichaBlk=function(e){var r=rasc(e),ed=fpode(),id=esc(e.id),dn=e.status==='realizado',s=situacao(e,r),d=dias(e),h='';
+window.__fichaBlk=function(e){var r=rasc(e),ed=fpode()&&!(window.__travado&&__travado(e)),id=esc(e.id),dn=e.status==='realizado',s=situacao(e,r),d=dias(e),h='';
   /* progresso */
   if(!dn)h+='<div class="fi-prog'+(s.atrasada?' late':'')+'"><div class="fi-pt"><b>Ficha '+s.ok+' de '+s.total+'</b>'+(s.ok===s.total?' · completa':'')+(d!=null&&d>=0?' <span class="note">· evento em '+d+' dia'+(d===1?'':'s')+'</span>':'')+'</div><span class="tbar"><i style="width:'+Math.round(s.ok/s.total*100)+'%"></i></span>'+
     (s.faltam.length?'<div class="note">'+(s.atrasada?'<b>Faltam menos de 30 dias.</b> ':'')+'Falta: '+esc(s.faltam.join(', '))+'.</div>':'')+'</div>';

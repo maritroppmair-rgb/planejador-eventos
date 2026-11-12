@@ -7,7 +7,8 @@
    "Gerar relatório final" monta um PDF com o que todas as diretorias registraram do evento, guarda o arquivo (arquivos/, como
    qualquer arquivo enviado) e um documento tipo PDF ligado ao evento (pasta do evento em Documentos). Só então o evento passa
    para Realizados: eventos/{id}.relatorio = {docId, assetId, em, por, versao} e status 'realizado'.
-   Gerar de novo atualiza o mesmo documento (nova versão). O ponto "Relatório final gerado" do checklist (7 dias depois) fica
+   Depois de gerado, o evento fica fechado: a ficha, o orçamento, os pagamentos, a divulgação e o pós-evento
+   passam a ser só leitura (por isso o prazo do relatório é 7 dias depois do evento: dá tempo de chegar nota e comprovante). O ponto "Relatório final gerado" do checklist (7 dias depois) fica
    verde sozinho. Eventos realizados mostram só "Relatório final" e "Relatório feedback convidado" (este, por enquanto, sem ação). */
 (function(){
 "use strict";
@@ -73,11 +74,11 @@ function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=v.inscritos,pr=v.presente
   return h+'<p class="note" style="margin:8px 0 0">O resumo usa os números do resultado já salvos e o que cada área registrou. Tudo isso entra no relatório final.</p>';}
 
 /* ----- painel ----- */
-function montarPos(id){var e=evDe(id);if(!e)return null;var ed=podeEd(),r=rasc(e),dn=e.status==='realizado',rel=e.relatorio&&e.relatorio.em?e.relatorio:null,id2=esc(id);
+function montarPos(id){var e=evDe(id);if(!e)return null;var r=rasc(e),dn=e.status==='realizado',rel=e.relatorio&&e.relatorio.em?e.relatorio:null,ed=podeEd()&&!rel; /* com o relatório gerado, o evento fica fechado */
   var sub=dataLonga(e)+(e.hora?' · '+esc(e.hora):'')+(e.sala?' · '+esc(e.sala):'')+' '+(rel?'<span class="chip ok">Relatório gerado em '+ddmm(dia(rel.em))+'</span>':dn?'<span class="chip warn">Sem relatório final</span>':'<span class="chip neutral">Pós-evento</span>');
   var c='';
   if(rel)c+=blk('Relatório final','<p style="margin:0">Gerado em '+ddmmaa(dia(rel.em))+(rel.por?' por '+esc(prim(rel.por)):'')+(rel.versao>1?' (versão '+rel.versao+')':'')+'. '+
-    (rel.assetId?'<a href="/_blob/'+esc(rel.assetId)+'" class="pos-pdf">Abrir o PDF</a>':'')+'</p><p class="note" style="margin:6px 0 0">O PDF também fica em Documentos, na pasta do evento.</p>');
+    (rel.assetId?'<a href="/_blob/'+esc(rel.assetId)+'" class="pos-pdf">Abrir o PDF</a>':'')+'</p><p class="note" style="margin:6px 0 0">O PDF também fica em Documentos, na pasta do evento. Com o relatório gerado, o evento está fechado: nada mais muda.</p>');
   else if(dn)c+=blk('','<p class="note" style="margin:0">Este evento foi finalizado antes do relatório final. '+(ed?'Confira os dados e gere o relatório.':'Ainda não tem relatório.')+'</p>');
   else c+='<p class="note" style="margin:0 0 10px">Registre o resultado, confira o resumo e escreva o pós-evento. O evento só passa para <b>Realizados</b> quando o relatório final é gerado.</p>';
   /* 1. resultado */
@@ -99,7 +100,7 @@ function montarPos(id){var e=evDe(id);if(!e)return null;var ed=podeEd(),r=rasc(e
       :(r.outros?'<h5 class="br-h5">Outros contatos</h5><p style="margin:0;white-space:pre-wrap">'+esc(r.outros)+'</p>':''));
   c+=blk('Pós-evento',ph);
   var rod='';
-  if(ed)rod='<div class="btns"><button type="button" class="btn ghost" id="pos-salvar"'+(r.ocup?' disabled':'')+'>Salvar</button><button type="button" class="btn" id="pos-gerar"'+(r.ocup?' disabled':'')+'>'+(rel?'Gerar de novo':'Gerar relatório final')+'</button>'+
+  if(ed)rod='<div class="btns"><button type="button" class="btn ghost" id="pos-salvar"'+(r.ocup?' disabled':'')+'>Salvar</button><button type="button" class="btn" id="pos-gerar"'+(r.ocup?' disabled':'')+'>'+'Gerar relatório final'+'</button>'+
     '<span class="msg" id="pos-m" role="status">'+esc(r.msg||(r.sujo?'Alterações não salvas.':''))+'</span></div>';
   return {titulo:(dn?'Relatório final · ':'Pós-evento · ')+(e.nome||'Evento'),sub:sub,corpo:c,rodape:rod};}
 function redesenha(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.closest('#view-base .tpanel'))a.blur();painelAtualizar('view-base');}
@@ -107,6 +108,7 @@ function redesenha(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.clo
 /* ----- salvar e gerar ----- */
 function salvar(id,gerar){var e=evDe(id);if(!e||!db)return;var r=rasc(e),q=quem();
   var lr=lerRes(r,gerar);if(lr.erro){r.msg=lr.erro;redesenha();return;}
+  if(window.__travado&&__travado(e)){r.msg='O relatório final já foi gerado: o evento está fechado.';redesenha();return;}
   if(gerar){var falta=TXT.filter(function(t){return !String(r[t[0]]).trim();});
     if(falta.length){r.msg='Preencha: '+falta.map(function(t){return t[1].toLowerCase();}).join('; ')+'.';redesenha();return;}
     if(e.data&&e.data>hoje()){r.msg='O relatório final só pode ser gerado depois do dia do evento.';redesenha();return;}}
