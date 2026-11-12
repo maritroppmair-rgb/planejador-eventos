@@ -449,7 +449,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var ultimoCampo=null;
   sec.addEventListener('input',function(e){var f=e.target.dataset&&e.target.dataset.ed;if(!f||!bEmail)return;var k=bEmail.id+'|'+bEmail.tipo;rasc[k][f]=e.target.value;});
   sec.addEventListener('focusin',function(e){if(e.target.dataset&&(e.target.dataset.ed==='assunto'||e.target.dataset.ed==='corpo'))ultimoCampo=e.target;});
-  sec.addEventListener('change',function(e){var a=e.target.closest('[data-fb-lig]');if(!a||!TP||!db)return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;
+  sec.addEventListener('change',function(e){var a=e.target.closest('[data-fb-lig]');if(!a||!TP||!db)return;var id=TP.o.chave,ev=events.filter(function(x){return x.id===id;})[0];if(!ev)return;a.blur(); /* com o foco no check, o painel não se redesenha */
     if(a.checked&&!(ev.feedback&&ev.feedback.formId)){emAcao(id,'criarFeedback',{},function(){return 'Forms de feedback criado. O agradecimento já leva para ele.';});return;}
     db.doc('eventos/'+id).update({'feedback.ligado':a.checked}).catch(function(){alertMsg('Não foi possível salvar.');});});
   sec.addEventListener('change',function(e){var a=e.target.closest('[data-em-auto]');if(!a||!TP||!db)return;var id=TP.o.chave,up={};up['emails.'+a.dataset.emAuto+'.auto']=a.checked;
