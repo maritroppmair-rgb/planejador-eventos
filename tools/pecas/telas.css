@@ -537,4 +537,5 @@ select.ck-s{cursor:pointer;padding-right:4px}
 .dv-pub{font-size:12px;white-space:nowrap}
 li.dv-p:not(:has(select)){grid-template-columns:auto minmax(0,1fr) auto auto}
 .dv-atr{color:var(--red);font-weight:700}
-
+.fc-c{display:flex;margin:0 0 8px}.fc-c span{white-space:pre-wrap}
+.fc-qs{margin:8px 0 0}.fc-q{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:6px 0;border-top:1px solid var(--line,#e3dccf);font-size:13.5px}.fc-q b{white-space:nowrap;font-weight:600}

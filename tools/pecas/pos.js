@@ -10,7 +10,7 @@
    para Realizados: eventos/{id}.relatorio = {docId, assetId, em, por, versao} e status 'realizado'.
    Depois de gerado, o evento fica fechado: a ficha, o orçamento, os pagamentos, a divulgação e o pós-evento
    passam a ser só leitura (por isso o prazo do relatório é 7 dias depois do evento: dá tempo de chegar nota e comprovante). O ponto "Relatório final gerado" do checklist (7 dias depois) fica
-   verde sozinho. Eventos realizados mostram só "Relatório final" e "Relatório feedback convidado" (este, por enquanto, sem ação). */
+   verde sozinho. Eventos realizados mostram só "Relatório final" e "Relatório feedback convidado" (um PDF por convidado, no fim deste arquivo). */
 (function(){
 "use strict";
 function Pm(){return window.__perm&&__perm.carregado()?__perm:null;}
@@ -40,6 +40,8 @@ window.__publicoUsp=publicoUsp;
 function fbDe(e){var f=e.feedback;if(!f||!f.formId)return null;
   return {total:+f.total||0,satisfacao:num(f.satisfacao),perguntas:(f.perguntas||[]).filter(function(q){return q&&q.t;}),comentarios:(f.comentarios||[]).filter(function(c){return c&&c.txt;})};}
 function nota(v){return v==null?'—':(Math.round(v*10)/10).toFixed(1).replace('.',',');}
+/* perguntas do feedback na tela: título à esquerda, nota à direita (o dl espreme títulos longos) */
+function qLista(fb){return '<div class="fc-qs">'+fb.perguntas.map(function(q){return '<div class="fc-q"><span>'+esc(q.t)+'</span><b>'+nota(q.media)+' <span class="note">de '+q.max+(q.n!=null?' · '+q.n+' resp.':'')+'</span></b></div>';}).join('')+'</div>';}
 /* os números do resultado (os mesmos de antes do pós-evento) */
 var RES=[['presentes','Presentes (total)',1],['membros','Membros presentes'],['duracaoReal','Duração real (min)'],['atraso','Atraso (min)']];
 var COM=[['','—'],['certo','Porções certas'],['faltou','Faltou comida'],['sobrou','Sobrou comida']];
@@ -88,8 +90,7 @@ function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=insDe(e),pr=v.presentes,s
   var fb=fbDe(e),ms=num((e.ficha||{}).metaSatisfacao);
   if(fb)h+='<h5 class="br-h5">Feedback dos participantes</h5>'+(fb.total?dl([['Respostas',fb.total+(ins?' <span class="note">'+pct(fb.total/ins)+' dos inscritos</span>':'')],
       ['Satisfação',pct(fb.satisfacao)+' <span class="note">notas 4 e 5'+(ms!=null?' · meta '+ms+'%':'')+'</span>'+(ms!=null&&fb.satisfacao!=null?(fb.satisfacao*100>=ms?' <span class="chip ok">bateu a meta</span>':' <span class="chip warn">abaixo da meta</span>'):'')]]
-    .concat(fb.perguntas.map(function(q){return [esc(q.t),nota(q.media)+' <span class="note">de '+q.max+' · '+q.n+' respostas</span>'];}))
-    .concat([['Comentários',fb.comentarios.length?fb.comentarios.length+' <span class="note">entram no relatório final</span>':'nenhum']])):'<p class="note" style="margin:0">O Forms de feedback ainda não tem respostas.</p>');
+    .concat([['Comentários',fb.comentarios.length?fb.comentarios.length+' <span class="note">entram no relatório final</span>':'nenhum']]))+qLista(fb):'<p class="note" style="margin:0">O Forms de feedback ainda não tem respostas.</p>');
   return h+'<p class="note" style="margin:8px 0 0">O resumo usa os números do resultado já salvos e o que cada área registrou. Tudo isso entra no relatório final.</p>';}
 
 /* ----- painel ----- */
@@ -299,6 +300,81 @@ window.__abrirPos=function(id){if(!$('view-base')||$('view-base').hidden){var b=
       else if(t.dataset.pcom){r.com=t.value;if(t.value!=='faltou'&&t.value!=='sobrou')r.comPct='';mexeu();redesenha();}});
     dr.addEventListener('click',function(ev){var id2=dr._posId;if(!id2||!RP[id2]||RP[id2].ocup)return;
       if(ev.target.closest('#pos-salvar'))salvar(id2,false);else if(ev.target.closest('#pos-gerar'))salvar(id2,true);});}});};
+/* ================= RELATÓRIO FEEDBACK CONVIDADO =================
+   Um PDF por convidado do evento, para a diretoria mandar a ele: agradecimento, público (inscritos, presentes, comparecimento),
+   público USP por instituto e as notas do Forms de feedback, com só os comentários que a pessoa marcar e um recado opcional.
+   Cada PDF fica em Documentos, na pasta do evento. eventos/{id}.relConvidado = {comentarios:[texto], recado, em, por,
+   docs:{convidadoId:{docId, assetId, versao, em}}}. Pode gerar de novo (o Forms de feedback recebe respostas até 30 dias
+   depois do evento): atualiza o mesmo documento, com nova versão. Não mexe no evento fechado pelo relatório final. */
+var RC={};
+function rcRasc(e){if(!RC[e.id]){var x=e.relConvidado||{};RC[e.id]={sel:(x.comentarios||[]).slice(),recado:x.recado||'',msg:'',ocup:false};}return RC[e.id];}
+function montarFc(id){var e=evDe(id);if(!e)return null;var r=rcRasc(e),ed=podeEd(),fb=fbDe(e),x=e.relConvidado||{},gl=convIds(e),c='';
+  c+='<p class="note" style="margin:0 0 10px">Um PDF para cada convidado, com o agradecimento da Feashion, o público do evento, quantos eram alunos da USP e de quais institutos e as notas do Forms de feedback. Os comentários só entram se forem marcados. O PDF fica em <b>Documentos</b>, na pasta do evento, para a diretoria mandar ao convidado.</p>';
+  var fh;
+  if(!fb)fh='<p class="note" style="margin:0">Este evento não tem o Forms de feedback do app: o PDF sai só com o público.</p>';
+  else if(!fb.total)fh='<p class="note" style="margin:0">O Forms de feedback ainda não tem respostas.</p>';
+  else fh=dl([['Respostas',String(fb.total)],['Satisfação',pct(fb.satisfacao)+' <span class="note">notas 4 e 5</span>']])+qLista(fb)+
+    (e.feedback&&e.feedback.aberto?'<p class="note" style="margin:6px 0 0">O Forms ainda recebe respostas (até 30 dias depois do evento): dá para gerar de novo depois.</p>':'');
+  c+=blk('Notas do feedback',fh);
+  var cs=fb?fb.comentarios:[],ch;
+  if(!cs.length)ch='<p class="note" style="margin:0">Nenhum comentário no Forms de feedback.</p>';
+  else if(ed)ch='<p class="note" style="margin:0 0 6px">Marque os que vão para o convidado (<span id="fc-n">'+r.sel.filter(function(t){return cs.some(function(k){return k.txt===t;});}).length+'</span> marcados).</p>'+
+    cs.map(function(k,i){return '<label class="check fc-c"><input type="checkbox" data-fcc="'+i+'"'+(r.sel.indexOf(k.txt)>=0?' checked':'')+'><span>'+esc(k.txt)+'</span></label>';}).join('');
+  else{var so=cs.filter(function(k){return r.sel.indexOf(k.txt)>=0;});ch=so.length?so.map(function(k){return '<p style="margin:0 0 4px">“'+esc(k.txt)+'”</p>';}).join(''):'<p class="note" style="margin:0">Nenhum comentário escolhido.</p>';}
+  c+=blk('Comentários',ch);
+  c+=blk('Recado da diretoria',ed?'<div class="field"><label for="fc-recado">Recado ao convidado <span class="rq opt">opcional · entra depois do agradecimento</span></label><textarea id="fc-recado" data-fcr="1" rows="3" maxlength="800">'+esc(r.recado)+'</textarea></div>'
+    :(r.recado?'<p style="margin:0;white-space:pre-wrap">'+esc(r.recado)+'</p>':'<p class="note" style="margin:0">Sem recado.</p>'));
+  var ph=gl.length?gl.map(function(g0){var g=gDe(g0),d=(x.docs||{})[g0];return '<p style="margin:0 0 6px"><b>'+esc(g?g.nome:'convidado removido da base')+'</b> · '+
+    (d&&d.assetId?'<a href="/_blob/'+esc(d.assetId)+'" class="pos-pdf">Abrir o PDF</a> <span class="note">gerado em '+ddmm(dia(d.em))+(d.versao>1?' · versão '+d.versao:'')+'</span>':'<span class="note">ainda não gerado</span>')+'</p>';}).join('')
+    :'<p class="note" style="margin:0">Evento sem convidado na ficha: não há para quem gerar.</p>';
+  c+=blk('PDFs',ph);
+  var rod='';
+  if(ed&&gl.length)rod='<div class="btns"><button type="button" class="btn" id="fc-gerar"'+(r.ocup?' disabled':'')+'>'+(x.em?'Gerar de novo':gl.length>1?'Gerar os '+gl.length+' PDFs':'Gerar o PDF')+'</button><span class="msg" id="fc-m" role="status">'+esc(r.msg)+'</span></div>';
+  return {titulo:'Feedback ao convidado · '+(e.nome||'Evento'),sub:dataLonga(e)+(e.sala?' · '+esc(e.sala):''),corpo:c,rodape:rod};}
+function redesenhaFc(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.closest('#view-base .tpanel'))a.blur();painelAtualizar('view-base');}
+function gerarFc(id){var e=evDe(id);if(!e||!db)return;var r=rcRasc(e),q=quem(),gl=convIds(e),x=e.relConvidado||{},velhos=x.docs||{},novos={};if(!gl.length)return;
+  var cs=(fbDe(e)||{comentarios:[]}).comentarios.map(function(k){return k.txt;}).filter(function(t){return r.sel.indexOf(t)>=0;}),rec=String(r.recado||'').trim().slice(0,800);
+  r.ocup=true;r.msg='Gerando…';redesenhaFc();
+  var p=Promise.resolve();
+  gl.forEach(function(gid){p=p.then(function(){var g=gDe(gid),blob=pdfConvidado(e,g,cs,rec);
+    return window.claude.use('assets').then(function(api){if(!api)throw {code:'sem'};return api.upload(blob,{type:'application/pdf'});}).then(function(upl){var d0=velhos[gid]||{},vs=(+d0.versao||0)+1,url='/_blob/'+upl.id;
+      var d={nome:('Feedback ao convidado · '+(g?g.nome:'Convidado')+' · '+(e.nome||'Evento')+' ('+ddmmaa(e.data)+')').slice(0,120),tipo:'PDF',versao:'v'+vs,resp:q.por,
+        resumo:'Gerado pelo app para mandar ao convidado: agradecimento, público, público USP e notas do Forms de feedback.',eventos:[id],area:'Eventos',link:'',arquivo:url,assetId:upl.id,url:url};
+      var existe=d0.docId&&docs.some(function(z){return z.id===d0.docId;});
+      return (existe?db.doc('documentos/'+d0.docId).update(d).then(function(){return d0.docId;}):db.collection('documentos').add(Object.assign({criadoEm:q.em},d)).then(function(z){return z.id;}))
+        .then(function(docId){novos[gid]={docId:docId,assetId:upl.id,versao:vs,em:q.em};});});});});
+  p.then(function(){return db.doc('eventos/'+id).update({relConvidado:{comentarios:cs.slice(0,150),recado:rec,em:q.em,por:q.por,docs:Object.assign({},velhos,novos)}});})
+    .then(function(){r.msg=gl.length>1?'PDFs gerados: estão em Documentos, na pasta do evento.':'PDF gerado: está em Documentos, na pasta do evento.';},
+      function(err){r.msg=err&&err.code==='sem'?'Não foi possível guardar o PDF: entre de novo no app e tente outra vez.':'Não foi possível gerar o PDF.';})
+    .then(function(){r.ocup=false;redesenhaFc();});}
+function pdfConvidado(e,g,cs,recado){var nome=e.nome||'Evento',gn=g?g.nome:'Convidado',pn=String(gn).trim().split(/\s+/)[0];
+  var doc=criarPdf('Feashion · Feedback do evento · '+nome.slice(0,60));
+  doc.capa('Feedback do evento',nome,[dataLonga(e),e.hora,e.sala].filter(Boolean).join(' · '),'Para '+gn+(g&&(g.cargo||g.empresa)?' · '+[g.cargo,g.empresa].filter(Boolean).join(', '):''));
+  doc.par('Olá, '+pn+'!',null,10.5);
+  doc.par('Muito obrigado por ter participado do evento '+nome+' com a Feashion. Reunimos aqui como foi o encontro: quantas pessoas vieram, quem eram e como o público avaliou o evento.',null,10.5);
+  if(recado)doc.par(recado,null,10.5);
+  doc.par('Diretoria de Eventos · Feashion','F4',10,CINZA);
+  var ins=insDe(e),pr=num(e.presentes),sw=num(e.semInscricao)||0,tc=ins&&pr!=null?Math.min(1,Math.max(0,pr-sw)/ins):null;
+  doc.secao('Público');
+  doc.kv([['Inscritos',ins!=null?String(ins):''],['Presentes',pr!=null?String(pr):''],['Comparecimento',tc!=null?pct(tc)+' dos inscritos vieram':'']]);
+  var pu=publicoUsp(e);
+  if(pu){doc.secao('Quem estava lá');
+    doc.kv([['Alunos USP',pu.usp+' de '+pu.total+' inscritos ('+pct(pu.usp/pu.total)+')'],['Fora da USP',pu.nao+' ('+pct(pu.nao/pu.total)+')']]);
+    if(pu.inst.length)doc.tabela(['Instituto','Inscritos','% dos alunos USP'],pu.inst.map(function(x){return [x[0],String(x[1]),pu.usp?pct(x[1]/pu.usp):'—'];}),[.5,.25,.25]);}
+  var fb=fbDe(e);
+  if(fb&&fb.total){doc.secao('Avaliação do público');
+    doc.kv([['Respostas',fb.total+(ins?' ('+pct(fb.total/ins)+' dos inscritos)':'')],['Satisfação',pct(fb.satisfacao)+' das notas foram 4 ou 5, numa escala de 1 a 5']]);
+    doc.tabela(['Pergunta','Média','Respostas'],fb.perguntas.map(function(x){return [x.t,nota(x.media)+' de '+x.max,String(x.n)];}),[.64,.18,.18]);}
+  if(cs.length){doc.secao('O que o público disse');cs.forEach(function(t){doc.par('“'+t+'”','F4',10);});}
+  return doc.blob('Feedback do evento · '+nome);}
+window.__pdfConvidado=pdfConvidado; /* para testes */
+window.__abrirFbConv=function(id){if(!$('view-base')||$('view-base').hidden){var b=document.querySelector('.side .sitem[data-alvo="base"]');if(b)b.click();}
+  painelAbrir({sec:'view-base',chave:'fc:'+id,montar:function(){return montarFc(id);},foco:'#fc-gerar',depois:function(dr){dr._fcId=id;if(dr._fcLig)return;dr._fcLig=1;
+    dr.addEventListener('change',function(ev){var t=ev.target;if(!t.dataset||t.dataset.fcc==null)return;var e=evDe(dr._fcId);if(!e)return;var r=rcRasc(e),k=((fbDe(e)||{}).comentarios||[])[+t.dataset.fcc];if(!k)return;
+      var i=r.sel.indexOf(k.txt);if(t.checked&&i<0)r.sel.push(k.txt);else if(!t.checked&&i>=0)r.sel.splice(i,1);r.msg='';
+      var n=dr.querySelector('#fc-n');if(n)n.textContent=dr.querySelectorAll('[data-fcc]:checked').length;var m=dr.querySelector('#fc-m');if(m)m.textContent='';});
+    dr.addEventListener('input',function(ev){var t=ev.target;if(!t.dataset||!t.dataset.fcr)return;var e=evDe(dr._fcId);if(e)rcRasc(e).recado=t.value;});
+    dr.addEventListener('click',function(ev){if(!ev.target.closest('#fc-gerar'))return;var e=evDe(dr._fcId);if(!e||rcRasc(e).ocup)return;gerarFc(dr._fcId);});}});};
 /* link do e-mail do robô: #posevento=ID */
 (function(){var m=/^#posevento=(.+)$/.exec(location.hash||'');if(!m)return;var id=decodeURIComponent(m[1]),n=0;
   (function tenta(){var p=Pm();if(p&&evDe(id)){if(p.podeEm('Eventos').ver)window.__abrirPos(id);return;}if(++n<60)setTimeout(tenta,500);})();})();
