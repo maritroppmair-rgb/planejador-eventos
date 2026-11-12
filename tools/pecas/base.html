@@ -927,7 +927,7 @@ function detail(e,opt){
     if(e.presentesPrev==null&&e.custoPrev==null)out.push(['Previsto → real','evento registrado sem planejamento no app']);
     if(e.membros!=null&&Pp)out.push(['Membros × externos',e.membros+' membros · <b>'+Math.max(0,Pp-e.membros)+' externos</b> ('+Math.round(Math.max(0,Pp-e.membros)/Pp*100)+'% do público)']);
     if(e.porcoesCompradas!=null||e.porcoesConsumidas!=null)out.push(['Coffee',(e.porcoesCompradas!=null?e.porcoesCompradas+' compradas':'')+(e.porcoesConsumidas!=null?' · '+e.porcoesConsumidas+' consumidas':'')+(e.porcoesCompradas!=null&&e.porcoesConsumidas!=null?' · sobra de <b>'+Math.max(0,e.porcoesCompradas-e.porcoesConsumidas)+'</b>'+(e.porcoesConsumidas>=e.porcoesCompradas?' (acabou tudo: pode ter faltado)':''):'')]);
-    if(e.metodoCheckin)out.push(['Check-in',e.metodoCheckin==='qr'?'QR':'lista de papel']);
+    if(e.comida)out.push(['Comida',({certo:'porções certas',faltou:'faltou comida',sobrou:'sobrou comida'})[e.comida]+(e.comida!=='certo'&&e.comidaPct!=null?' ('+e.comidaPct+'%)':'')]);
     if(e.duracaoReal!=null)out.push(['Duração real',e.duracaoReal+' min'+(e.duracao?' (planejado '+e.duracao+' min)':'')]);
     if(e.custo!=null)out.push(['Financeiro',e.custoBasico!=null||e.custoNaoPrev!=null?'básico '+brl2(e.custoBasico||0)+' + não previsto '+brl2(e.custoNaoPrev||0)+' = <b>'+brl2(e.custo)+'</b>'+(e.custo?' · não previsto = <b>'+Math.round((e.custoNaoPrev||0)/e.custo*100)+'%</b> do total':''):'total '+brl2(e.custo)+' (sem separação entre básico e não previsto)']);
   }else{
