@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261111231404"></script>
-<script src="plataforma.js?v=20261111231404"></script>
+<script src="config.js?v=20261111232029"></script>
+<script src="plataforma.js?v=20261111232029"></script>
 </head>
 <body>
 
@@ -4351,12 +4351,13 @@ window.__abrirPos=function(id){if(!$('view-base')||$('view-base').hidden){var b=
       if(ev.target.closest('#pos-salvar'))salvar(id2,false);else if(ev.target.closest('#pos-gerar'))salvar(id2,true);});}});};
 /* ================= RELATÓRIO FEEDBACK CONVIDADO =================
    Um PDF por convidado do evento, para a diretoria mandar a ele: agradecimento, público (inscritos, presentes, comparecimento),
-   público USP por instituto e as notas do Forms de feedback, com só os comentários que a pessoa marcar e um recado opcional.
-   Cada PDF fica em Documentos, na pasta do evento. eventos/{id}.relConvidado = {comentarios:[texto], recado, em, por,
+   público USP por instituto e as notas do Forms de feedback, com só os comentários que a pessoa marcar. A carta de abertura
+   vem com um texto padrão (CARTA) que dá para editar; {nome} vira o primeiro nome de cada convidado e {evento}, o nome do evento.
+   Cada PDF fica em Documentos, na pasta do evento. eventos/{id}.relConvidado = {comentarios:[texto], carta, em, por,
    docs:{convidadoId:{docId, assetId, versao, em}}}. Pode gerar de novo (o Forms de feedback recebe respostas até 30 dias
    depois do evento): atualiza o mesmo documento, com nova versão. Não mexe no evento fechado pelo relatório final. */
-var RC={};
-function rcRasc(e){if(!RC[e.id]){var x=e.relConvidado||{};RC[e.id]={sel:(x.comentarios||[]).slice(),recado:x.recado||'',msg:'',ocup:false};}return RC[e.id];}
+var RC={},CARTA='Olá, {nome}!\n\nMuito obrigado por ter participado do evento {evento} com a Feashion. Reunimos aqui como foi o encontro: quantas pessoas vieram, quem eram e como o público avaliou o evento.\n\nDiretoria de Eventos · Feashion';
+function rcRasc(e){if(!RC[e.id]){var x=e.relConvidado||{};RC[e.id]={sel:(x.comentarios||[]).slice(),carta:x.carta||CARTA,msg:'',ocup:false};}return RC[e.id];}
 function montarFc(id){var e=evDe(id);if(!e)return null;var r=rcRasc(e),ed=podeEd(),fb=fbDe(e),x=e.relConvidado||{},gl=convIds(e),c='';
   c+='<p class="note" style="margin:0 0 10px">Um PDF para cada convidado, com o agradecimento da Feashion, o público do evento, quantos eram alunos da USP e de quais institutos e as notas do Forms de feedback. Os comentários só entram se forem marcados. O PDF fica em <b>Documentos</b>, na pasta do evento, para a diretoria mandar ao convidado.</p>';
   var fh;
@@ -4371,8 +4372,9 @@ function montarFc(id){var e=evDe(id);if(!e)return null;var r=rcRasc(e),ed=podeEd
     cs.map(function(k,i){return '<label class="check fc-c"><input type="checkbox" data-fcc="'+i+'"'+(r.sel.indexOf(k.txt)>=0?' checked':'')+'><span>'+esc(k.txt)+'</span></label>';}).join('');
   else{var so=cs.filter(function(k){return r.sel.indexOf(k.txt)>=0;});ch=so.length?so.map(function(k){return '<p style="margin:0 0 4px">“'+esc(k.txt)+'”</p>';}).join(''):'<p class="note" style="margin:0">Nenhum comentário escolhido.</p>';}
   c+=blk('Comentários',ch);
-  c+=blk('Recado da diretoria',ed?'<div class="field"><label for="fc-recado">Recado ao convidado <span class="rq opt">opcional · entra depois do agradecimento</span></label><textarea id="fc-recado" data-fcr="1" rows="3" maxlength="800">'+esc(r.recado)+'</textarea></div>'
-    :(r.recado?'<p style="margin:0;white-space:pre-wrap">'+esc(r.recado)+'</p>':'<p class="note" style="margin:0">Sem recado.</p>'));
+  c+=blk('Carta ao convidado',ed?'<div class="field"><label for="fc-carta">Texto do começo do PDF <span class="rq opt">{nome} vira o primeiro nome de cada convidado e {evento}, o nome do evento · parágrafos separados por uma linha em branco</span></label><textarea id="fc-carta" data-fcr="1" rows="7" maxlength="2000">'+esc(r.carta)+'</textarea></div>'+
+    '<div class="btns" style="margin-top:8px"><button type="button" class="btn small ghost" id="fc-pad"'+(r.carta===CARTA?' disabled':'')+'>Voltar ao texto padrão</button></div>'
+    :'<p style="margin:0;white-space:pre-wrap">'+esc(r.carta)+'</p>');
   var ph=gl.length?gl.map(function(g0){var g=gDe(g0),d=(x.docs||{})[g0];return '<p style="margin:0 0 6px"><b>'+esc(g?g.nome:'convidado removido da base')+'</b> · '+
     (d&&d.assetId?'<a href="/_blob/'+esc(d.assetId)+'" class="pos-pdf">Abrir o PDF</a> <span class="note">gerado em '+ddmm(dia(d.em))+(d.versao>1?' · versão '+d.versao:'')+'</span>':'<span class="note">ainda não gerado</span>')+'</p>';}).join('')
     :'<p class="note" style="margin:0">Evento sem convidado na ficha: não há para quem gerar.</p>';
@@ -4382,7 +4384,7 @@ function montarFc(id){var e=evDe(id);if(!e)return null;var r=rcRasc(e),ed=podeEd
   return {titulo:'Feedback ao convidado · '+(e.nome||'Evento'),sub:dataLonga(e)+(e.sala?' · '+esc(e.sala):''),corpo:c,rodape:rod};}
 function redesenhaFc(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.closest('#view-base .tpanel'))a.blur();painelAtualizar('view-base');}
 function gerarFc(id){var e=evDe(id);if(!e||!db)return;var r=rcRasc(e),q=quem(),gl=convIds(e),x=e.relConvidado||{},velhos=x.docs||{},novos={};if(!gl.length)return;
-  var cs=(fbDe(e)||{comentarios:[]}).comentarios.map(function(k){return k.txt;}).filter(function(t){return r.sel.indexOf(t)>=0;}),rec=String(r.recado||'').trim().slice(0,800);
+  var cs=(fbDe(e)||{comentarios:[]}).comentarios.map(function(k){return k.txt;}).filter(function(t){return r.sel.indexOf(t)>=0;}),rec=String(r.carta||'').trim().slice(0,2000)||CARTA;
   r.ocup=true;r.msg='Gerando…';redesenhaFc();
   var p=Promise.resolve();
   gl.forEach(function(gid){p=p.then(function(){var g=gDe(gid),blob=pdfConvidado(e,g,cs,rec);
@@ -4392,17 +4394,14 @@ function gerarFc(id){var e=evDe(id);if(!e||!db)return;var r=rcRasc(e),q=quem(),g
       var existe=d0.docId&&docs.some(function(z){return z.id===d0.docId;});
       return (existe?db.doc('documentos/'+d0.docId).update(d).then(function(){return d0.docId;}):db.collection('documentos').add(Object.assign({criadoEm:q.em},d)).then(function(z){return z.id;}))
         .then(function(docId){novos[gid]={docId:docId,assetId:upl.id,versao:vs,em:q.em};});});});});
-  p.then(function(){return db.doc('eventos/'+id).update({relConvidado:{comentarios:cs.slice(0,150),recado:rec,em:q.em,por:q.por,docs:Object.assign({},velhos,novos)}});})
+  p.then(function(){return db.doc('eventos/'+id).update({relConvidado:{comentarios:cs.slice(0,150),carta:rec,em:q.em,por:q.por,docs:Object.assign({},velhos,novos)}});})
     .then(function(){r.msg=gl.length>1?'PDFs gerados: estão em Documentos, na pasta do evento.':'PDF gerado: está em Documentos, na pasta do evento.';},
       function(err){r.msg=err&&err.code==='sem'?'Não foi possível guardar o PDF: entre de novo no app e tente outra vez.':'Não foi possível gerar o PDF.';})
     .then(function(){r.ocup=false;redesenhaFc();});}
-function pdfConvidado(e,g,cs,recado){var nome=e.nome||'Evento',gn=g?g.nome:'Convidado',pn=String(gn).trim().split(/\s+/)[0];
+function pdfConvidado(e,g,cs,carta){var nome=e.nome||'Evento',gn=g?g.nome:'Convidado',pn=String(gn).trim().split(/\s+/)[0];
   var doc=criarPdf('Feashion · Feedback do evento · '+nome.slice(0,60));
   doc.capa('Feedback do evento',nome,[dataLonga(e),e.hora,e.sala].filter(Boolean).join(' · '),'Para '+gn+(g&&(g.cargo||g.empresa)?' · '+[g.cargo,g.empresa].filter(Boolean).join(', '):''));
-  doc.par('Olá, '+pn+'!',null,10.5);
-  doc.par('Muito obrigado por ter participado do evento '+nome+' com a Feashion. Reunimos aqui como foi o encontro: quantas pessoas vieram, quem eram e como o público avaliou o evento.',null,10.5);
-  if(recado)doc.par(recado,null,10.5);
-  doc.par('Diretoria de Eventos · Feashion','F4',10,CINZA);
+  String(carta||CARTA).replace(/\r/g,'').replace(/\{nome\}/g,pn).replace(/\{evento\}/g,nome).split(/\n\s*\n/).forEach(function(p){p=p.trim();if(p)doc.par(p,null,10.5);});
   var ins=insDe(e),pr=num(e.presentes),sw=num(e.semInscricao)||0,tc=ins&&pr!=null?Math.min(1,Math.max(0,pr-sw)/ins):null;
   doc.secao('Público');
   doc.kv([['Inscritos',ins!=null?String(ins):''],['Presentes',pr!=null?String(pr):''],['Comparecimento',tc!=null?pct(tc)+' dos inscritos vieram':'']]);
@@ -4422,8 +4421,8 @@ window.__abrirFbConv=function(id){if(!$('view-base')||$('view-base').hidden){var
     dr.addEventListener('change',function(ev){var t=ev.target;if(!t.dataset||t.dataset.fcc==null)return;var e=evDe(dr._fcId);if(!e)return;var r=rcRasc(e),k=((fbDe(e)||{}).comentarios||[])[+t.dataset.fcc];if(!k)return;
       var i=r.sel.indexOf(k.txt);if(t.checked&&i<0)r.sel.push(k.txt);else if(!t.checked&&i>=0)r.sel.splice(i,1);r.msg='';
       var n=dr.querySelector('#fc-n');if(n)n.textContent=dr.querySelectorAll('[data-fcc]:checked').length;var m=dr.querySelector('#fc-m');if(m)m.textContent='';});
-    dr.addEventListener('input',function(ev){var t=ev.target;if(!t.dataset||!t.dataset.fcr)return;var e=evDe(dr._fcId);if(e)rcRasc(e).recado=t.value;});
-    dr.addEventListener('click',function(ev){if(!ev.target.closest('#fc-gerar'))return;var e=evDe(dr._fcId);if(!e||rcRasc(e).ocup)return;gerarFc(dr._fcId);});}});};
+    dr.addEventListener('input',function(ev){var t=ev.target;if(!t.dataset||!t.dataset.fcr)return;var e=evDe(dr._fcId);if(e){var r=rcRasc(e);r.carta=t.value;var b=dr.querySelector('#fc-pad');if(b)b.disabled=t.value===CARTA;}});
+    dr.addEventListener('click',function(ev){if(ev.target.closest('#fc-pad')){var e0=evDe(dr._fcId);if(e0){rcRasc(e0).carta=CARTA;redesenhaFc();}return;}if(!ev.target.closest('#fc-gerar'))return;var e=evDe(dr._fcId);if(!e||rcRasc(e).ocup)return;gerarFc(dr._fcId);});}});};
 /* link do e-mail do robô: #posevento=ID */
 (function(){var m=/^#posevento=(.+)$/.exec(location.hash||'');if(!m)return;var id=decodeURIComponent(m[1]),n=0;
   (function tenta(){var p=Pm();if(p&&evDe(id)){if(p.podeEm('Eventos').ver)window.__abrirPos(id);return;}if(++n<60)setTimeout(tenta,500);})();})();
