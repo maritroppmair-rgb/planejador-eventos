@@ -181,6 +181,13 @@ var lig=false;
 function ligar(){if(lig||!db)return;lig=true;db.collection('mkt_divulgacao').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});div=m;tudo();},function(){});}
 document.addEventListener('permissoes',function(){ligar();tudo();});
 document.addEventListener('membros',function(){painelAtualizar('view-mkt-div');});
+/* dados do Marketing para o relatório final do evento (pos.js) */
+window.__mktRel=function(e){var d=div[e.id]||null,b=e.briefing||null,pl=d||planoDe(e.id),bs=pl.bastidores||{};
+  function rot(l,v,pad){return (l.filter(function(x){return x[0]===v;})[0]||pad||['',''])[1];}
+  return {briefing:b&&b.enviadoEm?{mensagem:b.mensagem||'',artes:(b.artes||[]).join(', '),pasta:b.pasta||'',obs:b.obs||'',em:b.enviadoEm||'',por:b.enviadoPor||'',atEm:b.atualizadoEm||''}:null,
+    feita:feitaDe(e.id),tem:!!d,
+    canais:(pl.canais||[]).map(function(c){return {nome:c.nome||'',resp:nomeMembro(c.resp),posts:(pl.posts||[]).filter(function(p){return p.canal===c.id;}).map(function(p){return {mom:rot(MOM,p.mom),oque:p.oque||'',data:p.data||'',pub:!!p.pub};})};}),
+    bastidores:{quem:nomeMembro(bs.quem),linkedin:rot(LKD,bs.linkedin||'?',LKD[0])}};};
 /* link do e-mail do robô: #divulgacao=ID */
 (function(){var m=/^#divulgacao=(.+)$/.exec(location.hash||'');if(!m)return;var id=decodeURIComponent(m[1]),n=0;
   (function tenta(){var p=P();if(p&&evDe(id)){if(p.podeEm('Marketing').ver)window.__abrirDiv(id);return;}if(++n<60)setTimeout(tenta,500);})();})();

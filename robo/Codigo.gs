@@ -603,7 +603,7 @@ function rotina() {
 }
 
 /* ---------- checklist do evento: e-mail para a área quando chega a vez dela e quando um ponto atrasa ----------
-   Os mesmos 14 pontos e prazos do site (etapas.js). Cada aviso sai uma vez só: eventos/{id}.etapasAvisos = {orc_vez: data, ...}.
+   Os mesmos 15 pontos e prazos do site (etapas.js; o último, Relatório final gerado, é 7 dias depois do evento). Cada aviso sai uma vez só: eventos/{id}.etapasAvisos = {orc_vez: data, ...}.
    "Sua vez" vai só para as outras áreas, quando o ponto anterior fica pronto: Presidência quando a ficha fica pronta,
    Financeiro quando a ficha é aprovada, Marketing quando o briefing é feito, responsável AEX quando começa o bloco de 7 dias.
    "Atrasado" vai para a área do ponto, juntando num e-mail só os pontos que atrasaram na mesma rodada.
@@ -623,7 +623,9 @@ var PONTOS = [
   { k: 'reconf', n: 'Reconfirmar convidado e sala', a: 'Eventos', d: 5 },
   { k: 'roteiro', n: 'Roteiro enviado à equipe', a: 'Eventos', d: 4 },
   { k: 'planob', n: 'Plano B revisado', a: 'Eventos', d: 3 },
-  { k: 'lembrete', n: 'Lembrete aos inscritos', a: 'Eventos', d: 2 }
+  { k: 'lembrete', n: 'Lembrete aos inscritos', a: 'Eventos', d: 2 },
+  // depois do evento: o relatório final (botão Finalizar evento no site), 7 dias depois; "Sua vez" no dia seguinte ao evento
+  { k: 'pos', n: 'Relatório final gerado', a: 'Eventos', d: -7, vez: function (ok, ev) { return hojeIso() > ev.data; } }
 ];
 function hojeIso() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
 function somaDiasIso(iso, n) { var p = partes(iso), d = new Date(p.a, p.m - 1, p.d + n); return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
@@ -647,6 +649,7 @@ function pontosFeitos(ev, convidados) {
       if (!ids.length && f.semConvidado) ok.conv = marcado(ck.conv);
       else { var cf = ev.convConfirmados || {}; ok.conv = ids.length > 0 && ids.every(function (i) { return !!cf[i]; }); } // check "Confirmado por escrito" da ficha
     }
+    else if (p.k === 'pos') ok.pos = !!(ev.relatorio && ev.relatorio.em); // botão Gerar relatório final (pós-evento)
     else if (p.k === 'brief') ok.brief = !!(ev.briefing && ev.briefing.enviadoEm); // botão Enviar briefing (linha do evento)
     else if (p.k === 'lembrete' && ev.inscricao && ev.inscricao.formId) { var x = (ev.inscricao.emails || {}).lembrete; ok.lembrete = !!(x && x.enviados > 0); }
     else ok[p.k] = marcado(p.c ? et[p.c] : ck[p.k]);
@@ -669,11 +672,13 @@ function avisosEtapas() {
   var hoje = hojeIso(), membros = null, convidados = null;
   fsList('eventos').forEach(function (ev) {
     try {
-      if (!ev.data || ev.status === 'realizado' || ev.data < hoje || /\[teste\]/i.test(ev.nome || '')) return;
+      if (!ev.data || ev.status === 'realizado' || /\[teste\]/i.test(ev.nome || '')) return;
+      var passou = ev.data < hoje; // evento que já aconteceu: só o ponto de depois (relatório final), por até 30 dias
+      if (passou && somaDiasIso(ev.data, 30) < hoje) return;
       if (!convidados) { convidados = {}; fsList('convidados').forEach(function (g) { convidados[g._id] = g; }); }
       var ok = pontosFeitos(ev, convidados), av = ev.etapasAvisos || {}, novo = false, atrasos = {};
       PONTOS.forEach(function (p) {
-        if (ok[p.k]) return;
+        if (ok[p.k] || (passou && p.d >= 0)) return;
         if (p.vez && !av[p.k + '_vez'] && p.vez(ok, ev)) {
           if (!membros) membros = fsList('membros');
           if (!mandar(emailsDaArea(p.a, ev, membros), emailVez(ev, p))) return;
@@ -701,11 +706,11 @@ function mandar(para, m) {
 function diaCurto(ev) { return dataCurta(ev.data) + '/' + String(ev.data).slice(2, 4); }
 /* o botão abre as Pendências; no orçamento e na divulgação, abre direto o evento na tela do Financeiro ou do Marketing */
 function moldura(txt, p, ev) {
-  var orc = p && p.k === 'orc' && ev, dv = p && p.k === 'divulg' && ev;
-  var link = orc ? CFG.SITE + '#orcamento=' + encodeURIComponent(ev._id) : dv ? CFG.SITE + '#divulgacao=' + encodeURIComponent(ev._id) : CFG.SITE + '#pendencias';
+  var orc = p && p.k === 'orc' && ev, dv = p && p.k === 'divulg' && ev, ps = p && p.k === 'pos' && ev;
+  var link = orc ? CFG.SITE + '#orcamento=' + encodeURIComponent(ev._id) : dv ? CFG.SITE + '#divulgacao=' + encodeURIComponent(ev._id) : ps ? CFG.SITE + '#posevento=' + encodeURIComponent(ev._id) : CFG.SITE + '#pendencias';
   return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">' + txt +
-    '<p>' + (orc ? 'O ponto fica verde quando a diretoria do Financeiro clicar em <b>Validar orçamento</b> no Planejador.' : dv ? 'O briefing completo e o plano de divulgação estão no Planejador. O ponto fica verde quando a diretoria do Marketing clicar em <b>Divulgação feita</b>.' : 'Quando terminar, marque o ponto como concluído no Planejador (tela Pendências).') + '</p>' +
-    '<p><a href="' + link + '" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">' + (orc ? 'Abrir o orçamento' : dv ? 'Abrir a divulgação' : 'Abrir as pendências') + '</a></p>' +
+    '<p>' + (orc ? 'O ponto fica verde quando a diretoria do Financeiro clicar em <b>Validar orçamento</b> no Planejador.' : dv ? 'O briefing completo e o plano de divulgação estão no Planejador. O ponto fica verde quando a diretoria do Marketing clicar em <b>Divulgação feita</b>.' : ps ? 'Registre o resultado e o pós-evento e clique em <b>Gerar relatório final</b>: o PDF vai para a pasta do evento em Documentos e o evento passa para Realizados.' : 'Quando terminar, marque o ponto como concluído no Planejador (tela Pendências).') + '</p>' +
+    '<p><a href="' + link + '" style="display:inline-block;background:#8a0d10;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-weight:bold">' + (orc ? 'Abrir o orçamento' : dv ? 'Abrir a divulgação' : ps ? 'Abrir o pós-evento' : 'Abrir as pendências') + '</a></p>' +
     '<p style="color:#777;font-size:12px">Aviso automático do Planejador de Eventos da Feashion.</p></div>';
 }
 function emailVez(ev, p) {

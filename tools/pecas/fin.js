@@ -374,6 +374,12 @@ function montarVerba(id){var e=events.filter(function(x){return x.id===id;})[0];
 function abrirVerba(id){vbAberto=id;
   painelAbrir({sec:'view-fin-custos',chave:id,montar:function(){return montarVerba(id);},aoFechar:function(){vbAberto=null;},depois:function(dr){
     dr._orcId=id;if(!dr._orcLig){dr._orcLig=1;ligarOrc(dr);ligarPag(dr);}}});}
+/* dados do Financeiro para o relatório final do evento (pos.js) */
+window.__finRel=function(e){var o=orcDe(e.id)||{},gp=gastoPorItem(e),val=validadoDe(e);
+  return {previsto:e.custoPrev!=null&&e.custoPrev!==''?+e.custoPrev:null,verba:verbaDe(e.id),gasto:gastoDe(e),validado:val?{em:val.em||'',por:val.por||''}:null,
+    itens:(o.itens||[]).map(function(x){return {tipo:tipoNome(x.tipo),desc:x.desc||'',forn:nomeForn(x),fonte:x.fonte||'',valor:+x.valor||0,gasto:gp[x.id]||0};}),
+    gastos:gastosDe(e).map(function(g){var p=pagDe(e.id,g.id),s=p?PAGS.filter(function(y){return y[0]===p.sit;})[0]:null;
+      return {data:g.data||'',desc:g.desc||'',tipo:tipoNome(g.tipo),valor:+g.valor||0,pag:s?s[1]:'',comp:g.tipo==='antigo'?null:!!linkDoc(docDe(g.docId))};})};};
 /* abre o orçamento de um evento (Pendências e o link do e-mail "Sua vez" do robô: #orcamento=ID) */
 window.__abrirOrc=function(id){if(window.__irArea)window.__irArea('Financeiro','fin-custos');setTimeout(function(){abrirVerba(id);},60);};
 (function(){var m=/^#orcamento=(.+)$/.exec(location.hash||'');if(!m)return;var id=decodeURIComponent(m[1]),n=0;

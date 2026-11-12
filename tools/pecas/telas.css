@@ -515,6 +515,9 @@ select.ck-s{cursor:pointer;padding-right:4px}
 @media (max-width:700px){.orc-r{grid-template-columns:1fr 1fr 24px;grid-template-areas:"t v x" "d d d" "f f f" "o o o" "g g g"}.orc-r .vb-in{justify-content:flex-start}}
 /* Briefing ao Marketing e Divulgação dos eventos (mkt.js) */
 .tbr-ok{border-color:color-mix(in srgb,var(--green) 45%,var(--line))!important;color:var(--green)!important}
+.pos-ct{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 10px;align-items:center;margin:0 0 6px}.pos-ct .check{margin:0}
+@media (max-width:700px){.pos-ct{grid-template-columns:1fr}}
+.pos-pdf{font-weight:700}
 .br-artes{display:flex;flex-wrap:wrap;gap:6px 14px}
 .br-dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:0;font-size:13.5px}
 .br-dl dt{color:var(--muted)}.br-dl dd{margin:0;overflow-wrap:anywhere}

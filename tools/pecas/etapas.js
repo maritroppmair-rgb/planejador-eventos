@@ -53,7 +53,9 @@ var PONTOS=[
   {k:'reconf',n:'Reconfirmar convidado e sala',b:3,d:5,a:'Eventos'},
   {k:'roteiro',n:'Roteiro enviado à equipe',b:3,d:4,a:'Eventos'},
   {k:'planob',n:'Plano B revisado',b:3,d:3,a:'Eventos'},
-  {k:'lembrete',n:'Lembrete aos inscritos',b:3,d:2,a:'Eventos',auto:function(e){var i=e.inscricao;if(!i||!i.formId)return null;var x=(i.emails||{}).lembrete;return !!(x&&x.enviados>0);}}];
+  {k:'lembrete',n:'Lembrete aos inscritos',b:3,d:2,a:'Eventos',auto:function(e){var i=e.inscricao;if(!i||!i.formId)return null;var x=(i.emails||{}).lembrete;return !!(x&&x.enviados>0);}},
+  /* depois do evento (b:0): o relatório final, gerado no pós-evento (pos.js), 7 dias depois */
+  {k:'pos',n:'Relatório final gerado',b:0,d:-7,a:'Eventos',como:'ao gerar o relatório final',auto:function(e){return !!(e.relatorio&&e.relatorio.em);}}];
 function campo(p){return p.c||'checklist.'+p.k;}
 function gravado(e,p){var ps=campo(p).split('.'),v=e[ps[0]]&&e[ps[0]][ps[1]];return v&&typeof v==='object'?v:{};}
 /* estado de cada ponto de um evento */
@@ -62,7 +64,8 @@ function pontosDe(e){var t=hoje(),fim=dn(e);
     if(au!=null){s=au?'ok':'';if(p.k==='ficha'&&e.etapas&&e.etapas.ficha){em=e.etapas.ficha.em||'';por=e.etapas.ficha.por||'';}
       if(p.k==='conv'&&au){var u=convUltimo(e);if(u){em=u.em;por=u.por||'';}}
       if(p.c&&au){em=g.em||'';por=g.por||'';}
-      if(p.k==='brief'&&au){em=e.briefing.enviadoEm||'';por=e.briefing.enviadoPor||'';}}
+      if(p.k==='brief'&&au){em=e.briefing.enviadoEm||'';por=e.briefing.enviadoPor||'';}
+      if(p.k==='pos'&&au){em=e.relatorio.em||'';por=e.relatorio.por||'';}}
     else{s=g.s==='ok'||g.s==='andamento'?g.s:g.em?'ok':'';em=g.em||'';por=g.por||'';}  /* marcas antigas {em,por} contam como concluídas */
     var prazo=e.data?somaDias(e.data,-p.d):null;
     return {p:p,k:p.k,n:p.n,a:p.a,b:p.b,s:s,feito:s==='ok',auto:au!=null,em:em,por:por,prazo:prazo,ptxt:ddmm(prazo),atrasado:s!=='ok'&&!fim&&!!prazo&&prazo<t};});}
@@ -100,10 +103,10 @@ window.__andamento=function(e,ab){
   function cls(x){return x.feito?'ok':x===cur?(x.atrasado?'atr':'vez'):x.atrasado?'atr2':x.s==='andamento'?'and':'';}
   var h='<div class="and'+(!cur?' fim':'')+(ab?' on':'')+'"><div class="and-hd" role="button" tabindex="0" data-eand="'+id+'" aria-expanded="'+!!ab+'" aria-label="Andamento: '+n+' de '+l.length+' pontos do checklist. '+(ab?'Fechar':'Abrir o checklist')+'">'+
     '<div class="and-t"><span>Andamento</span><span>'+n+' de '+l.length+'<span class="and-s" aria-hidden="true">'+(ab?'▲':'▼')+'</span></span></div>'+
-    '<div class="and-gs" aria-hidden="true">'+[30,7,3].map(function(b){var lb=l.filter(function(x){return x.b===b;});return '<ol class="and-g" style="flex:'+lb.length+'"><li class="and-gl">'+b+'</li>'+lb.map(function(x){return '<li class="'+cls(x)+'" title="'+esc(x.n+' · '+x.a+' · até '+x.ptxt+' · '+NOME[x.s])+'"><i>'+(x.feito?'✓':'')+'</i></li>';}).join('')+'</ol>';}).join('')+'</div>'+
+    '<div class="and-gs" aria-hidden="true">'+[30,7,3,0].map(function(b){var lb=l.filter(function(x){return x.b===b;});return '<ol class="and-g" style="flex:'+lb.length+'"><li class="and-gl">'+(b||'pós')+'</li>'+lb.map(function(x){return '<li class="'+cls(x)+'" title="'+esc(x.n+' · '+x.a+' · até '+x.ptxt+' · '+NOME[x.s])+'"><i>'+(x.feito?'✓':'')+'</i></li>';}).join('')+'</ol>';}).join('')+'</div>'+
     '<div class="and-p">'+(!cur?'<span><b>Checklist completo</b></span>':
       '<span>'+(cur.atrasado?'Atrasado: ':'Agora: ')+'<b>'+esc(cur.n)+'</b> · '+cur.a+'</span><span class="and-d'+(cur.atrasado?' atz':'')+'">até '+cur.ptxt+'</span>')+'</div></div>';
-  if(ab)h+='<div class="and-x">'+[30,7,3].map(function(b){return '<div class="and-bl"><h5>'+b+' dias</h5><ul>'+l.filter(function(x){return x.b===b;}).map(function(x){var c=cls(x);
+  if(ab)h+='<div class="and-x">'+[30,7,3,0].map(function(b){return '<div class="and-bl"><h5>'+(b?b+' dias':'Depois do evento')+'</h5><ul>'+l.filter(function(x){return x.b===b;}).map(function(x){var c=cls(x);
       var det='prazo '+x.ptxt+(x.k==='lembrete'?' (48 h antes)':'')+(x.feito?(x.em?' · concluído '+ddmm(x.em.slice(0,10))+(x.por?' por '+esc(primeiro(x.por)):''):''):x.s==='andamento'?' · em andamento':x.prazo&&!dn(e)?' · '+faltaTxt(x.prazo):'');
       return '<li><span class="and-k '+c+'"></span><span><b>'+esc(x.n)+'</b> · '+x.a+'<small'+(x.atrasado?' class="atz"':'')+'>'+det+'</small></span></li>';}).join('')+'</ul></div>';}).join('')+'</div>';
   return h+'</div>';};
@@ -121,7 +124,8 @@ function ligar(sec){if(!sec)return;
     if(t.dataset.ck){gravar(t.dataset.eid,t.dataset.ck,t.value);t.className='ck-s '+(t.value||'nao');return;}});
   sec.addEventListener('click',function(ev){var o=ev.target.closest('[data-pd-orc]');if(o&&window.__abrirOrc){__abrirOrc(o.dataset.pdOrc);return;}
     var o2=ev.target.closest('[data-pd-brief]');if(o2&&window.__abrirBrief){__abrirBrief(o2.dataset.pdBrief);return;}
-    var o3=ev.target.closest('[data-pd-div]');if(o3&&window.__abrirDiv){__abrirDiv(o3.dataset.pdDiv);return;}var b=ev.target.closest('[data-pd-abrir]');if(b&&window.__abrirFicha)__abrirFicha(b.dataset.pdAbrir);});}
+    var o3=ev.target.closest('[data-pd-div]');if(o3&&window.__abrirDiv){__abrirDiv(o3.dataset.pdDiv);return;}
+    var o4=ev.target.closest('[data-pd-pos]');if(o4&&window.__abrirPos){__abrirPos(o4.dataset.pdPos);return;}var b=ev.target.closest('[data-pd-abrir]');if(b&&window.__abrirFicha)__abrirFicha(b.dataset.pdAbrir);});}
 ligar($('view-base'));
 
 /* ============ PENDÊNCIAS DA MINHA ÁREA ============ */
@@ -134,19 +138,20 @@ $('pd-vista').addEventListener('click',function(e){var b=e.target.closest('[data
 ligar(sec);
 /* pontos em aberto com prazo nas próximas 2 semanas (ou já vencidos) */
 function pendencias(){var t=hoje(),lim=somaDias(t,14),out=[],tst=$('b-teste');
-  events.forEach(function(e){if(dn(e)||!e.data||e.data<t)return;
+  events.forEach(function(e){if(dn(e)||!e.data)return;var pas=e.data<t; /* evento que já passou: só os pontos de depois (relatório final) */
     if(/\[teste\]/i.test(e.nome||'')&&tst&&!tst.checked)return;
-    pontosDe(e).forEach(function(x){if(x.feito||!x.prazo||x.prazo>lim)return;out.push({e:e,x:x,minha:minha(x.p,e)});});});
+    pontosDe(e).forEach(function(x){if(x.feito||!x.prazo||x.prazo>lim||(pas&&x.p.d>=0))return;out.push({e:e,x:x,minha:minha(x.p,e)});});});
   return out.sort(function(a,b){return a.x.prazo<b.x.prazo?-1:a.x.prazo>b.x.prazo?1:0;});}
 function linhaPend(r){var e=r.e,x=r.x,id=esc(e.id),acao='',P0=P(),podeVer=!!P0&&!!P0.podeEm('Eventos').ver;
   if(x.k==='aprov'){if(pres()&&!bloqueioAprov(e))acao+='<label class="check et-ck"><input type="checkbox" data-et="aprov" data-eid="'+id+'">Aprovo esta ficha</label>';}
   else if(x.k==='brief'){if(podeVer&&window.__abrirBrief)acao+='<button type="button" class="btn small" data-pd-brief="'+id+'">Abrir briefing</button>';}
   else if(x.k==='divulg'){if(P0&&P0.podeEm('Marketing').ver&&window.__abrirDiv)acao+='<button type="button" class="btn small" data-pd-div="'+id+'">Abrir divulgação</button>';}
+  else if(x.k==='pos'){if(podeVer&&window.__abrirPos)acao+='<button type="button" class="btn small" data-pd-pos="'+id+'">Abrir pós-evento</button>';}
   else if(x.k==='orc'){if(P0&&P0.podeEm('Financeiro').ver&&window.__abrirOrc)acao+='<button type="button" class="btn small" data-pd-orc="'+id+'">Abrir orçamento</button>';}
   else if(podeMarcar(x.p,e))acao+=seletor(x,e.id);
   if(podeVer)acao+='<button type="button" class="btn small ghost" data-pd-abrir="'+id+'">Abrir ficha</button>';
   return '<li class="pd-it'+(x.atrasado?' atz':'')+'"><div class="pd-d"><b>'+x.ptxt+'</b><span>'+esc(faltaTxt(x.prazo))+'</span></div>'+
-    '<div class="pd-t"><b>'+esc(x.n)+'</b> <span class="note">· checklist de '+x.b+' dias'+(x.p.como?' · marca '+x.p.como:x.auto?' · automático':'')+'</span>'+
+    '<div class="pd-t"><b>'+esc(x.n)+'</b> <span class="note">· '+(x.b?'checklist de '+x.b+' dias':'depois do evento')+(x.p.como?' · marca '+x.p.como:x.auto?' · automático':'')+'</span>'+
     '<span class="tsub">'+esc(e.nome||'Evento')+' · '+ddmm(e.data)+'/'+e.data.slice(2,4)+'</span></div>'+
     '<span class="chip neutral pd-a">'+esc(x.a)+'</span><div class="pd-ac">'+acao+'</div></li>';}
 function renderPend(){var box=$('pd-lista');if(!box)return;
