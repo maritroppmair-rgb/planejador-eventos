@@ -6,7 +6,7 @@
 (function(){
 "use strict";
 var EMU=/[?&]emulador\b/.test(location.search);
-var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados','mailing','mailingEnvios','mailingConfig','descadastros','inscricoes','fin_coffee','fin_verbas','cd_capacitacoes','cd_avaliacoes'];
+var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados','mailing','mailingEnvios','mailingConfig','descadastros','inscricoes','fin_coffee','fin_verbas','fin_orcamentos','fin_pagamentos','mkt_divulgacao','cd_capacitacoes','cd_avaliacoes'];
 var saindo=false;
 var PARTE=700000; /* caracteres base64 por parte de arquivo (o Firestore aceita até 1 MiB por documento) */
 

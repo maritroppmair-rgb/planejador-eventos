@@ -128,7 +128,7 @@ As respostas curtas abaixo cobrem custo, confiabilidade da previsão, segurança
 
 **"De onde vem a previsão do tempo?"** Do Open-Meteo, um serviço gratuito. Para datas até 16 dias à frente o app usa a previsão do tempo de verdade, no horário do evento. Para datas mais distantes usa o histórico de 20 anos da região da FEA: em janeiro chove em cerca de um terço dos fins de tarde, no inverno em quase nenhum. A nota de cada evento salvo é atualizada sozinha 16 e 7 dias antes da data, e o app avisa se a sala não tem ar-condicionado num dia quente ou se o espaço é aberto com chuva prevista.
 
-**"Os dados estão seguros?"** Só entra quem está na lista, com login Google do e-mail USP. As permissões por área e cargo são checadas no próprio banco de dados, não só na tela. A única trava que fica só no app é a do evento fechado depois do relatório final, de propósito: assim dá para corrigir um dado em caso especial. Tem backup completo em Parâmetros, com aviso quando o último tiver mais de 30 dias.
+**"Os dados estão seguros?"** Só entra quem está na lista, com login Google do e-mail USP. As permissões por área e cargo são checadas no próprio banco de dados, não só na tela. A única trava que fica só no app é a do evento fechado depois do relatório final, de propósito: assim dá para corrigir um dado em caso especial. Tem backup completo em Parâmetros (eventos, orçamentos, pagamentos, divulgação, capacitações, documentos e o resto), com aviso quando o último tiver mais de 30 dias.
 
 **"E se alguém apagar algo sem querer?"** O que é excluído vai para a Lixeira e fica lá por 30 dias; a diretoria da área restaura com um clique. E o Histórico mostra quem criou, editou ou excluiu cada coisa, e quando.
 
