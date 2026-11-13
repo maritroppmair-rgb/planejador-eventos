@@ -19,7 +19,6 @@ var CFG = {
   PROJETO: 'planejador-de-eventos-261df',
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
   MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8', // reserva: o que vale é o link salvo em Parâmetros no site
-  MODELO_FEEDBACK_ID: '1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg', // reserva: o que vale é o link salvo em Parâmetros no site
   FEEDBACK_DIAS: 5,         // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
   PASTA: 'Feashion · Inscrições',
   PASTA_FEEDBACK: 'Feashion · Feedbacks', // Forms de feedback e planilhas de respostas (mesmo acesso de edição da pasta das inscrições)
@@ -221,7 +220,8 @@ function pastaFeedbacks() {
 function modeloFeedbackId() {
   var d = null;
   try { d = fsGet('parametros/feedback'); } catch (err) { console.error('Parâmetros: ' + err); }
-  return (d && d.modeloFormId) || CFG.MODELO_FEEDBACK_ID;
+  if (!(d && d.modeloFormId)) throw new Error('Falta o link do Forms padrão de feedback em Parâmetros, no site.');
+  return d.modeloFormId; // só em Parâmetros: o id não fica no código, que é público
 }
 function criarFeedback(eid, u) {
   var lock = LockService.getScriptLock();

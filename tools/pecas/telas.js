@@ -280,12 +280,12 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     m.textContent='Salvando…';db.doc('parametros/inscricoes').set({modeloFormUrl:'https://docs.google.com/forms/d/'+id+'/edit',modeloFormId:id,em:new Date().toISOString(),porNome:String(window.__meuNome||'').slice(0,80)},{merge:true})
       .then(function(){fsuj=false;desenhar();$('pi-msg').textContent='Salvo. Os próximos Forms saem deste modelo.';},function(){m.textContent='Não foi possível salvar: só a diretoria altera.';});});
   /* Forms padrão de feedback: o robô copia este Forms quando alguém marca "Forms de feedback" nos avisos do evento (parametros/feedback) */
-  var PADRAO_FB='https://docs.google.com/forms/d/1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg/edit';
+  /* sem padrão no código (o repositório é público): o link vem só de parametros/feedback */
   var fbk=el('<div class="tp-blk pinsc" id="par-fb"></div>');sec.appendChild(fbk);var fbsuj=false;
-  function desenharFb(){if(fbsuj)return;var d=window.__parFeedback||{},u=safeUrl(d.modeloFormUrl)||PADRAO_FB,ed=podeF();
+  function desenharFb(){if(fbsuj)return;var d=window.__parFeedback||{},u=safeUrl(d.modeloFormUrl)||'',ed=podeF();
     fbk.innerHTML='<h4>Forms padrão de feedback</h4><p class="note" style="margin:0 0 8px">O robô copia este Forms quando alguém marca <b>Forms de feedback</b> nos avisos do evento. Perguntas de escala (1 a 5) viram média e satisfação; perguntas abertas viram comentários. Nas perguntas, {evento}, {convidado}, {data} e {sala} viram os dados do evento.</p>'+
-      (ed?'<div class="fi-add pinsc-row"><input id="pf-url" type="url" value="'+esc(u)+'" aria-label="Link do Forms padrão de feedback"><button type="button" class="btn small" id="pf-salvar">Salvar</button></div>':'')+
-      '<div class="btns" style="margin-top:6px"><a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão de feedback ↗</a><span class="msg" id="pf-msg" role="status"></span></div>';}
+      (ed?'<div class="fi-add pinsc-row"><input id="pf-url" type="url" value="'+esc(u)+'" placeholder="Link de edição do Forms (docs.google.com/forms/d/…/edit)" aria-label="Link do Forms padrão de feedback"><button type="button" class="btn small" id="pf-salvar">Salvar</button></div>':'')+
+      '<div class="btns" style="margin-top:6px">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão de feedback ↗</a>':'<span class="note">Ainda sem Forms padrão de feedback: sem ele, o robô não cria o Forms do evento.</span>')+'<span class="msg" id="pf-msg" role="status"></span></div>';}
   window.__parFeedbackDesenhar=desenharFb;document.addEventListener('permissoes',desenharFb);desenharFb();
   fbk.addEventListener('input',function(e){if(e.target.id==='pf-url')fbsuj=true;});
   fbk.addEventListener('click',function(e){if(!e.target.closest('#pf-salvar'))return;var u=$('pf-url').value.trim(),id=formId(u),m=$('pf-msg');
