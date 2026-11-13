@@ -555,3 +555,23 @@ body:not(.cd-editar) .cd-ed{display:none!important}
 .cd-mat{list-style:none;margin:0;padding:0}.cd-mat li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line)}
 .cd-addmat{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}.cd-addmat input[type=url]{margin-top:6px;width:100%}
 .cd-minha{padding-bottom:10px;border-bottom:1px solid var(--line)}
+
+/* trava de agenda do convidado */
+.csug.cocup{opacity:.6;cursor:not-allowed}.csug.cocup .tsub{color:var(--red)}
+.cchip.cocup{border-color:var(--red)}.cocup-t{color:var(--red);font-weight:600}
+
+/* C&D · Trilha do trainee */
+.tr-lista{list-style:none;margin:0 0 6px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tr-et{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}.tr-lista .tr-et:first-child{border-top:0}
+.tr-et[data-tretapa]{cursor:pointer}.tr-et[data-tretapa]:hover{background:var(--surface-2)}
+.tr-et-n{flex:1;min-width:0}.tr-et .btn{white-space:nowrap}
+.tr-minha{margin:6px 0 10px;padding:14px 16px;border:1px solid var(--wine);border-radius:12px;background:var(--wine-soft)}
+.tr-mh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.tr-pet{padding:10px 0;border-top:1px solid var(--line)}.tp-blk h4+.tr-pet{border-top:0;padding-top:0}
+.tr-pet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tr-acts{margin-top:8px;display:grid;gap:6px}.tr-acts input{width:100%}
+.cd-quemf{border:0;padding:0;margin:0}.cd-quemf legend{font-weight:700;font-size:13px;margin-bottom:6px}.cd-qtipo{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px}
+#cd-confl:empty{display:none}
+@media (max-width:640px){.tr-et{flex-wrap:wrap}}
+#cd-confl{color:var(--red);font-weight:600;margin:6px 0 0}
+.tr-et .tsub{white-space:normal}

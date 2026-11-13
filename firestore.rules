@@ -233,6 +233,13 @@ service cloud.firestore {
         && depois().get('comentario', '') is string && depois().get('comentario', '').size() <= 600;
       allow delete: if liberado() && resource.data.uid == request.auth.uid;
     }
+    // entregas da Trilha do trainee: cada trainee grava só a própria (id = {etapa}_{uid}); o C&D aprova em cd_trilha_prog
+    match /cd_entregas/{id} {
+      allow create, update: if liberado() && temPerfil()
+        && depois().keys().hasOnly(['etapa', 'uid', 'nome', 'link', 'docId', 'obs', 'em'])
+        && depois().uid == request.auth.uid && depois().etapa is string && id == depois().etapa + '_' + request.auth.uid;
+      allow delete: if liberado() && resource.data.uid == request.auth.uid;
+    }
 
     match /{colecao}/{documento=**} {
       allow read: if liberado();

@@ -156,6 +156,18 @@ window.__fichaFechou=function(id){if(id&&!SUJO[id])delete MSG[id];};
 /* ============ PLANEJAR: convidados escolhidos da base, por segmento ============
    Um evento pode ter vários convidados, de segmentos diferentes. Só entram convidados da base.
    #f-convid guarda os ids separados por vírgula; #f-conv (escondido) guarda os nomes, para os e-mails e a busca. */
+/* trava de agenda: um convidado da base não fica em dois compromissos (evento ou capacitação do C&D) que se sobrepõem no mesmo dia.
+   Sem horário em um dos dois, vale o dia inteiro. Duração padrão: 120 min no evento, 90 na capacitação. ign = id do evento ou 'cap:'+id */
+function hmC(h){var m=/^(\d{1,2}):(\d{2})/.exec(h||'');return m?+m[1]*60+ +m[2]:null;}
+window.__convConflito=function(gid,data,hora,dur,ign){if(!gid||!data)return null;var a=hmC(hora),fa=a==null?null:a+(+dur||120),out=null;
+  function bate(h,d){var b=hmC(h);return a==null||b==null||(a<b+d&&b<fa);}
+  events.forEach(function(e){if(out||e.id===ign||e.data!==data)return;var ids=e.convidadoIds&&e.convidadoIds.length?e.convidadoIds:e.convidadoId?[e.convidadoId]:[];
+    if(ids.indexOf(gid)>=0&&bate(e.hora,+e.duracao||120))out={tipo:'evento',id:e.id,nome:e.nome||'evento',data:e.data,hora:e.hora||''};});
+  (window.__cdCaps||[]).forEach(function(c){if(out||'cap:'+c.id===ign||c.data!==data)return;var q=c.quem||{};
+    if(q.convidadoId===gid&&bate(c.hora,+c.duracao||90))out={tipo:'capacitacao',id:c.id,nome:c.nome||'capacitação',data:c.data,hora:c.hora||''};});
+  return out;};
+window.__convConflitoTxt=function(x){return (x.tipo==='evento'?'no evento “':'na capacitação “')+x.nome+'”'+(x.hora?' das '+x.hora:'')+' no mesmo dia';};
+function ocupado(gid){return window.__convConflito(gid,$('f-data').value,$('f-hora').value,$('f-dur').value,editingId||savedId);}
 function guestPorSeg(seg){return guests.filter(function(g){return !seg||gS(g).indexOf(seg)>=0;}).sort(function(a,b){return gscore(b)-gscore(a)||String(a.nome).localeCompare(String(b.nome),'pt-BR');});}
 function gDe(id){return guests.filter(function(x){return x.id===id;})[0]||null;}
 function idsSel(){var v=$('f-convid')?$('f-convid').value:'';return String(v||'').split(',').map(function(x){return x.trim();}).filter(Boolean);}
@@ -167,7 +179,7 @@ function planSegs(){var s=$('f-seg');if(!s)return;var cur=s.value,segs=allSegs()
   s.innerHTML='<option value="">Todos os segmentos</option>'+segs.map(function(x){return '<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>';}).join('')+(fpode()?'<option value="__novo">+ Criar segmento…</option>':'');
   if(cur&&cur!=='__novo'&&segs.indexOf(cur)<0)s.value='';}
 function planChips(){var box=$('f-convchips');if(!box)return;var ids=idsSel(),leg=!ids.length&&String($('f-conv').value||'').trim();
-  var h=ids.map(function(i){var g=gDe(i);return '<span class="fi-chip cchip"><b>'+esc(g?g.nome:'convidado removido da base')+'</b>'+(g&&(g.cargo||g.empresa)?'<span class="note"> · '+esc([g.cargo,g.empresa].filter(Boolean).join(' · '))+'</span>':'')+'<button type="button" data-cdel="'+esc(i)+'" aria-label="Tirar '+esc(g?g.nome:'convidado')+'">&times;</button></span>';}).join('');
+  var h=ids.map(function(i){var g=gDe(i),oc=ocupado(i);return '<span class="fi-chip cchip'+(oc?' cocup':'')+'"><b>'+esc(g?g.nome:'convidado removido da base')+'</b>'+(oc?'<span class="cocup-t"> · ocupado '+esc(window.__convConflitoTxt(oc))+'</span>':g&&(g.cargo||g.empresa)?'<span class="note"> · '+esc([g.cargo,g.empresa].filter(Boolean).join(' · '))+'</span>':'')+'<button type="button" data-cdel="'+esc(i)+'" aria-label="Tirar '+esc(g?g.nome:'convidado')+'">&times;</button></span>';}).join('');
   if(leg)h='<span class="fi-chip cchip"><b>'+esc(leg)+'</b><span class="note"> · fora da base</span><button type="button" data-cdel="__texto" aria-label="Tirar '+esc(leg)+'">&times;</button></span>';
   box.innerHTML=h?h:'<span class="note">Nenhum convidado escolhido. Escolha um segmento e clique nos convidados abaixo; dá para escolher mais de um, de segmentos diferentes.</span>';}
 function planSug(){var box=$('f-sug');if(!box)return;var seg=$('f-seg').value==='__novo'?'':$('f-seg').value,sel=idsSel(),l=guestPorSeg(seg);
@@ -175,7 +187,7 @@ function planSug(){var box=$('f-sug');if(!box)return;var seg=$('f-seg').value===
   if(!l.length){box.innerHTML='<p class="note">Nenhum convidado deste segmento na base. Cadastre na tela Convidados.</p>';return;}
   var mostra=l.slice(0,6);
   box.innerHTML='<p class="note" style="margin:0 0 6px">'+(seg?'Convidados de '+esc(seg):'Convidados da base')+', pela nota (potencial, conexão, abertura e histórico). Clique para adicionar ou tirar:</p>'+
-    mostra.map(function(g){var on=sel.indexOf(g.id)>=0;return '<button type="button" class="csug'+(on?' on':'')+'" data-csug="'+esc(g.id)+'" aria-pressed="'+on+'"><span class="csn">'+gscore(g)+'</span><span class="cst"><b>'+(on?'✓ ':'')+esc(g.nome)+'</b><span class="tsub">'+esc([g.cargo,g.empresa].filter(Boolean).join(' · ')||'—')+'</span></span><span class="chip neutral">'+esc(g.status||'—')+'</span></button>';}).join('')+
+    mostra.map(function(g){var on=sel.indexOf(g.id)>=0,oc=!on&&ocupado(g.id);return '<button type="button" class="csug'+(on?' on':'')+(oc?' cocup':'')+'" data-csug="'+esc(g.id)+'" aria-pressed="'+on+'"'+(oc?' disabled':'')+'><span class="csn">'+gscore(g)+'</span><span class="cst"><b>'+(on?'✓ ':'')+esc(g.nome)+'</b><span class="tsub">'+(oc?'Ocupado '+esc(window.__convConflitoTxt(oc)):esc([g.cargo,g.empresa].filter(Boolean).join(' · ')||'—'))+'</span></span><span class="chip neutral">'+esc(g.status||'—')+'</span></button>';}).join('')+
     (l.length>6?'<p class="note" style="margin:6px 0 0">Mostrando os 6 com maior nota de '+l.length+'.</p>':'');}
 function montarPlan(){var c=$('f-conv');if(!c||$('f-seg'))return;
   var fs=document.createElement('fieldset');fs.className='convsel';
@@ -204,5 +216,7 @@ window.__planConvNome=function(nome){var n=String(nome||'').trim().toLowerCase()
   $('f-convid').value=g?g.id:'';$('f-conv').value=g?g.nome:'';planChips();planSug();};
 montarPlan();
 $('f-convid').addEventListener('change',function(){markStale();});
+['f-data','f-hora','f-dur'].forEach(function(k){var x=$(k);if(x)x.addEventListener('change',function(){planChips();planSug();});});
+window.__planConvOcupado=function(){var l=idsSel();for(var i=0;i<l.length;i++){var oc=ocupado(l[i]);if(oc){var g=gDe(l[i]);return (g?g.nome:'Um convidado')+' já está '+window.__convConflitoTxt(oc);}}return '';};
 document.addEventListener('permissoes',function(){planSegs();});
 })();

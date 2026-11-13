@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261113084306"></script>
-<script src="plataforma.js?v=20261113084306"></script>
+<script src="config.js?v=20261113162645"></script>
+<script src="plataforma.js?v=20261113162645"></script>
 </head>
 <body>
 
@@ -1055,6 +1055,26 @@ body:not(.cd-editar) .cd-ed{display:none!important}
 .cd-mat{list-style:none;margin:0;padding:0}.cd-mat li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line)}
 .cd-addmat{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}.cd-addmat input[type=url]{margin-top:6px;width:100%}
 .cd-minha{padding-bottom:10px;border-bottom:1px solid var(--line)}
+
+/* trava de agenda do convidado */
+.csug.cocup{opacity:.6;cursor:not-allowed}.csug.cocup .tsub{color:var(--red)}
+.cchip.cocup{border-color:var(--red)}.cocup-t{color:var(--red);font-weight:600}
+
+/* C&D · Trilha do trainee */
+.tr-lista{list-style:none;margin:0 0 6px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tr-et{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}.tr-lista .tr-et:first-child{border-top:0}
+.tr-et[data-tretapa]{cursor:pointer}.tr-et[data-tretapa]:hover{background:var(--surface-2)}
+.tr-et-n{flex:1;min-width:0}.tr-et .btn{white-space:nowrap}
+.tr-minha{margin:6px 0 10px;padding:14px 16px;border:1px solid var(--wine);border-radius:12px;background:var(--wine-soft)}
+.tr-mh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.tr-pet{padding:10px 0;border-top:1px solid var(--line)}.tp-blk h4+.tr-pet{border-top:0;padding-top:0}
+.tr-pet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tr-acts{margin-top:8px;display:grid;gap:6px}.tr-acts input{width:100%}
+.cd-quemf{border:0;padding:0;margin:0}.cd-quemf legend{font-weight:700;font-size:13px;margin-bottom:6px}.cd-qtipo{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px}
+#cd-confl:empty{display:none}
+@media (max-width:640px){.tr-et{flex-wrap:wrap}}
+#cd-confl{color:var(--red);font-weight:600;margin:6px 0 0}
+.tr-et .tsub{white-space:normal}
 </style>
 
 <script>try{var t=localStorage.getItem("feashion-tema");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
@@ -1293,7 +1313,7 @@ body:not(.cd-editar) .cd-ed{display:none!important}
   <!-- DOCUMENTOS -->
   <section id="view-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
     <div class="section-head">
-      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento e cada capacitação têm uma pasta: o documento ligado a um deles entra na pasta dele; o resto fica em Geral.</p></div>
+      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento e cada capacitação têm uma pasta, e as entregas da Trilha do trainee têm a sua; o resto fica em Geral.</p></div>
       <div class="btns"><span class="msg" id="dform-ok" aria-live="polite"></span><button class="btn" type="button" id="dnova">+ Novo documento</button></div>
     </div>
     <form class="panel" id="dform" style="margin-bottom:18px" autocomplete="off" novalidate>
@@ -1877,6 +1897,7 @@ function doSave(exc){
 var pendAl=[];
 function dupAlerts(){var nm=$('f-nome').value.trim();if(!nm)return [];return events.filter(function(e){return e.id!==savedId&&e.id!==editingId&&(e.nome||'').trim()===nm;}).map(function(e){return 'Possível duplicata: já existe "'+e.nome+'" na base'+(e.data?' ('+fmt(D(e.data))+(e.status==='realizado'?', realizado':'')+')':'')+'.';});}
 $('saveplan').addEventListener('click',function(){if(!calcDone||stale)return;
+  var oc=window.__planConvOcupado?window.__planConvOcupado():'';if(oc){$('savemsg').textContent='Não dá para salvar: '+oc+'. Troque o horário ou o convidado.';return;}
   pendAl=dupAlerts().concat(alertas);
   if(pendAl.length){$('exclist').innerHTML=pendAl.map(function(a){return '<li>'+esc(a)+'</li>';}).join('');$('excmotivo').value='';$('excmsg').textContent='';$('excbox').hidden=false;$('excmotivo').focus();return;}
   doSave(null);});
@@ -2435,14 +2456,14 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   function evDe(id){return events.filter(function(e){return e.id===id;})[0];}
   /* pastas de um documento: os eventos dele e as capacitações do C&D (id 'cap:...') */
   function capD(id){return window.__cdCapDe?window.__cdCapDe(id):null;}
-  function dPs(x){return dEvs(x).filter(evDe).concat((x.caps||[]).filter(capD).map(function(c){return 'cap:'+c;}));}
-  function pInfo(id){if(!id||id==='__geral')return null;if(id.indexOf('cap:')===0){var c=capD(id.slice(4));return c?{nome:c.nome||'(capacitação sem tema)',sub:'Capacitação · '+(c.data?fmt(D(c.data))+'/'+c.data.slice(2,4):'sem data')}:null;}var e=evDe(id);return e?{nome:e.nome||'(evento sem nome)',sub:dataEv(e)}:null;}
+  function dPs(x){return dEvs(x).filter(evDe).concat((x.caps||[]).filter(capD).map(function(c){return 'cap:'+c;}),x.trilha?['__trilha']:[]);}
+  function pInfo(id){if(!id||id==='__geral')return null;if(id==='__trilha')return {nome:'Trilha do trainee',sub:'entregas dos trainees'};if(id.indexOf('cap:')===0){var c=capD(id.slice(4));return c?{nome:c.nome||'(capacitação sem tema)',sub:'Capacitação · '+(c.data?fmt(D(c.data))+'/'+c.data.slice(2,4):'sem data')}:null;}var e=evDe(id);return e?{nome:e.nome||'(evento sem nome)',sub:dataEv(e)}:null;}
   function pNome(id){var i=pInfo(id);return i?i.nome:'';}
   function dataEv(e){return e&&e.data?fmt(D(e.data))+'/'+e.data.slice(2,4):'sem data';}
   function linha(x,comPasta){var f=dFontes(x),u=dPrincipal(x.tipo,f.link,f.arquivo),ev=dPs(x);
     var alt=f.link&&f.arquivo?(u===f.arquivo?'<a class="alt" href="'+esc(f.link)+'" target="_blank" rel="noopener">link</a>':'<a class="alt" href="'+esc(f.arquivo)+'" target="_blank" rel="noopener">arquivo</a>'):'';
     var outras=ev.filter(function(id){return id!==pasta;});
-    var onde=comPasta?(ev.length?ev.map(function(id){return '<span class="ttag">'+esc(id.indexOf('cap:')===0?pNome(id):evName(id))+'</span>';}).join(''):'<span class="ttag">Geral</span>'):(outras.length&&pasta!=='__geral'?'<span class="tsub">também em '+esc(outras.map(function(id){return id.indexOf('cap:')===0?pNome(id):evName(id);}).join(', '))+'</span>':'');
+    var onde=comPasta?(ev.length?ev.map(function(id){return '<span class="ttag">'+esc(id.indexOf('cap:')===0||id==='__trilha'?pNome(id):evName(id))+'</span>';}).join(''):'<span class="ttag">Geral</span>'):(outras.length&&pasta!=='__geral'?'<span class="tsub">também em '+esc(outras.map(function(id){return id.indexOf('cap:')===0||id==='__trilha'?pNome(id):evName(id);}).join(', '))+'</span>':'');
     return '<tr data-dopen="'+esc(x.id)+'" tabindex="0"><td><span class="tn">'+esc(x.nome)+'</span>'+(x.resumo?'<span class="tsub">'+esc(x.resumo)+'</span>':'')+(comPasta?'':onde)+'</td>'+
       (comPasta?'<td>'+onde+'</td>':'')+
       '<td><span class="chip neutral">'+esc(x.tipo||'—')+(x.versao?' · '+esc(x.versao):'')+'</span></td><td>'+esc(dArea(x))+'</td><td>'+(x.resp?esc(x.resp):'<span class="note">—</span>')+'</td>'+
@@ -2469,6 +2490,7 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
       evs.forEach(function(e){h+=card(e.id,e.nome||'(evento sem nome)',dataEv(e),cont[e.id]||0);});
       (window.__cdCaps||[]).filter(function(c){return vazias||cont['cap:'+c.id];}).sort(function(a,b){return (a.data||'')<(b.data||'')?1:-1;})
         .forEach(function(c){var i=pInfo('cap:'+c.id);h+=card('cap:'+c.id,i.nome,i.sub,cont['cap:'+c.id]||0);});
+      if(cont.__trilha)h+=card('__trilha','Trilha do trainee','entregas dos trainees',cont.__trilha);
       h+='</div>';
       if(nVaz)h+='<label class="check dvaz"><input type="checkbox" id="dvazias"'+(vazias?' checked':'')+'> Mostrar pastas vazias ('+nVaz+(nVaz===1?' evento sem documento':' eventos sem documento')+')</label>';
       box.innerHTML=h;return;}
@@ -2991,6 +3013,9 @@ function salvar(btn){if(!db||!PROP)return;var idx=[];EST.forEach(function(s,i){i
   var docs=idx.map(function(i,k){var o=obj(i),r=simular(o);var d=Object.assign({status:'planejado',criadoEm:agora},r?r.cur:{nome:o.nome,tipo:o.tipo,data:o.data,hora:o.hora,duracao:o.dur,inscritosMeta:o.insc});
     d.responsavel=window.__meuNome||'';d.responsavelId=window.__euId||'';d.criadoPor=window.__euId||'';d.origem='ia';d.ideia=IDEIA.slice(0,2000);
     if(serie){d.serieId=sid;d.serieNome=PROP.titulo||'Série';d.serieOrdem=k+1;}return d;});
+  /* trava de agenda: o mesmo convidado não fica em dois compromissos no mesmo horário */
+  var oc='';docs.forEach(function(d){(d.convidadoIds||[]).forEach(function(gid){var x=!oc&&window.__convConflito&&window.__convConflito(gid,d.data,d.hora,d.duracao,null);if(x){var g=guests.filter(function(y){return y.id===gid;})[0];oc=(g?g.nome:'Um convidado')+' já está '+window.__convConflitoTxt(x)+' de “'+d.nome+'”';}});});
+  if(oc){erro='Não dá para salvar: '+oc+'. Troque a data ou abra o evento no Planejar para escolher outro horário.';desenhar();return;}
   btn.disabled=true;var feitos=0;
   docs.reduce(function(pr,d){return pr.then(function(){return db.collection('eventos').add(d).then(function(){feitos++;});});},Promise.resolve())
     .then(function(){okMsg=(serie?'Série salva: '+feitos+' eventos':'Evento salvo')+' na Base de eventos como planejado. <button type="button" class="btn small ghost" data-iabase>Ver na Base</button>';PROP=null;EST=[];$('ia-ideia').value='';},
@@ -3646,6 +3671,18 @@ window.__fichaFechou=function(id){if(id&&!SUJO[id])delete MSG[id];};
 /* ============ PLANEJAR: convidados escolhidos da base, por segmento ============
    Um evento pode ter vários convidados, de segmentos diferentes. Só entram convidados da base.
    #f-convid guarda os ids separados por vírgula; #f-conv (escondido) guarda os nomes, para os e-mails e a busca. */
+/* trava de agenda: um convidado da base não fica em dois compromissos (evento ou capacitação do C&D) que se sobrepõem no mesmo dia.
+   Sem horário em um dos dois, vale o dia inteiro. Duração padrão: 120 min no evento, 90 na capacitação. ign = id do evento ou 'cap:'+id */
+function hmC(h){var m=/^(\d{1,2}):(\d{2})/.exec(h||'');return m?+m[1]*60+ +m[2]:null;}
+window.__convConflito=function(gid,data,hora,dur,ign){if(!gid||!data)return null;var a=hmC(hora),fa=a==null?null:a+(+dur||120),out=null;
+  function bate(h,d){var b=hmC(h);return a==null||b==null||(a<b+d&&b<fa);}
+  events.forEach(function(e){if(out||e.id===ign||e.data!==data)return;var ids=e.convidadoIds&&e.convidadoIds.length?e.convidadoIds:e.convidadoId?[e.convidadoId]:[];
+    if(ids.indexOf(gid)>=0&&bate(e.hora,+e.duracao||120))out={tipo:'evento',id:e.id,nome:e.nome||'evento',data:e.data,hora:e.hora||''};});
+  (window.__cdCaps||[]).forEach(function(c){if(out||'cap:'+c.id===ign||c.data!==data)return;var q=c.quem||{};
+    if(q.convidadoId===gid&&bate(c.hora,+c.duracao||90))out={tipo:'capacitacao',id:c.id,nome:c.nome||'capacitação',data:c.data,hora:c.hora||''};});
+  return out;};
+window.__convConflitoTxt=function(x){return (x.tipo==='evento'?'no evento “':'na capacitação “')+x.nome+'”'+(x.hora?' das '+x.hora:'')+' no mesmo dia';};
+function ocupado(gid){return window.__convConflito(gid,$('f-data').value,$('f-hora').value,$('f-dur').value,editingId||savedId);}
 function guestPorSeg(seg){return guests.filter(function(g){return !seg||gS(g).indexOf(seg)>=0;}).sort(function(a,b){return gscore(b)-gscore(a)||String(a.nome).localeCompare(String(b.nome),'pt-BR');});}
 function gDe(id){return guests.filter(function(x){return x.id===id;})[0]||null;}
 function idsSel(){var v=$('f-convid')?$('f-convid').value:'';return String(v||'').split(',').map(function(x){return x.trim();}).filter(Boolean);}
@@ -3657,7 +3694,7 @@ function planSegs(){var s=$('f-seg');if(!s)return;var cur=s.value,segs=allSegs()
   s.innerHTML='<option value="">Todos os segmentos</option>'+segs.map(function(x){return '<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>';}).join('')+(fpode()?'<option value="__novo">+ Criar segmento…</option>':'');
   if(cur&&cur!=='__novo'&&segs.indexOf(cur)<0)s.value='';}
 function planChips(){var box=$('f-convchips');if(!box)return;var ids=idsSel(),leg=!ids.length&&String($('f-conv').value||'').trim();
-  var h=ids.map(function(i){var g=gDe(i);return '<span class="fi-chip cchip"><b>'+esc(g?g.nome:'convidado removido da base')+'</b>'+(g&&(g.cargo||g.empresa)?'<span class="note"> · '+esc([g.cargo,g.empresa].filter(Boolean).join(' · '))+'</span>':'')+'<button type="button" data-cdel="'+esc(i)+'" aria-label="Tirar '+esc(g?g.nome:'convidado')+'">&times;</button></span>';}).join('');
+  var h=ids.map(function(i){var g=gDe(i),oc=ocupado(i);return '<span class="fi-chip cchip'+(oc?' cocup':'')+'"><b>'+esc(g?g.nome:'convidado removido da base')+'</b>'+(oc?'<span class="cocup-t"> · ocupado '+esc(window.__convConflitoTxt(oc))+'</span>':g&&(g.cargo||g.empresa)?'<span class="note"> · '+esc([g.cargo,g.empresa].filter(Boolean).join(' · '))+'</span>':'')+'<button type="button" data-cdel="'+esc(i)+'" aria-label="Tirar '+esc(g?g.nome:'convidado')+'">&times;</button></span>';}).join('');
   if(leg)h='<span class="fi-chip cchip"><b>'+esc(leg)+'</b><span class="note"> · fora da base</span><button type="button" data-cdel="__texto" aria-label="Tirar '+esc(leg)+'">&times;</button></span>';
   box.innerHTML=h?h:'<span class="note">Nenhum convidado escolhido. Escolha um segmento e clique nos convidados abaixo; dá para escolher mais de um, de segmentos diferentes.</span>';}
 function planSug(){var box=$('f-sug');if(!box)return;var seg=$('f-seg').value==='__novo'?'':$('f-seg').value,sel=idsSel(),l=guestPorSeg(seg);
@@ -3665,7 +3702,7 @@ function planSug(){var box=$('f-sug');if(!box)return;var seg=$('f-seg').value===
   if(!l.length){box.innerHTML='<p class="note">Nenhum convidado deste segmento na base. Cadastre na tela Convidados.</p>';return;}
   var mostra=l.slice(0,6);
   box.innerHTML='<p class="note" style="margin:0 0 6px">'+(seg?'Convidados de '+esc(seg):'Convidados da base')+', pela nota (potencial, conexão, abertura e histórico). Clique para adicionar ou tirar:</p>'+
-    mostra.map(function(g){var on=sel.indexOf(g.id)>=0;return '<button type="button" class="csug'+(on?' on':'')+'" data-csug="'+esc(g.id)+'" aria-pressed="'+on+'"><span class="csn">'+gscore(g)+'</span><span class="cst"><b>'+(on?'✓ ':'')+esc(g.nome)+'</b><span class="tsub">'+esc([g.cargo,g.empresa].filter(Boolean).join(' · ')||'—')+'</span></span><span class="chip neutral">'+esc(g.status||'—')+'</span></button>';}).join('')+
+    mostra.map(function(g){var on=sel.indexOf(g.id)>=0,oc=!on&&ocupado(g.id);return '<button type="button" class="csug'+(on?' on':'')+(oc?' cocup':'')+'" data-csug="'+esc(g.id)+'" aria-pressed="'+on+'"'+(oc?' disabled':'')+'><span class="csn">'+gscore(g)+'</span><span class="cst"><b>'+(on?'✓ ':'')+esc(g.nome)+'</b><span class="tsub">'+(oc?'Ocupado '+esc(window.__convConflitoTxt(oc)):esc([g.cargo,g.empresa].filter(Boolean).join(' · ')||'—'))+'</span></span><span class="chip neutral">'+esc(g.status||'—')+'</span></button>';}).join('')+
     (l.length>6?'<p class="note" style="margin:6px 0 0">Mostrando os 6 com maior nota de '+l.length+'.</p>':'');}
 function montarPlan(){var c=$('f-conv');if(!c||$('f-seg'))return;
   var fs=document.createElement('fieldset');fs.className='convsel';
@@ -3694,6 +3731,8 @@ window.__planConvNome=function(nome){var n=String(nome||'').trim().toLowerCase()
   $('f-convid').value=g?g.id:'';$('f-conv').value=g?g.nome:'';planChips();planSug();};
 montarPlan();
 $('f-convid').addEventListener('change',function(){markStale();});
+['f-data','f-hora','f-dur'].forEach(function(k){var x=$(k);if(x)x.addEventListener('change',function(){planChips();planSug();});});
+window.__planConvOcupado=function(){var l=idsSel();for(var i=0;i<l.length;i++){var oc=ocupado(l[i]);if(oc){var g=gDe(l[i]);return (g?g.nome:'Um convidado')+' já está '+window.__convConflitoTxt(oc);}}return '';};
 document.addEventListener('permissoes',function(){planSegs();});
 })();
 
@@ -4456,7 +4495,9 @@ window.__abrirFbConv=function(id){if(!$('view-base')||$('view-base').hidden){var
 /* ============================== C&D · CAPACITAÇÕES ==============================
    Roda dentro do script principal (mesmo escopo de events, docs, db, esc, D, iso, $, painelAbrir, painelAtualizar, adiar...).
    Todos os membros veem; quem tem cargo em C&D (e DEV, presidência e Diretor(a) de Eventos) cria, edita e marca presença.
-   cd_capacitacoes/{id} = {nome (tema), data, hora, duracao (min), local, quem:{membroId, nome}, descricao, presentes:[membroId], criadoEm, editadoEm}
+   cd_capacitacoes/{id} = {nome (tema), data, hora, duracao (min), local, quem, descricao, etapa (id da etapa da trilha), presentes:[membroId], criadoEm, editadoEm}
+     quem = {tipo:'membro', membroId, nome} ou {tipo:'externo', convidadoId (da base de Convidados; vazio se for de fora da base), nome}.
+     Um convidado da base não pode estar em dois compromissos no mesmo horário (window.__convConflito, no Planejar).
    cd_avaliacoes/{capId}_{uid} = {cap, uid, nota (1 a 5), comentario, em}: cada membro grava só a própria (regras);
      a tela mostra a média, as notas e os comentários sem o nome de quem avaliou.
    Material: documentos com caps:[capId] e area 'C&D'; viram a pasta da capacitação em Documentos. */
@@ -4476,7 +4517,9 @@ function membros(){return window.__membros||[];}
 function nomeMembro(id){var m=membros().filter(function(x){return x.id===id;})[0];return m?m.nome:'';}
 function capDe(id){return caps.filter(function(c){return c.id===id;})[0]||null;}
 function feita(c){return !!c.data&&c.data<=hoje();}
-function quemTxt(c){var q=c.quem||{};return q.membroId?(nomeMembro(q.membroId)||q.nome||''):(q.nome||'');}
+function tipoQuem(q){q=q||{};return q.tipo||(q.membroId?'membro':q.nome||q.convidadoId?'externo':'');}
+function gDeC(id){return (typeof guests!=='undefined'?guests:[]).filter(function(g){return g.id===id;})[0]||null;}
+function quemTxt(c){var q=c.quem||{};if(q.membroId)return nomeMembro(q.membroId)||q.nome||'';if(q.convidadoId){var g=gDeC(q.convidadoId);return g?g.nome:q.nome||'';}return q.nome||'';}
 function avsDe(id){return avs.filter(function(a){return a.cap===id&&a.nota>=1&&a.nota<=5;});}
 function media(l){return l.length?l.reduce(function(s,a){return s+a.nota;},0)/l.length:null;}
 function matDe(id){return (typeof docs!=='undefined'?docs:[]).filter(function(d){return (d.caps||[]).indexOf(id)>=0;}).sort(function(a,b){return String(a.nome).localeCompare(String(b.nome),'pt-BR');});}
@@ -4536,22 +4579,35 @@ $('cd-novo').addEventListener('click',function(){$('cd-cap-ok').textContent='';a
 
 /* ---------------- painel da capacitação ---------------- */
 function campo(id,rot,val,attr){return '<div class="field"><label for="'+id+'">'+rot+'</label><input id="'+id+'" value="'+esc(val==null?'':val)+'"'+(attr?' '+attr:'')+'></div>';}
-function opsQuem(c){var q=c.quem||{},sel=q.membroId||(q.nome?'__fora':'');
+function opsMembro(q){var sel=q.membroId||'';
   return '<option value="">A definir</option>'+membros().map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===sel?' selected':'')+'>'+esc(m.nome)+'</option>';}).join('')+
-    (q.membroId&&!membros().some(function(m){return m.id===q.membroId;})?'<option value="'+esc(q.membroId)+'" selected>'+esc(q.nome||'membro')+'</option>':'')+
-    '<option value="__fora"'+(sel==='__fora'?' selected':'')+'>Pessoa de fora da Feashion</option>';}
+    (sel&&!membros().some(function(m){return m.id===sel;})?'<option value="'+esc(sel)+'" selected>'+esc(q.nome||'membro')+'</option>':'');}
+function opsConv(q){var sel=q.convidadoId||(q.nome?'__fora':''),l=(typeof guests!=='undefined'?guests:[]).slice().sort(function(a,b){return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');});
+  return '<option value="">A definir</option>'+l.map(function(g){return '<option value="'+esc(g.id)+'"'+(g.id===sel?' selected':'')+'>'+esc(g.nome+(g.empresa?' · '+g.empresa:''))+'</option>';}).join('')+
+    (q.convidadoId&&!gDeC(q.convidadoId)?'<option value="'+esc(q.convidadoId)+'" selected>'+esc(q.nome||'convidado removido')+'</option>':'')+
+    '<option value="__fora"'+(sel==='__fora'?' selected':'')+'>Outra pessoa (fora da lista de Convidados)</option>';}
 function blocoDados(c,ed){
   if(!ed)return blk('',['<p class="fin-ro"><span>Data</span><b>'+esc(dataLonga(c.data))+(c.hora?' · '+esc(c.hora):'')+(c.duracao?' · '+esc(c.duracao)+' min':'')+'</b></p>',
     '<p class="fin-ro"><span>Quem dá</span><b>'+esc(quemTxt(c)||'A definir')+'</b></p>','<p class="fin-ro"><span>Local</span><b>'+(safeUrl(c.local)?'<a href="'+esc(c.local)+'" target="_blank" rel="noopener">'+esc(c.local)+' ↗</a>':esc(c.local||'—'))+'</b></p>',
+    (function(){var x=c.etapa&&window.__trilhaEtapa?window.__trilhaEtapa(c.etapa):null;return x?'<p class="fin-ro"><span>Trilha do trainee</span><b>'+esc(x.nome)+'</b></p>':'';})(),
     c.descricao?'<p style="margin:8px 0 0;white-space:pre-wrap">'+esc(c.descricao)+'</p>':''].join(''));
-  var q=c.quem||{},fora=!q.membroId&&!!q.nome;
+  var q=c.quem||{},tq=tipoQuem(q)||'membro',fora=tq==='externo'&&!q.convidadoId&&!!q.nome;
   return blk('','<div class="fin-grid">'+
     '<div class="field ffull"><label for="cd-nome">Tema <span class="rq">obrigatório</span></label><input id="cd-nome" maxlength="120" value="'+esc(c.nome||'')+'" placeholder="ex.: Excel para orçamentos"></div>'+
     campo('cd-data','Data <span class="rq">obrigatório</span>',c.data,'type="date"')+campo('cd-hora','Horário',c.hora,'type="time"')+
     campo('cd-dur','Duração (min)',c.duracao,'type="number" min="0" step="5" inputmode="numeric"')+campo('cd-local','Local ou link',c.local,'maxlength="200" placeholder="Sala ou link da chamada"')+
-    '<div class="field ffull"><label for="cd-quem">Quem dá</label><select id="cd-quem">'+opsQuem(c)+'</select></div>'+
-    '<div class="field ffull" id="cd-forabox"'+(fora?'':' hidden')+'><label for="cd-fora">Nome de quem dá</label><input id="cd-fora" maxlength="80" value="'+esc(fora?q.nome:'')+'"></div>'+
-    '<div class="field ffull"><label for="cd-desc">Descrição <span class="rq opt">opcional</span></label><textarea id="cd-desc" rows="3" maxlength="1500">'+esc(c.descricao||'')+'</textarea></div></div>');}
+    '<fieldset class="field ffull cd-quemf"><legend>Quem dá</legend><div class="cd-qtipo" role="radiogroup">'+
+      '<label class="check"><input type="radio" name="cd-qt" value="membro"'+(tq==='membro'?' checked':'')+'> Membro da Feashion</label>'+
+      '<label class="check"><input type="radio" name="cd-qt" value="externo"'+(tq==='externo'?' checked':'')+'> Convidado externo</label></div>'+
+      '<div id="cd-qmbox"'+(tq==='membro'?'':' hidden')+'><label for="cd-qm" class="sr">Membro</label><select id="cd-qm">'+opsMembro(q)+'</select></div>'+
+      '<div id="cd-qcbox"'+(tq==='externo'?'':' hidden')+'><label for="cd-qc" class="sr">Convidado</label><select id="cd-qc">'+opsConv(q)+'</select>'+
+        '<div id="cd-forabox"'+(fora?'':' hidden')+' style="margin-top:6px"><label for="cd-fora">Nome de quem dá</label><input id="cd-fora" maxlength="80" value="'+esc(fora?q.nome:'')+'"></div>'+
+        '<p class="note" style="margin:6px 0 0">Os convidados vêm da tela Convidados. Um convidado não pode estar em dois eventos ou capacitações no mesmo horário.</p></div>'+
+      '<p class="msg err" id="cd-confl" role="status"></p></fieldset>'+
+    '<div class="field ffull"><label for="cd-desc">Descrição <span class="rq opt">opcional</span></label><textarea id="cd-desc" rows="3" maxlength="1500">'+esc(c.descricao||'')+'</textarea></div>'+
+    (function(){var l=(window.__trilhaEtapas?window.__trilhaEtapas():[]).filter(function(x){return x.tipo==='cap';});if(!l.length&&!c.etapa)return '';
+      return '<div class="field ffull"><label for="cd-etapa">Conta para a Trilha do trainee <span class="rq opt">opcional · o trainee que estiver na presença cumpre a etapa</span></label><select id="cd-etapa"><option value="">Não conta para a trilha</option>'+
+        l.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===c.etapa?' selected':'')+'>'+esc(x.nome+' · '+(x.area||'Base comum'))+'</option>';}).join('')+'</select></div>';})()+'</div>');}
 function blocoPresenca(c,ed){
   var pres=c.presentes||[],ms=membros();
   if(!feita(c))return blk('Presença','<p class="note" style="margin:0">A lista de presença abre no dia da capacitação.</p>');
@@ -4597,7 +4653,15 @@ function montar(id){
 function abrir(id){painelAbrir({sec:'view-cd-cap',chave:id||'nova',montar:function(){return montar(id);},foco:id?null:'#cd-nome',depois:function(dr){ligarPainel(dr,id);}});}
 window.__cdAbrir=abrir;
 function ligarPainel(dr,id){
-  var qs=dr.querySelector('#cd-quem');if(qs)qs.addEventListener('change',function(){dr.querySelector('#cd-forabox').hidden=qs.value!=='__fora';});
+  function qTipo(){var r=dr.querySelector('input[name="cd-qt"]:checked');return r?r.value:'membro';}
+  function confl(){var b=dr.querySelector('#cd-confl');if(!b)return '';var t='';
+    if(qTipo()==='externo'){var gid=dr.querySelector('#cd-qc').value;if(gid&&gid!=='__fora'&&window.__convConflito){var x=window.__convConflito(gid,dr.querySelector('#cd-data').value,dr.querySelector('#cd-hora').value,dr.querySelector('#cd-dur').value||90,id?'cap:'+id:null);
+      if(x){var g=gDeC(gid);t=(g?g.nome:'Este convidado')+' já está '+window.__convConflitoTxt(x)+'. Troque o horário ou o convidado.';}}}
+    b.textContent=t;return t;}
+  dr._cdConfl=confl;
+  if(dr.querySelector('#cd-qc')){dr.querySelectorAll('input[name="cd-qt"]').forEach(function(r){r.addEventListener('change',function(){var t=qTipo();dr.querySelector('#cd-qmbox').hidden=t!=='membro';dr.querySelector('#cd-qcbox').hidden=t!=='externo';confl();});});
+    dr.querySelector('#cd-qc').addEventListener('change',function(){dr.querySelector('#cd-forabox').hidden=this.value!=='__fora';confl();});
+    ['cd-data','cd-hora','cd-dur'].forEach(function(k){dr.querySelector('#'+k).addEventListener('change',confl);});confl();}
   var sv=dr.querySelector('#cd-salvar');if(sv)sv.addEventListener('click',function(){salvar(id,dr);});
   var dl=dr.querySelector('#cd-del');if(dl)dl.addEventListener('click',function(){confirma(dl,'Confirmar exclusão',function(){db.doc('cd_capacitacoes/'+id).delete().then(function(){painelFechar();$('cd-cap-ok').textContent='Capacitação excluída (fica 30 dias na Lixeira).';}).catch(function(){dr.querySelector('#cd-msg').textContent='Não foi possível excluir.';});});});
   var pq=dr.querySelector('#cd-pq');if(pq)pq.addEventListener('input',function(){RS[id].q=pq.value;var c=capDe(id);if(!c)return;
@@ -4616,12 +4680,14 @@ function ligarPainel(dr,id){
   var ma=dr.querySelector('#cd-madd');if(ma)ma.addEventListener('click',function(){addMaterial(id,dr,ma);});
 }
 function salvar(id,dr){var msg=dr.querySelector('#cd-msg');if(!db){msg.textContent='Sem conexão com a base.';return;}
-  var g=function(k){return dr.querySelector('#'+k).value.trim();},nome=g('cd-nome'),dt=g('cd-data'),qv=dr.querySelector('#cd-quem').value,dur=g('cd-dur');
+  var g=function(k){return dr.querySelector('#'+k).value.trim();},nome=g('cd-nome'),dt=g('cd-data'),dur=g('cd-dur'),rq=dr.querySelector('input[name="cd-qt"]:checked'),qt=rq?rq.value:'membro',qv=qt==='membro'?g('cd-qm'):g('cd-qc');
   if(!nome){msg.textContent='Escreva o tema.';dr.querySelector('#cd-nome').focus();return;}
   if(!dt){msg.textContent='Escolha a data.';dr.querySelector('#cd-data').focus();return;}
-  if(qv==='__fora'&&!g('cd-fora')){msg.textContent='Escreva o nome de quem dá.';dr.querySelector('#cd-fora').focus();return;}
-  var quem=qv==='__fora'?{membroId:'',nome:g('cd-fora').slice(0,80)}:qv?{membroId:qv,nome:nomeMembro(qv)}:{membroId:'',nome:''};
-  var d={nome:nome.slice(0,120),data:dt,hora:g('cd-hora'),duracao:dur?Math.max(0,Math.round(+dur))||null:null,local:g('cd-local').slice(0,200),quem:quem,descricao:g('cd-desc').slice(0,1500),editadoEm:new Date().toISOString()};
+  if(qt==='externo'&&qv==='__fora'&&!g('cd-fora')){msg.textContent='Escreva o nome de quem dá.';dr.querySelector('#cd-fora').focus();return;}
+  var cf=dr._cdConfl&&dr._cdConfl();if(cf){msg.textContent='Não dá para salvar: '+cf;return;}
+  var quem=qt==='membro'?{tipo:'membro',membroId:qv,convidadoId:'',nome:qv?nomeMembro(qv):''}:qv==='__fora'?{tipo:'externo',membroId:'',convidadoId:'',nome:g('cd-fora').slice(0,80)}:{tipo:'externo',membroId:'',convidadoId:qv,nome:qv?(gDeC(qv)||{}).nome||'':''};
+  var et=dr.querySelector('#cd-etapa');
+  var d={nome:nome.slice(0,120),data:dt,hora:g('cd-hora'),duracao:dur?Math.max(0,Math.round(+dur))||null:null,local:g('cd-local').slice(0,200),quem:quem,descricao:g('cd-desc').slice(0,1500),etapa:et?et.value||null:null,editadoEm:new Date().toISOString()};
   msg.textContent='Salvando…';
   var pr=id?db.doc('cd_capacitacoes/'+id).update(d):db.collection('cd_capacitacoes').add(Object.assign({presentes:[],criadoEm:d.editadoEm,porNome:String(window.__meuNome||'').slice(0,80)},d));
   pr.then(function(r){if(id){painelFechar();$('cd-cap-ok').textContent='Alterações salvas.';return;}
@@ -4644,11 +4710,185 @@ function addMaterial(id,dr,b){var m=dr.querySelector('#cd-mm'),c=capDe(id);if(!c
 
 /* ---------------- dados ---------------- */
 function ligar(){if(lig||!db)return;lig=true;
-  db.collection('cd_capacitacoes').onSnapshot(function(s){caps.length=0;s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;caps.push(o);});tudo();if(typeof renderDocs==='function')renderDocs();},function(){});
+  db.collection('cd_capacitacoes').onSnapshot(function(s){caps.length=0;s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;caps.push(o);});window.__cdMudou();if(typeof renderDocs==='function')renderDocs();},function(){});
   db.collection('cd_avaliacoes').onSnapshot(function(s){avs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();},function(){});}
 document.addEventListener('permissoes',function(){document.body.classList.toggle('cd-editar',pode('editar'));ligar();tudo();});
 document.addEventListener('membros',tudo);
 document.addEventListener('tela',function(e){if(e.detail==='cd-cap')render();});
+render();
+})();
+
+/* ============================== C&D · TRILHA DO TRAINEE ==============================
+   Roda dentro do script principal (mesmo escopo de docs, db, esc, D, iso, $, painelAbrir, painelAtualizar, adiar...).
+   A trilha tem uma base comum (todos os trainees) e etapas de cada área (o trainee segue as das áreas em que é Trainee).
+   cd_trilha/{id} = {nome, descricao, area ('' = base comum), tipo, ordem, criadoEm}
+     tipo 'cap': cumprida quando o trainee está na presença de uma capacitação ligada a esta etapa (cd_capacitacoes.etapa)
+     tipo 'tarefa': o C&D marca como feita
+     tipo 'entrega': o trainee manda um arquivo ou link (cd_entregas) e o C&D aprova ou pede ajuste
+   cd_trilha_prog/{uid} = {etapas:{etapaId:{status:'feita'|'aprovada'|'refazer'|null, obs, em, por, porNome}}} (grava o C&D)
+   cd_entregas/{etapaId}_{uid} = {etapa, uid, nome, link, docId, obs, em} (grava só o próprio trainee; regras)
+   O arquivo da entrega vira um documento em Documentos, na pasta "Trilha do trainee" (documentos.trilha = uid). */
+(function(){
+"use strict";
+var etapas=[],prog={},entregas={},lig=false,RT={};
+var AREAS_T=['Eventos','Financeiro','Marketing','C&D','RH'];
+var TIPOS=[['cap','Ir a uma capacitação'],['tarefa','Tarefa marcada pelo C&D'],['entrega','Entrega com arquivo ou link']];
+function pode(k){var p=window.__perm;return !!(p&&p.carregado()&&p.podeEm('C&D')[k]);}
+function blk(t,h){return '<div class="tp-blk">'+(t?'<h4>'+t+'</h4>':'')+h+'</div>';}
+function confirma(b,txt,fn){if(b.dataset.sure){fn();return;}var o=b.textContent;b.dataset.sure='1';b.textContent=txt;setTimeout(function(){delete b.dataset.sure;b.textContent=o;},5000);}
+function dataBR(s){s=String(s||'').slice(0,10);return s?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(2,4):'';}
+function tipoNome(t){return (TIPOS.filter(function(x){return x[0]===t;})[0]||['',''])[1];}
+function quem(){return {em:new Date().toISOString(),por:window.__euId||'',porNome:String(window.__meuNome||'').slice(0,80)};}
+function ordenadas(){return etapas.slice().sort(function(a,b){return (a.area?1:0)-(b.area?1:0)||String(a.area||'').localeCompare(String(b.area||''))||(+a.ordem||0)-(+b.ordem||0)||String(a.nome).localeCompare(String(b.nome),'pt-BR');});}
+window.__trilhaEtapas=function(){return ordenadas();};
+window.__trilhaEtapa=function(id){return etapas.filter(function(x){return x.id===id;})[0]||null;};
+function areasTrainee(m){var a=m&&m.areas||{};return Object.keys(a).filter(function(k){return a[k]==='Trainee';});}
+function trainees(){return (window.__membros||[]).filter(function(m){return areasTrainee(m).length;});}
+function etapasDe(m){var ar=areasTrainee(m);return ordenadas().filter(function(x){return !x.area||ar.indexOf(x.area)>=0;});}
+function capsDe(eid){return (window.__cdCaps||[]).filter(function(c){return c.etapa===eid;});}
+/* situação de uma etapa para um trainee: {s:'feita'|'enviada'|'refazer'|'pendente', em, txt} */
+function sit(m,x){var p=((prog[m.id]||{}).etapas||{})[x.id]||{},en=entregas[x.id+'_'+m.id]||null;
+  if(x.tipo==='cap'){var c=capsDe(x.id).filter(function(c){return (c.presentes||[]).indexOf(m.id)>=0;}).sort(function(a,b){return String(a.data).localeCompare(String(b.data));})[0];
+    if(c)return {s:'feita',em:c.data,txt:'Foi a “'+c.nome+'” em '+dataBR(c.data)};
+    if(p.status==='feita')return {s:'feita',em:p.em,txt:'Marcada pelo C&D em '+dataBR(p.em)+(p.obs?' · '+p.obs:'')};
+    return {s:'pendente',txt:capsDe(x.id).length?'Ainda não esteve numa capacitação desta etapa':'Nenhuma capacitação ligada a esta etapa ainda'};}
+  if(x.tipo==='tarefa'){return p.status==='feita'?{s:'feita',em:p.em,txt:'Marcada por '+(p.porNome||'C&D')+' em '+dataBR(p.em)+(p.obs?' · '+p.obs:'')}:{s:'pendente',txt:'Aguardando o C&D marcar'};}
+  if(p.status==='aprovada'&&(!en||String(p.em)>=String(en.em)))return {s:'feita',em:p.em,txt:'Aprovada por '+(p.porNome||'C&D')+' em '+dataBR(p.em)+(p.obs?' · '+p.obs:'')};
+  if(p.status==='refazer'&&(!en||String(p.em)>=String(en.em)))return {s:'refazer',em:p.em,txt:'Ajuste pedido em '+dataBR(p.em)+(p.obs?': '+p.obs:'')};
+  if(en)return {s:'enviada',em:en.em,txt:'Enviada em '+dataBR(en.em)+', aguardando o C&D'};
+  return {s:'pendente',txt:'Ainda não enviada'};}
+var CHIP={feita:['Cumprida','ok'],enviada:['Aguardando aprovação','warn'],refazer:['Ajustar','bad'],pendente:['Pendente','neutral']};
+function chip(s){var c=CHIP[s]||CHIP.pendente;return '<span class="chip '+c[1]+'">'+c[0]+'</span>';}
+function prg(m){var l=etapasDe(m),f=0,ag=0;l.forEach(function(x){var s=sit(m,x).s;if(s==='feita')f++;if(s==='enviada')ag++;});return {n:l.length,f:f,ag:ag};}
+function barra(f,n){var pc=n?Math.round(f/n*100):0;return '<span class="cd-bar"><i style="width:'+pc+'%"></i></span><b>'+f+' de '+n+'</b>';}
+
+/* ---------------- tela ---------------- */
+var main=document.querySelector('main');
+var sec=document.createElement('section');sec.id='view-cd-trilha';sec.hidden=true;sec.setAttribute('aria-labelledby','cd-trilha-title');
+sec.innerHTML='<div class="section-head"><div><h2 id="cd-trilha-title">Trilha do trainee</h2><p class="note">As etapas que cada trainee cumpre: uma base comum para todos e as etapas da área de cada um. Uma etapa se cumpre indo a uma capacitação, por uma tarefa que o C&amp;D marca ou com uma entrega que o C&amp;D aprova.</p></div>'+
+  '<div class="btns"><span class="msg" id="cd-trilha-ok" aria-live="polite"></span><button class="btn cd-ed" type="button" id="tr-nova">+ Nova etapa</button></div></div>'+
+  '<div id="tr-minha"></div><h3 class="cd-h">Trainees</h3><div class="tablewrap"><table class="tlist" id="tr-tab"></table></div>'+
+  '<h3 class="cd-h">Etapas da trilha</h3><div id="tr-etapas"></div>';
+main.appendChild(sec);
+
+function linhaEtapa(m,x,eu){var t=sit(m,x);
+  return '<li class="tr-et"><span class="tr-et-n"><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(tipoNome(x.tipo))+' · '+esc(t.txt)+'</span></span>'+chip(t.s)+
+    (eu&&x.tipo==='entrega'&&t.s!=='feita'?'<button type="button" class="btn small" data-trenv="'+esc(x.id)+'">'+(t.s==='pendente'?'Enviar entrega':'Enviar de novo')+'</button>':'')+'</li>';}
+function grupos(l,fn){var out='',cur=null;l.forEach(function(x){var g=x.area||'Base comum';if(g!==cur){if(cur!==null)out+='</ul>';out+='<h5 class="cd-h5">'+esc(g)+'</h5><ul class="tr-lista">';cur=g;}out+=fn(x);});return out+(cur!==null?'</ul>':'');}
+function render(){
+  var eu=(window.__membros||[]).filter(function(m){return m.id===window.__euId;})[0],box=$('tr-minha');
+  if(eu&&areasTrainee(eu).length){var l=etapasDe(eu),p=prg(eu);
+    box.innerHTML='<div class="tr-minha"><div class="tr-mh"><h3 class="cd-h" style="margin:0">Sua trilha</h3><span class="tr-prog">'+barra(p.f,p.n)+'</span></div>'+
+      (l.length?grupos(l,function(x){return linhaEtapa(eu,x,true);}):'<p class="note" style="margin:0">O C&amp;D ainda não montou as etapas da sua trilha.</p>')+'</div>';}
+  else box.innerHTML='';
+  var ts=trainees().sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
+  var h='<thead><tr><th>Trainee</th><th>Área</th><th class="r">Progresso</th><th class="r">Aguardando aprovação</th></tr></thead><tbody>';
+  if(!ts.length)h+='<tr><td colspan="4" class="empty">Nenhum trainee ainda. Quem tem o cargo Trainee em alguma área aparece aqui.</td></tr>';
+  ts.forEach(function(m){var p=prg(m);h+='<tr data-tropen="'+esc(m.id)+'" tabindex="0"'+(m.id===window.__euId?' class="cd-eu"':'')+'><td><span class="tn">'+esc(m.nome)+'</span></td><td>'+areasTrainee(m).map(function(a){return '<span class="ttag">'+esc(a)+'</span>';}).join('')+'</td>'+
+    '<td class="r num">'+(p.n?barra(p.f,p.n):'<span class="note">sem etapas</span>')+'</td><td class="r num">'+(p.ag?'<span class="chip warn">'+p.ag+(p.ag===1?' entrega':' entregas')+'</span>':'<span class="note">—</span>')+'</td></tr>';});
+  $('tr-tab').innerHTML=h+'</tbody>';
+  var le=ordenadas();
+  $('tr-etapas').innerHTML=le.length?grupos(le,function(x){var nc=x.tipo==='cap'?capsDe(x.id).length:null;
+      return '<li class="tr-et" data-tretapa="'+esc(x.id)+'" tabindex="0"><span class="tr-et-n"><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(tipoNome(x.tipo))+(nc!=null?' · '+(nc?nc+(nc===1?' capacitação ligada':' capacitações ligadas'):'nenhuma capacitação ligada ainda'):'')+(x.descricao?' · '+esc(x.descricao):'')+'</span></span></li>';})
+    :'<p class="empty">Nenhuma etapa ainda.'+(pode('editar')?' Clique em “+ Nova etapa”: comece pela base comum e depois as etapas de cada área.':'')+'</p>';
+}
+function tudo(){adiar('view-cd-trilha',render);painelAtualizar('view-cd-trilha');}
+window.__trilhaMudou=tudo;
+
+/* ---------------- painel: etapa (C&D) ---------------- */
+function montarEtapa(id){var x=id?window.__trilhaEtapa(id):{tipo:'tarefa',area:''};if(id&&!x)return null;var ed=pode('editar');
+  if(!ed)return {titulo:x.nome,sub:esc((x.area||'Base comum')+' · '+tipoNome(x.tipo)),corpo:blk('',(x.descricao?'<p style="margin:0;white-space:pre-wrap">'+esc(x.descricao)+'</p>':'<p class="note" style="margin:0">Sem descrição.</p>')+
+    (x.tipo==='cap'?'<p class="note" style="margin:8px 0 0">Capacitações ligadas: '+(capsDe(x.id).map(function(c){return esc(c.nome+' ('+dataBR(c.data)+')');}).join(', ')||'nenhuma ainda')+'.</p>':''))};
+  var corpo=blk('','<div class="fin-grid"><div class="field ffull"><label for="tr-nome">Nome da etapa <span class="rq">obrigatório</span></label><input id="tr-nome" maxlength="120" value="'+esc(x.nome||'')+'" placeholder="ex.: Apresentação do projeto da área"></div>'+
+    '<div class="field"><label for="tr-area">Para quem</label><select id="tr-area"><option value="">Base comum (todos os trainees)</option>'+AREAS_T.map(function(a){return '<option'+(a===x.area?' selected':'')+'>'+esc(a)+'</option>';}).join('')+'</select></div>'+
+    '<div class="field"><label for="tr-ordem">Ordem</label><input id="tr-ordem" type="number" min="0" step="1" inputmode="numeric" value="'+esc(x.ordem==null?'':x.ordem)+'"></div>'+
+    '<div class="field ffull"><label for="tr-tipo">Como se cumpre</label><select id="tr-tipo">'+TIPOS.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===x.tipo?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select>'+
+      '<span class="note" id="tr-tipo-n"></span></div>'+
+    '<div class="field ffull"><label for="tr-desc">O que o trainee precisa fazer <span class="rq opt">opcional</span></label><textarea id="tr-desc" rows="3" maxlength="1000">'+esc(x.descricao||'')+'</textarea></div></div>');
+  var rod='<div class="btns"><button type="button" class="btn" id="tr-salvar">'+(id?'Salvar alterações':'Criar etapa')+'</button>'+(id&&pode('excluir')?'<button type="button" class="btn small ghost tdanger" id="tr-del">Excluir</button>':'')+'<span class="msg" id="tr-msg" role="status"></span></div>';
+  return {titulo:id?x.nome:'Nova etapa da trilha',sub:id?esc((x.area||'Base comum')+' · '+tipoNome(x.tipo)):'',corpo:corpo,rodape:rod};}
+var NTIPO={cap:'Ligue esta etapa às capacitações (no campo “Conta para a Trilha do trainee” da capacitação). Quem estiver na presença cumpre a etapa sozinho.',tarefa:'Alguém do C&D marca a etapa como feita no painel do trainee.',entrega:'O trainee manda um arquivo ou link nesta tela, e o C&D aprova ou pede ajuste.'};
+function abrirEtapa(id){painelAbrir({sec:'view-cd-trilha',chave:'e'+(id||'nova'),montar:function(){return montarEtapa(id);},foco:id?null:'#tr-nome',depois:function(dr){
+  var tp=dr.querySelector('#tr-tipo');if(tp){var nt=function(){dr.querySelector('#tr-tipo-n').textContent=NTIPO[tp.value]||'';};tp.addEventListener('change',nt);nt();}
+  var sv=dr.querySelector('#tr-salvar');if(sv)sv.addEventListener('click',function(){var m=dr.querySelector('#tr-msg'),nome=dr.querySelector('#tr-nome').value.trim();if(!db){m.textContent='Sem conexão com a base.';return;}
+    if(!nome){m.textContent='Dê um nome à etapa.';dr.querySelector('#tr-nome').focus();return;}
+    var o=dr.querySelector('#tr-ordem').value,d={nome:nome.slice(0,120),area:dr.querySelector('#tr-area').value,tipo:tp.value,ordem:o===''?null:Math.max(0,Math.round(+o)||0),descricao:dr.querySelector('#tr-desc').value.trim().slice(0,1000),editadoEm:new Date().toISOString()};
+    m.textContent='Salvando…';(id?db.doc('cd_trilha/'+id).update(d):db.collection('cd_trilha').add(Object.assign({criadoEm:d.editadoEm},d)))
+      .then(function(){painelFechar();$('cd-trilha-ok').textContent=id?'Etapa salva.':'Etapa criada.';},function(){m.textContent='Não foi possível salvar: só quem tem cargo em C&D edita.';});});
+  var dl=dr.querySelector('#tr-del');if(dl)dl.addEventListener('click',function(){confirma(dl,'Confirmar exclusão',function(){db.doc('cd_trilha/'+id).delete().then(function(){painelFechar();$('cd-trilha-ok').textContent='Etapa excluída (fica 30 dias na Lixeira).';},function(){dr.querySelector('#tr-msg').textContent='Não foi possível excluir.';});});});
+}});}
+
+/* ---------------- painel: trainee ---------------- */
+function montarTrainee(uid){var m=(window.__membros||[]).filter(function(x){return x.id===uid;})[0];if(!m)return null;
+  var ed=pode('editar'),eu=uid===window.__euId,l=etapasDe(m),p=prg(m);
+  var corpo=blk('','<p style="margin:0">'+barra(p.f,p.n)+' <span class="note">etapas cumpridas'+(p.ag?' · '+p.ag+' aguardando aprovação':'')+'</span></p>');
+  if(!l.length)corpo+=blk('','<p class="note" style="margin:0">Nenhuma etapa para '+esc(areasTrainee(m).join(', '))+' nem na base comum ainda.</p>');
+  var cur=null;
+  l.forEach(function(x){var g=x.area||'Base comum',t=sit(m,x),en=entregas[x.id+'_'+uid]||null,pp=((prog[uid]||{}).etapas||{})[x.id]||{},r=RT[x.id+'_'+uid]=RT[x.id+'_'+uid]||{obs:''};
+    var h='<div class="tr-pet"><div class="tr-pet-h"><span><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(g+' · '+tipoNome(x.tipo))+'</span></span>'+chip(t.s)+'</div>'+
+      (x.descricao?'<p class="note" style="margin:4px 0 0;white-space:pre-wrap">'+esc(x.descricao)+'</p>':'')+'<p style="margin:6px 0 0;font-size:13.5px">'+esc(t.txt)+'</p>';
+    if(en){var u=safeUrl(en.link)||'',dd=en.docId?(typeof docs!=='undefined'?docs:[]).filter(function(d){return d.id===en.docId;})[0]:null;if(dd){var f=dFontes(dd);u=dPrincipal(dd.tipo,f.link,f.arquivo)||u;}
+      h+='<p style="margin:6px 0 0;font-size:13.5px">Entrega: '+(u?'<a class="fi-link" href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(en.nome||'abrir')+' ↗</a>':esc(en.nome||'—'))+' <span class="note">· '+dataBR(en.em)+'</span>'+(en.obs?'<br><span class="note">“'+esc(en.obs)+'”</span>':'')+'</p>';}
+    if(ed&&x.tipo!=='cap'||ed&&x.tipo==='cap'&&t.s!=='feita'||ed&&x.tipo==='cap'&&pp.status==='feita'){
+      var acts='';
+      if(x.tipo==='tarefa'||x.tipo==='cap')acts=pp.status==='feita'?'<button type="button" class="btn small ghost" data-trst="'+esc(x.id)+'|">Desmarcar</button>':'<button type="button" class="btn small" data-trst="'+esc(x.id)+'|feita">'+(x.tipo==='cap'?'Marcar como cumprida mesmo assim':'Marcar como feita')+'</button>';
+      else if(en&&t.s==='enviada')acts='<button type="button" class="btn small" data-trst="'+esc(x.id)+'|aprovada">Aprovar</button><button type="button" class="btn small ghost" data-trst="'+esc(x.id)+'|refazer">Pedir ajuste</button>';
+      else if(t.s==='feita'||t.s==='refazer')acts='<button type="button" class="btn small ghost" data-trst="'+esc(x.id)+'|">Desfazer</button>';
+      if(acts)h+='<div class="tr-acts"><div class="field" style="margin:0"><input data-trobs="'+esc(x.id)+'" maxlength="300" placeholder="Comentário para o trainee (opcional)" aria-label="Comentário para o trainee" value="'+esc(r.obs)+'"></div><div class="btns">'+acts+'</div></div>';}
+    if(eu&&x.tipo==='entrega'&&t.s!=='feita')h+='<div class="btns" style="margin-top:6px"><button type="button" class="btn small" data-trenv="'+esc(x.id)+'">'+(en?'Enviar de novo':'Enviar entrega')+'</button></div>';
+    if(g!==cur){corpo+=(cur!==null?'</div>':'')+'<div class="tp-blk"><h4>'+esc(g)+'</h4>';cur=g;}
+    corpo+=h+'</div>';});
+  if(cur!==null)corpo+='</div>';
+  return {titulo:m.nome,sub:'Trainee · '+esc(areasTrainee(m).join(', ')),corpo:corpo,rodape:'<div class="btns"><span class="msg" id="tr-pmsg" role="status"></span></div>'};}
+function abrirTrainee(uid){painelAbrir({sec:'view-cd-trilha',chave:'t'+uid,montar:function(){return montarTrainee(uid);},depois:function(dr){
+  dr.addEventListener('input',function(e){var o=e.target.closest('[data-trobs]');if(o)RT[o.dataset.trobs+'_'+uid].obs=o.value;});
+  dr.addEventListener('click',function(e){var b=e.target.closest('[data-trst]');if(b){var p=b.dataset.trst.split('|'),eid=p[0],st=p[1]||null,m=dr.querySelector('#tr-pmsg'),r=RT[eid+'_'+uid];
+      if(!db){m.textContent='Sem conexão com a base.';return;}if(st==='refazer'&&!String(r.obs||'').trim()){m.textContent='Escreva no comentário o que o trainee precisa ajustar.';var i=dr.querySelector('[data-trobs="'+eid+'"]');if(i)i.focus();return;}
+      var v=Object.assign({status:st,obs:st?String(r.obs||'').trim().slice(0,300):''},quem()),up={etapas:Object.assign({},(prog[uid]||{}).etapas||{})};up.etapas[eid]=v;b.disabled=true;m.textContent='Salvando…';
+      db.doc('cd_trilha_prog/'+uid).set(up,{merge:true}).then(function(){var x=prog[uid]=prog[uid]||{etapas:{}};x.etapas=x.etapas||{};x.etapas[eid]=v;r.obs='';m.textContent='Salvo.';painelAtualizar('view-cd-trilha');render();},function(){b.disabled=false;m.textContent='Não foi possível salvar: só quem tem cargo em C&D marca.';});return;}
+    var ev=e.target.closest('[data-trenv]');if(ev)abrirEntrega(ev.dataset.trenv);});
+}});}
+
+/* ---------------- painel: entrega (o próprio trainee) ---------------- */
+function abrirEntrega(eid){var x=window.__trilhaEtapa(eid),uid=window.__euId;if(!x||!uid)return;
+  painelAbrir({sec:'view-cd-trilha',chave:'n'+eid,montar:function(){var en=entregas[eid+'_'+uid]||null,pp=((prog[uid]||{}).etapas||{})[eid]||{};
+      return {titulo:'Entrega · '+x.nome,sub:esc((x.area||'Base comum')),corpo:(x.descricao?blk('O que fazer','<p style="margin:0;white-space:pre-wrap">'+esc(x.descricao)+'</p>'):'')+
+        (pp.status==='refazer'?blk('Ajuste pedido pelo C&amp;D','<p style="margin:0">'+esc(pp.obs||'')+'</p>'):'')+
+        blk(en?'Enviar de novo':'Sua entrega','<div class="field"><label for="tn-nome">Nome <span class="rq">obrigatório</span></label><input id="tn-nome" maxlength="120" value="'+esc(en?en.nome:x.nome)+'"></div>'+
+          '<div class="field"><label for="tn-arq">Arquivo <span class="rq opt">PDF ou imagem, até 10 MB</span></label><input id="tn-arq" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"><input id="tn-link" type="url" placeholder="ou cole um link (Drive, apresentação)" aria-label="Link da entrega" style="margin-top:6px;width:100%"></div>'+
+          '<div class="field"><label for="tn-obs">Recado para o C&amp;D <span class="rq opt">opcional</span></label><textarea id="tn-obs" rows="2" maxlength="300"></textarea></div>'+
+          '<p class="note" style="margin:0">O arquivo fica em Documentos, na pasta Trilha do trainee.</p>'),
+        rodape:'<div class="btns"><button type="button" class="btn" id="tn-env">Enviar</button><span class="msg" id="tn-msg" role="status"></span></div>'};},
+    foco:'#tn-arq',depois:function(dr){dr.querySelector('#tn-env').addEventListener('click',function(){enviar(eid,dr,this);});}});}
+function enviar(eid,dr,b){var m=dr.querySelector('#tn-msg'),x=window.__trilhaEtapa(eid),uid=window.__euId;if(!db||!uid||!x){m.textContent='Sem conexão com a base.';return;}
+  var nome=dr.querySelector('#tn-nome').value.trim(),file=dr.querySelector('#tn-arq').files[0],link=dr.querySelector('#tn-link').value.trim(),obs=dr.querySelector('#tn-obs').value.trim();
+  if(!nome){m.textContent='Dê um nome à entrega.';return;}if(!file&&!link){m.textContent='Escolha um arquivo ou cole um link.';return;}
+  if(!file&&!safeUrl(link)){m.textContent='O link precisa começar com https://';return;}if(file&&file.size>10*1024*1024){m.textContent='Arquivo maior que 10 MB: use um link do Drive.';return;}
+  var agora=new Date().toISOString(),ext=file?(file.name.split('.').pop()||'').toLowerCase():'',TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
+  var d={nome:(nome+' · '+String(window.__meuNome||'')).slice(0,120),tipo:file?(ext==='pdf'?'PDF':'Imagem'):(/(docs|drive)\.google\.com/.test(link)?'Drive':'Site'),versao:'',resp:String(window.__meuNome||'').slice(0,80),
+    resumo:'Entrega da etapa '+x.nome+' (Trilha do trainee)',eventos:[],trilha:uid,area:'C&D',criadoEm:agora,link:file?'':link,arquivo:''};
+  b.disabled=true;m.textContent=file?'Enviando o arquivo…':'Salvando…';
+  (file?window.claude.use('assets').then(function(api){if(!api)throw {code:'sem'};return api.upload(file,{type:TY[ext]||file.type});}).then(function(r){d.arquivo='/_blob/'+r.id;d.assetId=r.id;}):Promise.resolve())
+    .then(function(){d.url=dPrincipal(d.tipo,d.link,d.arquivo);return db.collection('documentos').add(d);})
+    .then(function(r){var en={etapa:eid,uid:uid,nome:nome.slice(0,120),link:d.url||'',docId:r&&r.id||'',obs:obs.slice(0,300),em:agora};entregas[eid+'_'+uid]=en;return db.doc('cd_entregas/'+eid+'_'+uid).set(en);})
+    .then(function(){painelFechar();render();$('cd-trilha-ok').textContent='Entrega enviada. O C&D vai avaliar.';},
+      function(err){b.disabled=false;m.textContent=err&&err.code==='quota_exceeded'?'Espaço de arquivos cheio: use um link do Drive.':err&&err.code==='unsupported_type'?'Tipo de arquivo não aceito: use PDF ou imagem.':err&&err.code==='sem'?'Seu acesso não permite enviar arquivos: use um link.':'Não foi possível enviar a entrega.';});}
+
+/* ---------------- cliques e dados ---------------- */
+function clique(e){if(e.target.closest('a'))return;if(!(e.type==='click'||e.key==='Enter'||e.key===' '))return;
+  var b=e.target.closest('[data-trenv]');if(b&&e.type==='click'){abrirEntrega(b.dataset.trenv);return;}
+  var t=e.target.closest('[data-tropen]'),x=e.target.closest('[data-tretapa]');if(!t&&!x)return;if(e.type==='keydown')e.preventDefault();
+  if(t)abrirTrainee(t.dataset.tropen);else abrirEtapa(x.dataset.tretapa);}
+sec.addEventListener('click',clique);sec.addEventListener('keydown',clique);
+$('tr-nova').addEventListener('click',function(){$('cd-trilha-ok').textContent='';abrirEtapa(null);});
+function ligar(){if(lig||!db)return;lig=true;
+  db.collection('cd_trilha').onSnapshot(function(s){etapas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();if(window.__cdMudou)window.__cdMudou();},function(){});
+  db.collection('cd_trilha_prog').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});prog=m;tudo();},function(){});
+  db.collection('cd_entregas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});entregas=m;tudo();},function(){});}
+document.addEventListener('permissoes',function(){ligar();tudo();});
+document.addEventListener('membros',tudo);
+document.addEventListener('tela',function(e){if(e.detail==='cd-trilha')render();});
+var _cm=window.__cdMudou;window.__cdMudou=function(){if(_cm)_cm();tudo();}; /* capacitações e presença mudam a trilha */
 render();
 })();
 
@@ -5180,7 +5420,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['cd-cap','Capacitações','view','','fora:C&D'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['cd-cap','Capacitações','view','','fora:C&D'],['cd-trilha','Trilha do trainee','view','','fora:C&D'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],
@@ -5570,7 +5810,7 @@ if(window.claude&&window.claude.use)window.claude.use('db').then(function(db){
 function $(i){return document.getElementById(i);}
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var DIAS_LIXEIRA=30,DIAS_BACKUP=30,PASSO=200;
-var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro',fin_coffee:'Contato de coffee',fin_verbas:'Verba de evento',cd_capacitacoes:'Capacitação'};
+var TIPO={eventos:'Evento',salas:'Sala',calendario:'Bloqueio do calendário',convidados:'Convidado',documentos:'Documento',membros:'Perfil',permitidos:'Acesso ao app',parametros:'Parâmetros',listas:'Listas de opções',mailing:'Contato do mailing',mailingConfig:'Configuração do mailing',mailingEnvios:'Envio do mailing',descadastros:'Descadastro',fin_coffee:'Contato de coffee',fin_verbas:'Verba de evento',cd_capacitacoes:'Capacitação',cd_trilha:'Etapa da trilha',cd_trilha_prog:'Progresso na trilha',cd_entregas:'Entrega da trilha'};
 var ACAO={criou:'criou',editou:'editou',excluiu:'excluiu',restaurou:'restaurou',exportou:'exportou',importou:'importou'};
 var CAMPO={areas:'cargos',presidencia:'presidência',responsavel:'responsável',responsavelId:'',hora:'horário',duracao:'duração',obs:'observações',inicio:'início',fim:'fim',penalidade:'penalidade',ativa:'ativa',potencial:'potencial'};
 function tipo(c){return TIPO[c]||c;}
@@ -5586,7 +5826,7 @@ function secao(id,titulo,nota,ferr){
   s.innerHTML='<div class="section-head"><div><h2 id="'+id+'-title">'+titulo+'</h2><p class="note">'+nota+'</p></div><span class="note" id="'+id+'-count"></span></div><div class="mtools">'+ferr+'</div><div id="'+id+'-list"></div>';
   main.appendChild(s);return s;
 }
-secao('lixeira','Lixeira','O que foi excluído de eventos, salas, calendário, convidados, documentos, contatos de coffee e capacitações fica aqui por '+DIAS_LIXEIRA+' dias. A presidência restaura qualquer coisa; a diretoria, só o que é da própria área.',
+secao('lixeira','Lixeira','O que foi excluído de eventos, salas, calendário, convidados, documentos, contatos de coffee, capacitações e etapas da trilha fica aqui por '+DIAS_LIXEIRA+' dias. A presidência restaura qualquer coisa; a diretoria, só o que é da própria área.',
   '<label for="lx-area" class="sr">Área</label><select id="lx-area"></select><span class="msg" id="lx-msg" role="status"></span>');
 secao('hist','Histórico','Quem criou, editou ou excluiu o quê, e quando. Atualizações automáticas (como a nota do clima) não entram.',
   '<label for="hs-busca" class="sr">Buscar</label><input id="hs-busca" type="search" placeholder="Buscar por pessoa ou item" style="flex:1;min-width:200px;max-width:380px"><label for="hs-area" class="sr">Área</label><select id="hs-area"></select><label for="hs-acao" class="sr">Ação</label><select id="hs-acao"><option value="">Todas as ações</option><option value="criou">Criou</option><option value="editou">Editou</option><option value="excluiu">Excluiu</option><option value="restaurou">Restaurou</option><option value="exportou">Backup</option></select><button type="button" class="btn small ghost" id="hs-atual">Atualizar</button>');

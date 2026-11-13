@@ -6,7 +6,7 @@
 (function(){
 "use strict";
 var EMU=/[?&]emulador\b/.test(location.search);
-var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados','mailing','mailingEnvios','mailingConfig','descadastros','inscricoes','fin_coffee','fin_verbas','fin_orcamentos','fin_pagamentos','mkt_divulgacao','cd_capacitacoes','cd_avaliacoes'];
+var COLECOES=['eventos','salas','calendario','convidados','listas','documentos','parametros','membros','permitidos','arquivos','perfisImportados','mailing','mailingEnvios','mailingConfig','descadastros','inscricoes','fin_coffee','fin_verbas','fin_orcamentos','fin_pagamentos','mkt_divulgacao','cd_capacitacoes','cd_avaliacoes','cd_trilha','cd_trilha_prog','cd_entregas'];
 var saindo=false;
 var PARTE=700000; /* caracteres base64 por parte de arquivo (o Firestore aceita até 1 MiB por documento) */
 
@@ -23,7 +23,7 @@ function liberar(){liberado=true;esperando.splice(0).forEach(function(r){r();});
    Toda gravação do app passa por aqui: criar, editar e excluir viram uma linha em "registro" (quem, o quê, quando),
    e o que é excluído de eventos, salas, calendário, convidados e documentos vai antes para a "lixeira". */
 var SEM_REGISTRO=['registro','lixeira','arquivos','config','perfisImportados','inscricoes','cd_avaliacoes']; /* avaliação das capacitações: sem nome no Histórico */
-var COM_LIXEIRA=['eventos','salas','calendario','convidados','documentos','fin_coffee','fin_verbas','cd_capacitacoes'];
+var COM_LIXEIRA=['eventos','salas','calendario','convidados','documentos','fin_coffee','fin_verbas','cd_capacitacoes','cd_trilha'];
 var SO_SISTEMA=['notaData','notaHist','notaClima','climaAvisos','tema','atualizadoEm','editadoEm','cargoPor','cargoEm'];
 var PREFIXO={fin:'Financeiro',mkt:'Marketing',cd:'C&D',rh:'RH'};
 /* área dona de cada coleção (igual às regras): Documentos, Membros e acesso são de todos; fin_, mkt_, cd_ e rh_ são das outras áreas */

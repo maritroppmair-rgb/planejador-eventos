@@ -521,7 +521,7 @@ body.sd-aberto{overflow:hidden}
   <!-- DOCUMENTOS -->
   <section id="view-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
     <div class="section-head">
-      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento e cada capacitação têm uma pasta: o documento ligado a um deles entra na pasta dele; o resto fica em Geral.</p></div>
+      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento e cada capacitação têm uma pasta, e as entregas da Trilha do trainee têm a sua; o resto fica em Geral.</p></div>
       <div class="btns"><span class="msg" id="dform-ok" aria-live="polite"></span><button class="btn" type="button" id="dnova">+ Novo documento</button></div>
     </div>
     <form class="panel" id="dform" style="margin-bottom:18px" autocomplete="off" novalidate>
@@ -1023,6 +1023,7 @@ function doSave(exc){
 var pendAl=[];
 function dupAlerts(){var nm=$('f-nome').value.trim();if(!nm)return [];return events.filter(function(e){return e.id!==savedId&&e.id!==editingId&&(e.nome||'').trim()===nm;}).map(function(e){return 'Possível duplicata: já existe "'+e.nome+'" na base'+(e.data?' ('+fmt(D(e.data))+(e.status==='realizado'?', realizado':'')+')':'')+'.';});}
 $('saveplan').addEventListener('click',function(){if(!calcDone||stale)return;
+  var oc=window.__planConvOcupado?window.__planConvOcupado():'';if(oc){$('savemsg').textContent='Não dá para salvar: '+oc+'. Troque o horário ou o convidado.';return;}
   pendAl=dupAlerts().concat(alertas);
   if(pendAl.length){$('exclist').innerHTML=pendAl.map(function(a){return '<li>'+esc(a)+'</li>';}).join('');$('excmotivo').value='';$('excmsg').textContent='';$('excbox').hidden=false;$('excmotivo').focus();return;}
   doSave(null);});

@@ -13,7 +13,7 @@ s = open(base, encoding='utf-8').read()
 P = lambda n: open(os.path.join(pecas, n), encoding='utf-8').read()
 # telas no padrão de Salas: rodam dentro do script principal (mesmo escopo)
 _f = s.index('\n})();\n</script>')
-s = s[:_f] + '\n' + P('telas.js') + '\n' + P('fin.js') + '\n' + P('ficha.js') + '\n' + P('etapas.js') + '\n' + P('mkt.js') + '\n' + P('pos.js') + '\n' + P('cd.js') + s[_f:]
+s = s[:_f] + '\n' + P('telas.js') + '\n' + P('fin.js') + '\n' + P('ficha.js') + '\n' + P('etapas.js') + '\n' + P('mkt.js') + '\n' + P('pos.js') + '\n' + P('cd.js') + '\n' + P('trilha.js') + s[_f:]
 
 def troca(a, b, n=1):
     global s
