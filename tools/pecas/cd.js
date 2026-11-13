@@ -34,7 +34,7 @@ window.__cdCapDe=capDe;
 /* ---------------- tela ---------------- */
 var main=document.querySelector('main');
 var sec=document.createElement('section');sec.id='view-cd-cap';sec.hidden=true;sec.setAttribute('aria-labelledby','cd-cap-title');
-sec.innerHTML='<div class="section-head"><div><h2 id="cd-cap-title">Capacitações</h2><p class="note">Treinamentos e aulas da Feashion: quando, sobre o quê e quem dá, a presença de cada membro, a avaliação de quem foi e o material. O C&amp;D cria e marca a presença; todos veem e avaliam.</p></div>'+
+sec.innerHTML='<div class="section-head"><div><h2 id="cd-cap-title">Capacitações</h2><p class="note">Treinamentos e aulas da Feashion: quando, sobre o quê e quem dá, a presença de cada membro, a avaliação de quem foi e o material. O C&amp;D cria e marca a presença; quem vê a área de C&amp;D avalia.</p></div>'+
   '<div class="btns"><span class="msg" id="cd-cap-ok" aria-live="polite"></span><button class="btn cd-ed" type="button" id="cd-novo">+ Nova capacitação</button></div></div>'+
   '<div class="sbar"><input type="search" id="cd-busca" placeholder="Buscar tema ou quem dá" aria-label="Buscar capacitação"><span class="note" id="cd-conta" aria-live="polite"></span></div>'+
   '<h3 class="cd-h">Próximas</h3><div class="tablewrap"><table class="tlist" id="cd-prox"></table></div>'+
@@ -216,10 +216,11 @@ function addMaterial(id,dr,b){var m=dr.querySelector('#cd-mm'),c=capDe(id);if(!c
 
 /* ---------------- dados ---------------- */
 function ligar(){if(lig||!db)return;lig=true;
-  db.collection('cd_capacitacoes').onSnapshot(function(s){caps.length=0;s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;caps.push(o);});window.__cdMudou();if(typeof renderDocs==='function')renderDocs();},function(){});
+  db.collection('cd_capacitacoes').onSnapshot(function(s){caps.length=0;s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;caps.push(o);});window.__cdMudou();if(typeof renderDocs==='function')renderDocs();},function(err){console.error('cd_capacitacoes',err);});
   db.collection('cd_avaliacoes').onSnapshot(function(s){avs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();},function(){});}
 document.addEventListener('permissoes',function(){document.body.classList.toggle('cd-editar',pode('editar'));ligar();tudo();});
 document.addEventListener('membros',tudo);
-document.addEventListener('tela',function(e){if(e.detail==='cd-cap')render();});
+document.addEventListener('tela',function(e){if(e.detail==='cd-cap'){ligar();render();}});
+document.addEventListener('base-pronta',ligar);
 render();
 })();

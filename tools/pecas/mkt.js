@@ -180,6 +180,7 @@ var _rb=renderBase;renderBase=function(){_rb.apply(this,arguments);tudo();};
 var lig=false;
 function ligar(){if(lig||!db)return;lig=true;db.collection('mkt_divulgacao').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});div=m;tudo();},function(){});}
 document.addEventListener('permissoes',function(){ligar();tudo();});
+document.addEventListener('base-pronta',ligar);
 document.addEventListener('membros',function(){painelAtualizar('view-mkt-div');});
 /* dados do Marketing para o relatório final do evento (pos.js) */
 window.__mktRel=function(e){var d=div[e.id]||null,b=e.briefing||null,pl=d||planoDe(e.id),bs=pl.bastidores||{};

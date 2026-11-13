@@ -41,7 +41,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['cd-cap','Capacitações','view','','fora:C&D'],['cd-trilha','Trilha do trainee','view','','fora:C&D'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],

@@ -17,8 +17,8 @@
 <script src="vendor/firebase-app-compat.js"></script>
 <script src="vendor/firebase-auth-compat.js"></script>
 <script src="vendor/firebase-firestore-compat.js"></script>
-<script src="config.js?v=20261113162645"></script>
-<script src="plataforma.js?v=20261113162645"></script>
+<script src="config.js?v=20261113163519"></script>
+<script src="plataforma.js?v=20261113163519"></script>
 </head>
 <body>
 
@@ -2250,6 +2250,7 @@ function connect(){
     if(!d){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>. Nada é salvo.';return;}
     db=d;mode='on';$('dbstatus').innerHTML='Base conectada · <b id="ncount">…</b>';
     if(typeof finLigar==='function')finLigar();
+    document.dispatchEvent(new CustomEvent('base-pronta')); /* C&D e Marketing começam a ouvir as coleções deles */
     db.collection('eventos').onSnapshot(function(s){CARR.ev=1;climaAgendar();events=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});if(typeof finAplicar==='function')finAplicar();$('ncount').textContent=events.length+' eventos';adiar('view-base',renderBase,function(){return regOpen!=null;});adiar('view-cal',renderCal);renderDocs();refresh();},function(){alertMsg('A conexão com a base caiu. Recarregue a página.');});
     db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}else if(x.id==='inscricoes'){window.__parInsc=x.data();if(window.__parInscDesenhar)window.__parInscDesenhar();}else if(x.id==='feedback'){window.__parFeedback=x.data();if(window.__parFeedbackDesenhar)window.__parFeedbackDesenhar();}});},function(){});
     db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
@@ -4095,6 +4096,7 @@ var _rb=renderBase;renderBase=function(){_rb.apply(this,arguments);tudo();};
 var lig=false;
 function ligar(){if(lig||!db)return;lig=true;db.collection('mkt_divulgacao').onSnapshot(function(s){var m={};s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;m[x.id]=o;});div=m;tudo();},function(){});}
 document.addEventListener('permissoes',function(){ligar();tudo();});
+document.addEventListener('base-pronta',ligar);
 document.addEventListener('membros',function(){painelAtualizar('view-mkt-div');});
 /* dados do Marketing para o relatório final do evento (pos.js) */
 window.__mktRel=function(e){var d=div[e.id]||null,b=e.briefing||null,pl=d||planoDe(e.id),bs=pl.bastidores||{};
@@ -4528,7 +4530,7 @@ window.__cdCapDe=capDe;
 /* ---------------- tela ---------------- */
 var main=document.querySelector('main');
 var sec=document.createElement('section');sec.id='view-cd-cap';sec.hidden=true;sec.setAttribute('aria-labelledby','cd-cap-title');
-sec.innerHTML='<div class="section-head"><div><h2 id="cd-cap-title">Capacitações</h2><p class="note">Treinamentos e aulas da Feashion: quando, sobre o quê e quem dá, a presença de cada membro, a avaliação de quem foi e o material. O C&amp;D cria e marca a presença; todos veem e avaliam.</p></div>'+
+sec.innerHTML='<div class="section-head"><div><h2 id="cd-cap-title">Capacitações</h2><p class="note">Treinamentos e aulas da Feashion: quando, sobre o quê e quem dá, a presença de cada membro, a avaliação de quem foi e o material. O C&amp;D cria e marca a presença; quem vê a área de C&amp;D avalia.</p></div>'+
   '<div class="btns"><span class="msg" id="cd-cap-ok" aria-live="polite"></span><button class="btn cd-ed" type="button" id="cd-novo">+ Nova capacitação</button></div></div>'+
   '<div class="sbar"><input type="search" id="cd-busca" placeholder="Buscar tema ou quem dá" aria-label="Buscar capacitação"><span class="note" id="cd-conta" aria-live="polite"></span></div>'+
   '<h3 class="cd-h">Próximas</h3><div class="tablewrap"><table class="tlist" id="cd-prox"></table></div>'+
@@ -4710,11 +4712,12 @@ function addMaterial(id,dr,b){var m=dr.querySelector('#cd-mm'),c=capDe(id);if(!c
 
 /* ---------------- dados ---------------- */
 function ligar(){if(lig||!db)return;lig=true;
-  db.collection('cd_capacitacoes').onSnapshot(function(s){caps.length=0;s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;caps.push(o);});window.__cdMudou();if(typeof renderDocs==='function')renderDocs();},function(){});
+  db.collection('cd_capacitacoes').onSnapshot(function(s){caps.length=0;s.docs.forEach(function(x){var o=Object.assign({},x.data());o.id=x.id;caps.push(o);});window.__cdMudou();if(typeof renderDocs==='function')renderDocs();},function(err){console.error('cd_capacitacoes',err);});
   db.collection('cd_avaliacoes').onSnapshot(function(s){avs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();},function(){});}
 document.addEventListener('permissoes',function(){document.body.classList.toggle('cd-editar',pode('editar'));ligar();tudo();});
 document.addEventListener('membros',tudo);
-document.addEventListener('tela',function(e){if(e.detail==='cd-cap')render();});
+document.addEventListener('tela',function(e){if(e.detail==='cd-cap'){ligar();render();}});
+document.addEventListener('base-pronta',ligar);
 render();
 })();
 
@@ -4813,8 +4816,10 @@ function abrirEtapa(id){painelAbrir({sec:'view-cd-trilha',chave:'e'+(id||'nova')
   var sv=dr.querySelector('#tr-salvar');if(sv)sv.addEventListener('click',function(){var m=dr.querySelector('#tr-msg'),nome=dr.querySelector('#tr-nome').value.trim();if(!db){m.textContent='Sem conexão com a base.';return;}
     if(!nome){m.textContent='Dê um nome à etapa.';dr.querySelector('#tr-nome').focus();return;}
     var o=dr.querySelector('#tr-ordem').value,d={nome:nome.slice(0,120),area:dr.querySelector('#tr-area').value,tipo:tp.value,ordem:o===''?null:Math.max(0,Math.round(+o)||0),descricao:dr.querySelector('#tr-desc').value.trim().slice(0,1000),editadoEm:new Date().toISOString()};
-    m.textContent='Salvando…';(id?db.doc('cd_trilha/'+id).update(d):db.collection('cd_trilha').add(Object.assign({criadoEm:d.editadoEm},d)))
-      .then(function(){painelFechar();$('cd-trilha-ok').textContent=id?'Etapa salva.':'Etapa criada.';},function(){m.textContent='Não foi possível salvar: só quem tem cargo em C&D edita.';});});
+    m.textContent='Salvando…';ligar();(id?db.doc('cd_trilha/'+id).update(d):db.collection('cd_trilha').add(Object.assign({criadoEm:d.editadoEm},d)))
+      .then(function(r){var x=id?window.__trilhaEtapa(id):null;if(x)Object.assign(x,d);else if(r&&r.id&&!window.__trilhaEtapa(r.id))etapas.push(Object.assign({id:r.id},d));
+        painelFechar();render();$('cd-trilha-ok').textContent=id?'Etapa salva.':'Etapa criada.';},
+        function(err){console.error('cd_trilha',err);m.textContent=err&&err.code==='permission-denied'?'O banco recusou: só quem tem cargo em C&D (ou acesso total) cria etapas.':'Não foi possível salvar ('+(err&&(err.code||err.message)||'erro')+').';});});
   var dl=dr.querySelector('#tr-del');if(dl)dl.addEventListener('click',function(){confirma(dl,'Confirmar exclusão',function(){db.doc('cd_trilha/'+id).delete().then(function(){painelFechar();$('cd-trilha-ok').textContent='Etapa excluída (fica 30 dias na Lixeira).';},function(){dr.querySelector('#tr-msg').textContent='Não foi possível excluir.';});});});
 }});}
 
@@ -4882,12 +4887,14 @@ function clique(e){if(e.target.closest('a'))return;if(!(e.type==='click'||e.key=
 sec.addEventListener('click',clique);sec.addEventListener('keydown',clique);
 $('tr-nova').addEventListener('click',function(){$('cd-trilha-ok').textContent='';abrirEtapa(null);});
 function ligar(){if(lig||!db)return;lig=true;
-  db.collection('cd_trilha').onSnapshot(function(s){etapas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();if(window.__cdMudou)window.__cdMudou();},function(){});
-  db.collection('cd_trilha_prog').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});prog=m;tudo();},function(){});
-  db.collection('cd_entregas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});entregas=m;tudo();},function(){});}
+  function falhou(c){return function(err){console.error(c,err);};}
+  db.collection('cd_trilha').onSnapshot(function(s){etapas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();if(window.__cdMudou)window.__cdMudou();},falhou('cd_trilha'));
+  db.collection('cd_trilha_prog').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});prog=m;tudo();},falhou('cd_trilha_prog'));
+  db.collection('cd_entregas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});entregas=m;tudo();},falhou('cd_entregas'));}
 document.addEventListener('permissoes',function(){ligar();tudo();});
 document.addEventListener('membros',tudo);
-document.addEventListener('tela',function(e){if(e.detail==='cd-trilha')render();});
+document.addEventListener('tela',function(e){if(e.detail==='cd-trilha'){ligar();render();}});
+document.addEventListener('base-pronta',ligar);
 var _cm=window.__cdMudou;window.__cdMudou=function(){if(_cm)_cm();tudo();}; /* capacitações e presença mudam a trilha */
 render();
 })();
@@ -5420,7 +5427,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['cd-cap','Capacitações','view','','fora:C&D'],['cd-trilha','Trilha do trainee','view','','fora:C&D'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],

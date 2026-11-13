@@ -93,8 +93,10 @@ function abrirEtapa(id){painelAbrir({sec:'view-cd-trilha',chave:'e'+(id||'nova')
   var sv=dr.querySelector('#tr-salvar');if(sv)sv.addEventListener('click',function(){var m=dr.querySelector('#tr-msg'),nome=dr.querySelector('#tr-nome').value.trim();if(!db){m.textContent='Sem conexão com a base.';return;}
     if(!nome){m.textContent='Dê um nome à etapa.';dr.querySelector('#tr-nome').focus();return;}
     var o=dr.querySelector('#tr-ordem').value,d={nome:nome.slice(0,120),area:dr.querySelector('#tr-area').value,tipo:tp.value,ordem:o===''?null:Math.max(0,Math.round(+o)||0),descricao:dr.querySelector('#tr-desc').value.trim().slice(0,1000),editadoEm:new Date().toISOString()};
-    m.textContent='Salvando…';(id?db.doc('cd_trilha/'+id).update(d):db.collection('cd_trilha').add(Object.assign({criadoEm:d.editadoEm},d)))
-      .then(function(){painelFechar();$('cd-trilha-ok').textContent=id?'Etapa salva.':'Etapa criada.';},function(){m.textContent='Não foi possível salvar: só quem tem cargo em C&D edita.';});});
+    m.textContent='Salvando…';ligar();(id?db.doc('cd_trilha/'+id).update(d):db.collection('cd_trilha').add(Object.assign({criadoEm:d.editadoEm},d)))
+      .then(function(r){var x=id?window.__trilhaEtapa(id):null;if(x)Object.assign(x,d);else if(r&&r.id&&!window.__trilhaEtapa(r.id))etapas.push(Object.assign({id:r.id},d));
+        painelFechar();render();$('cd-trilha-ok').textContent=id?'Etapa salva.':'Etapa criada.';},
+        function(err){console.error('cd_trilha',err);m.textContent=err&&err.code==='permission-denied'?'O banco recusou: só quem tem cargo em C&D (ou acesso total) cria etapas.':'Não foi possível salvar ('+(err&&(err.code||err.message)||'erro')+').';});});
   var dl=dr.querySelector('#tr-del');if(dl)dl.addEventListener('click',function(){confirma(dl,'Confirmar exclusão',function(){db.doc('cd_trilha/'+id).delete().then(function(){painelFechar();$('cd-trilha-ok').textContent='Etapa excluída (fica 30 dias na Lixeira).';},function(){dr.querySelector('#tr-msg').textContent='Não foi possível excluir.';});});});
 }});}
 
@@ -162,12 +164,14 @@ function clique(e){if(e.target.closest('a'))return;if(!(e.type==='click'||e.key=
 sec.addEventListener('click',clique);sec.addEventListener('keydown',clique);
 $('tr-nova').addEventListener('click',function(){$('cd-trilha-ok').textContent='';abrirEtapa(null);});
 function ligar(){if(lig||!db)return;lig=true;
-  db.collection('cd_trilha').onSnapshot(function(s){etapas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();if(window.__cdMudou)window.__cdMudou();},function(){});
-  db.collection('cd_trilha_prog').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});prog=m;tudo();},function(){});
-  db.collection('cd_entregas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});entregas=m;tudo();},function(){});}
+  function falhou(c){return function(err){console.error(c,err);};}
+  db.collection('cd_trilha').onSnapshot(function(s){etapas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();if(window.__cdMudou)window.__cdMudou();},falhou('cd_trilha'));
+  db.collection('cd_trilha_prog').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});prog=m;tudo();},falhou('cd_trilha_prog'));
+  db.collection('cd_entregas').onSnapshot(function(s){var m={};s.docs.forEach(function(x){m[x.id]=x.data();});entregas=m;tudo();},falhou('cd_entregas'));}
 document.addEventListener('permissoes',function(){ligar();tudo();});
 document.addEventListener('membros',tudo);
-document.addEventListener('tela',function(e){if(e.detail==='cd-trilha')render();});
+document.addEventListener('tela',function(e){if(e.detail==='cd-trilha'){ligar();render();}});
+document.addEventListener('base-pronta',ligar);
 var _cm=window.__cdMudou;window.__cdMudou=function(){if(_cm)_cm();tudo();}; /* capacitações e presença mudam a trilha */
 render();
 })();
