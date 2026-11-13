@@ -359,7 +359,7 @@ if(window.claude&&window.claude.use){
       if(souDev()&&!migrou){migrou=true;members.forEach(function(m){if(m.areas||ehDevM(m))return;window.__semRegistro=true;db.doc('membros/'+m.id).update({areas:areasOf(m)}).catch(function(){});window.__semRegistro=false;});}
       if(myDoc&&!getTheme()&&(myDoc.tema==='light'||myDoc.tema==='dark'))applyTheme(myDoc.tema);
       renderMe();
-      window.__membros=members.map(function(m){return {id:m.id,nome:m.nome||m.email||'Sem nome',apelido:m.apelido||'',areas:areasOf(m)};}).sort(function(a,b){return cmp(a.nome,b.nome);});
+      window.__membros=members.map(function(m){return {id:m.id,nome:m.nome||m.email||'Sem nome',apelido:m.apelido||'',areas:areasOf(m),desde:String(m.criadoEm||'').slice(0,10)};}).sort(function(a,b){return cmp(a.nome,b.nome);});
       window.__euId=meId;window.__meuNome=(myDoc&&myDoc.nome)||(meInfo&&meInfo.name)||'';
       document.dispatchEvent(new CustomEvent('membros'));
       if(!$('view-membros').hidden)renderMembros();

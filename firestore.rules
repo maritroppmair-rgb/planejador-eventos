@@ -224,6 +224,15 @@ service cloud.firestore {
     match /eventos/{id} {
       allow update: if liberado() && temPerfil() && etapaDeArea(get(eu()).data);
     }
+    // avaliação das capacitações do C&D: cada membro grava só a própria (id = {capacitação}_{uid}), nota de 1 a 5
+    match /cd_avaliacoes/{id} {
+      allow create, update: if liberado() && temPerfil()
+        && depois().keys().hasOnly(['cap', 'uid', 'nota', 'comentario', 'em'])
+        && depois().uid == request.auth.uid && depois().cap is string && id == depois().cap + '_' + request.auth.uid
+        && depois().nota is int && depois().nota >= 1 && depois().nota <= 5
+        && depois().get('comentario', '') is string && depois().get('comentario', '').size() <= 600;
+      allow delete: if liberado() && resource.data.uid == request.auth.uid;
+    }
 
     match /{colecao}/{documento=**} {
       allow read: if liberado();

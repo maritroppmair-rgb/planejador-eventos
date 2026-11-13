@@ -41,7 +41,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['cd-cap','Capacitações','view','','fora:C&D'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],
@@ -73,7 +73,7 @@ function grupo(g,area){
   var box=document.createElement('div');box.className='sgroup';box.dataset.area=area;
   var h=document.createElement('h4');h.textContent=g[0];box.appendChild(h);
   g[1].forEach(function(it){
-    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4])b.dataset.gov='1';
+    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4]==='gov')b.dataset.gov='1';else if(it[4])b.dataset.fora=it[4].slice(5);
     b.innerHTML=icone(it[0]);var sp=document.createElement('span');sp.textContent=it[1];b.appendChild(sp);if(it[3]){var bt=document.createElement('span');bt.className='beta';bt.textContent=it[3];b.appendChild(bt);}
     b.addEventListener('click',function(){ir(it[0],it[2]);});
     box.appendChild(b);
@@ -135,14 +135,14 @@ if(AREAS.indexOf(atual)<0)atual='Eventos';
 /* área em que a pessoa está agora: os documentos novos guardam isso */
 window.__areaAtual=function(){return atual||'Eventos';};
 /* vai para uma área e uma tela dela (ex.: o link do e-mail abre o orçamento no Financeiro) */
-window.__irArea=function(a,alvo){if(a!==atual)escolher(a);var b=alvo&&side.querySelector('.sitem[data-alvo="'+alvo+'"]');if(b)b.click();};
+window.__irArea=function(a,alvo){if(a!==atual)escolher(a);var b=alvo&&([].filter.call(side.querySelectorAll('.sitem[data-alvo="'+alvo+'"]'),function(x){return !x.hidden&&!x.closest('.sgroup').hidden;})[0]||side.querySelector('.sitem[data-alvo="'+alvo+'"]'));if(b)b.click();};
 function visiveis(){var P=window.__perm;if(!P||!P.carregado())return [atual];return AREAS.filter(function(a){return !!P.podeEm(a).ver;});}
 function telaAberta(){var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});return vis;}
 function primeira(){return side.querySelector('.sgroup:not([hidden]) .sitem:not([hidden])');}
 function mostrarGrupos(){
   var P=window.__perm,ok=P&&P.carregado();
   side.querySelectorAll('.sgroup').forEach(function(g){var algum=false,daArea=!g.dataset.area||g.dataset.area===atual;
-    g.querySelectorAll('.sitem').forEach(function(b){var v=!b.dataset.gov||(ok&&P.diretorAlgum());b.hidden=!v;if(v)algum=true;});
+    g.querySelectorAll('.sitem').forEach(function(b){var v=(!b.dataset.gov||(ok&&P.diretorAlgum()))&&b.dataset.fora!==atual;b.hidden=!v;if(v)algum=true;});
     g.hidden=!daArea||!algum;});
   rotulos();
 }
@@ -152,8 +152,8 @@ function aplicarAreas(){
   if(vis.indexOf(atual)<0){var mi=P.minhas().filter(function(a){return vis.indexOf(a)>=0;});atual=mi[0]||vis[0]||null;}
   mostrarGrupos();
   /* a tela aberta ficou fora da área (ou do alcance): vai para a primeira da área */
-  var t=telaAberta(),bt=t&&side.querySelector('.sitem[data-alvo="'+t+'"]');
-  if(bt&&(bt.hidden||bt.closest('.sgroup').hidden)){var f=primeira();if(f)ir(f.dataset.alvo,f.dataset.modo);}
+  var t=telaAberta(),bts=t?[].slice.call(side.querySelectorAll('.sitem[data-alvo="'+t+'"]')):[];
+  if(bts.length&&bts.every(function(bt){return bt.hidden||bt.closest('.sgroup').hidden;})){var f=primeira();if(f)ir(f.dataset.alvo,f.dataset.modo);}
 }
 function escolher(a){
   if(a===atual)return fecharSel();

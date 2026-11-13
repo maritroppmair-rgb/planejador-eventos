@@ -521,7 +521,7 @@ body.sd-aberto{overflow:hidden}
   <!-- DOCUMENTOS -->
   <section id="view-docs" role="tabpanel" aria-labelledby="tab-docs" hidden>
     <div class="section-head">
-      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento tem uma pasta: o documento ligado a um evento entra na pasta dele; o que não é de nenhum evento fica em Geral.</p></div>
+      <div><h2>Documentos</h2><p class="note">Manuais, modelos, relatórios, notas fiscais e arquivos de todas as áreas. Cada evento e cada capacitação têm uma pasta: o documento ligado a um deles entra na pasta dele; o resto fica em Geral.</p></div>
       <div class="btns"><span class="msg" id="dform-ok" aria-live="polite"></span><button class="btn" type="button" id="dnova">+ Novo documento</button></div>
     </div>
     <form class="panel" id="dform" style="margin-bottom:18px" autocomplete="off" novalidate>
@@ -1160,7 +1160,7 @@ $('dform').addEventListener('submit',function(e){e.preventDefault();if(!db){$('d
   if(u&&!safeUrl(u)){$('dmsg').textContent='Use um link que comece com https://';return;}
   var data={nome:nome,tipo:$('d-tipo').value,versao:$('d-versao').value.trim(),resp:$('d-resp').value.trim(),resumo:$('d-resumo').value.trim(),eventos:Array.prototype.map.call($('d-evs').querySelectorAll('input:checked'),function(i){return i.value;})};
   function fixar(arq){data.link=u;data.arquivo=arq;data.url=dPrincipal(data.tipo,u,arq);}
-  function save(){var pr=docEdit?db.doc('documentos/'+docEdit).update(data):db.collection('documentos').add(Object.assign({criadoEm:new Date().toISOString(),area:window.__areaAtual?window.__areaAtual():'Eventos'},data));
+  function save(){var pr=docEdit?db.doc('documentos/'+docEdit).update(data):db.collection('documentos').add(Object.assign({criadoEm:new Date().toISOString(),area:window.__areaAtual?window.__areaAtual():'Eventos'},window.__novoDocCaps?{caps:window.__novoDocCaps}:{},data));
     pr.then(function(){var m=docEdit?'Alterações salvas.':'Documento adicionado.';resetDocForm();fecharGav('dform',m);}).catch(function(){$('dmsg').textContent='Não foi possível salvar.';});}
   if(file){if(file.size>20*1024*1024){$('dmsg').textContent='Arquivo maior que 20 MB: use um link do Drive.';return;}
     var ext=(file.name.split('.').pop()||'').toLowerCase(),TY={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',csv:'text/csv',txt:'text/plain',md:'text/markdown'};
@@ -1379,7 +1379,7 @@ function connect(){
     db.collection('parametros').onSnapshot(function(s){CARR.par=1;climaAgendar();s.docs.forEach(function(x){if(x.id==='geral'){P=Object.assign({},PDEF,x.data());applyP();if(!parDirty)renderPar();refresh();}else if(x.id==='inscricoes'){window.__parInsc=x.data();if(window.__parInscDesenhar)window.__parInscDesenhar();}else if(x.id==='feedback'){window.__parFeedback=x.data();if(window.__parFeedbackDesenhar)window.__parFeedbackDesenhar();}});},function(){});
     db.collection('calendario').onSnapshot(function(s){CARR.cal=1;climaAgendar();calRows=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});rebuildHol();adiar('view-cal',renderCal);refresh();},function(){});
     db.collection('salas').onSnapshot(function(s){CARR.sal=1;climaAgendar();salas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-salas',renderSalas);refresh();},function(){});
-    db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();if(typeof finDocs==='function')finDocs();refresh();},function(){});
+    db.collection('documentos').onSnapshot(function(s){docs=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});renderDocs();if(typeof finDocs==='function')finDocs();if(window.__cdMudou)window.__cdMudou();refresh();},function(){});
     db.collection('convidados').onSnapshot(function(s){guests=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});adiar('view-conv',renderGuests);renderChks();},function(){});
     db.collection('listas').onSnapshot(function(s){s.docs.forEach(function(x){if(x.id==='convidados'){var d=x.data();listas={temas:d.temas||[],segmentos:d.segmentos||[]};renderChks();renderGuests();}});},function(){});
   }).catch(function(){mode='off';$('dbstatus').innerHTML='Modo demonstração: <b>sem base conectada</b>.';});

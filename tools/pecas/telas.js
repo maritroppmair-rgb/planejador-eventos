@@ -192,11 +192,16 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   fa.addEventListener('change',function(){renderDocs();});
   function dArea(x){return x.area||'Eventos';}
   function evDe(id){return events.filter(function(e){return e.id===id;})[0];}
+  /* pastas de um documento: os eventos dele e as capacitações do C&D (id 'cap:...') */
+  function capD(id){return window.__cdCapDe?window.__cdCapDe(id):null;}
+  function dPs(x){return dEvs(x).filter(evDe).concat((x.caps||[]).filter(capD).map(function(c){return 'cap:'+c;}));}
+  function pInfo(id){if(!id||id==='__geral')return null;if(id.indexOf('cap:')===0){var c=capD(id.slice(4));return c?{nome:c.nome||'(capacitação sem tema)',sub:'Capacitação · '+(c.data?fmt(D(c.data))+'/'+c.data.slice(2,4):'sem data')}:null;}var e=evDe(id);return e?{nome:e.nome||'(evento sem nome)',sub:dataEv(e)}:null;}
+  function pNome(id){var i=pInfo(id);return i?i.nome:'';}
   function dataEv(e){return e&&e.data?fmt(D(e.data))+'/'+e.data.slice(2,4):'sem data';}
-  function linha(x,comPasta){var f=dFontes(x),u=dPrincipal(x.tipo,f.link,f.arquivo),ev=dEvs(x);
+  function linha(x,comPasta){var f=dFontes(x),u=dPrincipal(x.tipo,f.link,f.arquivo),ev=dPs(x);
     var alt=f.link&&f.arquivo?(u===f.arquivo?'<a class="alt" href="'+esc(f.link)+'" target="_blank" rel="noopener">link</a>':'<a class="alt" href="'+esc(f.arquivo)+'" target="_blank" rel="noopener">arquivo</a>'):'';
     var outras=ev.filter(function(id){return id!==pasta;});
-    var onde=comPasta?(ev.length?ev.map(function(id){return '<span class="ttag">'+esc(evName(id))+'</span>';}).join(''):'<span class="ttag">Geral</span>'):(outras.length&&pasta!=='__geral'?'<span class="tsub">também em '+esc(outras.map(evName).join(', '))+'</span>':'');
+    var onde=comPasta?(ev.length?ev.map(function(id){return '<span class="ttag">'+esc(id.indexOf('cap:')===0?pNome(id):evName(id))+'</span>';}).join(''):'<span class="ttag">Geral</span>'):(outras.length&&pasta!=='__geral'?'<span class="tsub">também em '+esc(outras.map(function(id){return id.indexOf('cap:')===0?pNome(id):evName(id);}).join(', '))+'</span>':'');
     return '<tr data-dopen="'+esc(x.id)+'" tabindex="0"><td><span class="tn">'+esc(x.nome)+'</span>'+(x.resumo?'<span class="tsub">'+esc(x.resumo)+'</span>':'')+(comPasta?'':onde)+'</td>'+
       (comPasta?'<td>'+onde+'</td>':'')+
       '<td><span class="chip neutral">'+esc(x.tipo||'—')+(x.versao?' · '+esc(x.versao):'')+'</span></td><td>'+esc(dArea(x))+'</td><td>'+(x.resp?esc(x.resp):'<span class="note">—</span>')+'</td>'+
@@ -210,30 +215,32 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
     renderDocEvChoices();pintar('d-tipo');
     var q=nrm($('dsearch').value).trim(),ar=fa.value,box=$('dlist');
     var porArea=docs.filter(function(x){return !ar||dArea(x)===ar;});
-    if(pasta&&pasta!=='__geral'&&!evDe(pasta))pasta=null;
+    if(pasta&&pasta!=='__geral'&&!pInfo(pasta))pasta=null;
     /* busca: procura em todas as pastas */
     if(q){var l=porArea.filter(function(x){return nrm([x.nome,x.resp,x.resumo,x.versao,x.tipo].join(' ')).indexOf(q)>=0;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
       box.innerHTML='<p class="note dbusca">'+l.length+(l.length===1?' documento encontrado':' documentos encontrados')+' em todas as pastas.</p>'+tabela(l,true,'Nenhum documento com essa busca.');return;}
     if(!pasta){
-      var cont={__geral:0};porArea.forEach(function(x){var ev=dEvs(x).filter(evDe);if(!ev.length)cont.__geral++;ev.forEach(function(id){cont[id]=(cont[id]||0)+1;});});
+      var cont={__geral:0};porArea.forEach(function(x){var ev=dPs(x);if(!ev.length)cont.__geral++;ev.forEach(function(id){cont[id]=(cont[id]||0)+1;});});
       var evs=events.filter(function(e){return vazias||cont[e.id];}).sort(function(a,b){return (a.data||'')<(b.data||'')?1:-1;});
       var nVaz=events.filter(function(e){return !cont[e.id];}).length;
       function card(id,nome,sub,n){return '<button type="button" class="dpasta'+(n?'':' vazia')+'" data-dpasta="'+esc(id)+'">'+PASTA_IC+'<span class="dp-t"><b>'+esc(nome)+'</b><small>'+esc(sub)+'</small></span><span class="dp-n">'+n+'</span></button>';}
       var h='<div class="dpastas">'+card('__geral','Geral','documentos sem evento',cont.__geral);
       evs.forEach(function(e){h+=card(e.id,e.nome||'(evento sem nome)',dataEv(e),cont[e.id]||0);});
+      (window.__cdCaps||[]).filter(function(c){return vazias||cont['cap:'+c.id];}).sort(function(a,b){return (a.data||'')<(b.data||'')?1:-1;})
+        .forEach(function(c){var i=pInfo('cap:'+c.id);h+=card('cap:'+c.id,i.nome,i.sub,cont['cap:'+c.id]||0);});
       h+='</div>';
       if(nVaz)h+='<label class="check dvaz"><input type="checkbox" id="dvazias"'+(vazias?' checked':'')+'> Mostrar pastas vazias ('+nVaz+(nVaz===1?' evento sem documento':' eventos sem documento')+')</label>';
       box.innerHTML=h;return;}
-    var e=pasta==='__geral'?null:evDe(pasta);
-    var l=porArea.filter(function(x){var ev=dEvs(x).filter(evDe);return pasta==='__geral'?!ev.length:ev.indexOf(pasta)>=0;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
-    box.innerHTML='<div class="dcrumb"><button type="button" class="btn small ghost" data-dpasta="">← Todas as pastas</button><h3>'+PASTA_IC+esc(e?e.nome||'(evento sem nome)':'Geral')+'</h3><span class="note">'+(e?dataEv(e)+' · ':'')+l.length+(l.length===1?' documento':' documentos')+'</span></div>'+
+    var e=pInfo(pasta);
+    var l=porArea.filter(function(x){var ev=dPs(x);return pasta==='__geral'?!ev.length:ev.indexOf(pasta)>=0;}).sort(function(a,b){return String(a.nome).localeCompare(b.nome);});
+    box.innerHTML='<div class="dcrumb"><button type="button" class="btn small ghost" data-dpasta="">← Todas as pastas</button><h3>'+PASTA_IC+esc(e?e.nome:'Geral')+'</h3><span class="note">'+(e?e.sub+' · ':'')+l.length+(l.length===1?' documento':' documentos')+'</span></div>'+
       tabela(l,false,ar?'Nenhum documento de '+esc(ar)+' nesta pasta.':'Esta pasta está vazia. Clique em “+ Novo documento” para adicionar.');
   };
   $('dlist').addEventListener('click',function(e){var b=e.target.closest('[data-dpasta]');if(!b)return;pasta=b.dataset.dpasta||null;renderDocs();var v=$('view-docs');if(v.getBoundingClientRect().top<0)v.scrollIntoView();
     var f=$('dlist').querySelector(pasta?'.dcrumb button':'[data-dpasta]');if(f)f.focus();});
   $('dlist').addEventListener('change',function(e){if(e.target.id==='dvazias'){vazias=e.target.checked;renderDocs();}});
   /* "+ Novo documento" dentro da pasta de um evento já liga o documento a ele */
-  $('dnova').addEventListener('click',function(){if(!pasta||pasta==='__geral')return;var i=$('d-evs').querySelector('input[value="'+pasta.replace(/"/g,'')+'"]');if(i)i.checked=true;});
+  $('dnova').addEventListener('click',function(){window.__novoDocCaps=pasta&&pasta.indexOf('cap:')===0?[pasta.slice(4)]:null;if(!pasta||pasta==='__geral'||window.__novoDocCaps)return;var i=$('d-evs').querySelector('input[value="'+pasta.replace(/"/g,'')+'"]');if(i)i.checked=true;});
   window.docsAbrirPasta=function(id){pasta=id||null;$('dsearch').value='';renderDocs();};
   function clique(e){if(e.target.closest('a'))return;var tr=e.target.closest('[data-dopen]');if(!tr||!(e.type==='click'||e.key==='Enter'||e.key===' '))return;if(e.type==='keydown')e.preventDefault();
     var b=document.createElement('button');b.type='button';b.hidden=true;b.dataset.dedit=tr.dataset.dopen;$('dlist').appendChild(b);b.click();b.remove();}
