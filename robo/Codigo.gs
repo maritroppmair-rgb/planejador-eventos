@@ -18,7 +18,6 @@
 var CFG = {
   PROJETO: 'planejador-de-eventos-261df',
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
-  MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8', // reserva: o que vale é o link salvo em Parâmetros no site
   FEEDBACK_DIAS: 5,         // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
   PASTA: 'Feashion · Inscrições',
   PASTA_FEEDBACK: 'Feashion · Feedbacks', // Forms de feedback e planilhas de respostas (mesmo acesso de edição da pasta das inscrições)
@@ -887,11 +886,12 @@ function sincronizarEquipe() {
   }
   return Object.keys(querem);
 }
-/* o Forms que o robô copia: o link salvo em Parâmetros (parametros/inscricoes) ou, sem ele, o do CFG */
+/* o Forms que o robô copia: o link salvo em Parâmetros (parametros/inscricoes); o id não fica no código, que é público */
 function modeloFormId() {
   var d = null;
   try { d = fsGet('parametros/inscricoes'); } catch (err) { console.error('Parâmetros: ' + err); }
-  return (d && d.modeloFormId) || CFG.MODELO_FORM_ID;
+  if (!(d && d.modeloFormId)) throw new Error('Falta o link do Forms padrão de inscrição em Parâmetros, no site.');
+  return d.modeloFormId;
 }
 /* deixa na pasta (ou arquivo) exatamente quem está na lista, como editor (as subpastas herdam) */
 function permissoesPasta(id, querem) {
@@ -939,8 +939,7 @@ function drive(metodo, caminho, corpo) {
 
 /* ---------- instalação: rode uma vez pelo editor ---------- */
 function instalar() {
-  var f = FormApp.openById(modeloFormId());
-  console.log('Modelo encontrado: ' + f.getTitle());
+  try { console.log('Modelo encontrado: ' + FormApp.openById(modeloFormId()).getTitle()); } catch (err) { console.error('Forms padrão de inscrição: ' + err); }
   try { console.log('Modelo de feedback: ' + FormApp.openById(modeloFeedbackId()).getTitle()); } catch (err) { console.error('Forms padrão de feedback: ' + err); }
   console.log('Pasta: ' + pastaInscricoes().getUrl());
   console.log('Pasta de feedbacks: ' + pastaFeedbacks().getUrl());

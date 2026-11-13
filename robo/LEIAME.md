@@ -8,13 +8,13 @@ Ele roda na **conta Google dona do Firebase** (o Gmail da diretoria de Eventos).
 
 Faça tudo logado no Gmail dono do Firebase.
 
-1. **Forms modelo.** Abra o Forms padrão e use ⋮ → **Fazer uma cópia**. Na cópia, confira em Configurações → Respostas que "Coletar endereços de e-mail" está em **Resposta do participante**. Copie o ID da cópia: é o trecho do link entre `/d/` e `/edit`.
+1. **Forms modelo.** Abra o Forms padrão e use ⋮ → **Fazer uma cópia**. Na cópia, confira em Configurações → Respostas que "Coletar endereços de e-mail" está em **Resposta do participante**. Guarde o link de edição da cópia (termina em `/edit`): ele vai em Parâmetros, no passo 7.
 2. **Projeto do robô.** Abra [script.google.com](https://script.google.com) → **Novo projeto**. Dê o nome "Robô de inscrições · Feashion".
 3. **Manifesto.** Em ⚙️ Configurações do projeto, marque **"Mostrar o arquivo de manifesto appsscript.json no editor"**. Volte ao editor, abra `appsscript.json` e troque o conteúdo pelo deste repositório (`robo/appsscript.json`).
-4. **Código.** Abra `Código.gs`, apague o que tiver e cole o conteúdo de `robo/Codigo.gs`. No topo, em `MODELO_FORM_ID`, cole o ID do passo 1. Salve (Ctrl+S).
-5. **Autorizar e agendar.** No seletor de funções (ao lado de "Depurar"), escolha **instalar** e clique em **Executar**. O Google pede autorização: Revisar permissões → escolha a conta → "Avançado" → "Acessar Robô de inscrições (não seguro)" → Permitir. Esse aviso aparece porque o script é seu e não foi publicado; é normal. No registro de execução devem aparecer o nome do modelo, a pasta, o DEV e "Pronto".
+4. **Código.** Abra `Código.gs`, apague o que tiver e cole o conteúdo de `robo/Codigo.gs`. Salve (Ctrl+S). O id do Forms modelo não fica no código (o repositório é público).
+5. **Autorizar e agendar.** No seletor de funções (ao lado de "Depurar"), escolha **instalar** e clique em **Executar**. O Google pede autorização: Revisar permissões → escolha a conta → "Avançado" → "Acessar Robô de inscrições (não seguro)" → Permitir. Esse aviso aparece porque o script é seu e não foi publicado; é normal. No registro de execução devem aparecer a pasta, o DEV e "Pronto" (o nome do modelo só aparece depois que o link estiver em Parâmetros).
 6. **Publicar.** Clique em **Implantar → Nova implantação** → ⚙️ tipo **App da Web**. "Executar como": **Eu**. "Quem pode acessar": **Qualquer pessoa**. Implantar. Copie a **URL do app da Web** (termina em `/exec`).
-7. **Ligar no site.** Mande a URL para o Claude colocar em `config.js` (`window.ROBO_URL`), ou edite direto no GitHub.
+7. **Ligar no site.** Mande a URL para o Claude colocar em `config.js` (`window.ROBO_URL`), ou edite direto no GitHub. Depois, no site, em **Parâmetros**, cole o link do passo 1 em **Forms padrão de inscrição** (e o do Forms de feedback) e salve.
 
 Pronto: na Base, abrindo um evento (▸), aparece **Inscrições → Criar Forms de inscrição**.
 
@@ -61,7 +61,7 @@ Depois de colar uma versão nova do `Codigo.gs`: **Implantar → Gerenciar impla
 
 - "Login expirado": recarregue o app.
 - "Seu cargo não permite": a pessoa está sem cargo na área Eventos (ou na presidência); a diretoria atribui em Membros. Diretoria de outra área não usa o robô.
-- Forms padrão: o link fica em Parâmetros, no site, e o robô copia esse Forms para cada evento (o `MODELO_FORM_ID` do código só vale se Parâmetros estiver vazio). A rotina dá acesso de edição ao Forms padrão e à pasta de inscrições (com todos os Forms criados) para quem tem cargo em Eventos.
+- Forms padrão: o link fica em Parâmetros, no site, e o robô copia esse Forms para cada evento (o id não fica no código; sem o link, o robô avisa que ele falta). A rotina dá acesso de edição ao Forms padrão e à pasta de inscrições (com todos os Forms criados) para quem tem cargo em Eventos.
 - Pasta de fotos: o botão da Ficha cria uma subpasta em "Feashion · Fotos de eventos". A rotina dá acesso de edição a essa pasta para todos os membros cadastrados no app, de qualquer área.
 - Erro com "Firestore 403": a conta do script não é dona do projeto Firebase, ou a API do Firestore pede o projeto de cobrança; confira se `PROJETO` está certo.
 - Execuções e erros da rotina: no script.google.com, menu **Execuções**.

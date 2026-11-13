@@ -264,14 +264,14 @@ function pintar(id){var s=$(id);if(s&&s._pinta)s._pinta();}
   var sv=savePar;savePar=function(){sv();renderPar();setTimeout(function(){if(!parDirty)fecharGav('parform');},400);};
   renderPar();
   /* Forms padrão de inscrição: o robô copia este Forms para cada evento (parametros/inscricoes) */
-  var PADRAO_FORM='https://docs.google.com/forms/d/1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8/edit';
+  /* sem padrão no código (o repositório é público): o link vem só de parametros/inscricoes */
   var fb=el('<div class="tp-blk pinsc" id="par-insc"></div>');sec.appendChild(fb);var fsuj=false;
   function formId(u){var m=/docs\.google\.com\/forms\/d\/(?!e\/)([A-Za-z0-9_-]{20,})/.exec(String(u||''));return m?m[1]:'';}
   function podeF(){var p=window.__perm;return !!(p&&p.carregado()&&p.podeEm('Eventos').gerir);}
-  function desenhar(){if(fsuj)return;var d=window.__parInsc||{},u=safeUrl(d.modeloFormUrl)||PADRAO_FORM,ed=podeF();
+  function desenhar(){if(fsuj)return;var d=window.__parInsc||{},u=safeUrl(d.modeloFormUrl)||'',ed=podeF();
     fb.innerHTML='<h4>Forms padrão de inscrição</h4><p class="note" style="margin:0 0 8px">O robô copia este Forms para criar a inscrição de cada evento. Quem tem cargo em Eventos tem acesso de edição a ele e a todos os Forms criados (o acesso chega em até 10 min).</p>'+
-      (ed?'<div class="fi-add pinsc-row"><input id="pi-url" type="url" value="'+esc(u)+'" aria-label="Link do Forms padrão"><button type="button" class="btn small" id="pi-salvar">Salvar</button></div>':'')+
-      '<div class="btns" style="margin-top:6px"><a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão ↗</a><span class="msg" id="pi-msg" role="status"></span></div>';}
+      (ed?'<div class="fi-add pinsc-row"><input id="pi-url" type="url" value="'+esc(u)+'" placeholder="Link de edição do Forms (docs.google.com/forms/d/…/edit)" aria-label="Link do Forms padrão"><button type="button" class="btn small" id="pi-salvar">Salvar</button></div>':'')+
+      '<div class="btns" style="margin-top:6px">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" class="fi-link">Abrir o Forms padrão ↗</a>':'<span class="note">Ainda sem Forms padrão de inscrição: sem ele, o robô não cria a inscrição do evento.</span>')+'<span class="msg" id="pi-msg" role="status"></span></div>';}
   window.__parInscDesenhar=desenhar;document.addEventListener('permissoes',desenhar);desenhar();
   fb.addEventListener('input',function(e){if(e.target.id==='pi-url')fsuj=true;});
   fb.addEventListener('click',function(e){if(!e.target.closest('#pi-salvar'))return;var u=$('pi-url').value.trim(),id=formId(u),m=$('pi-msg');
