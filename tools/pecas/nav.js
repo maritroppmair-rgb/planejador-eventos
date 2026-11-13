@@ -41,7 +41,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['cd-trilha','Trilha do trainee','view','','trainee'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],
@@ -73,7 +73,7 @@ function grupo(g,area){
   var box=document.createElement('div');box.className='sgroup';box.dataset.area=area;
   var h=document.createElement('h4');h.textContent=g[0];box.appendChild(h);
   g[1].forEach(function(it){
-    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4]==='gov')b.dataset.gov='1';else if(it[4])b.dataset.fora=it[4].slice(5);
+    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4]==='gov')b.dataset.gov='1';else if(it[4]==='trainee')b.dataset.trainee='1';else if(it[4])b.dataset.fora=it[4].slice(5);
     b.innerHTML=icone(it[0]);var sp=document.createElement('span');sp.textContent=it[1];b.appendChild(sp);if(it[3]){var bt=document.createElement('span');bt.className='beta';bt.textContent=it[3];b.appendChild(bt);}
     b.addEventListener('click',function(){ir(it[0],it[2]);});
     box.appendChild(b);
@@ -139,10 +139,12 @@ window.__irArea=function(a,alvo){if(a!==atual)escolher(a);var b=alvo&&([].filter
 function visiveis(){var P=window.__perm;if(!P||!P.carregado())return [atual];return AREAS.filter(function(a){return !!P.podeEm(a).ver;});}
 function telaAberta(){var vis=null;document.querySelectorAll('main>section').forEach(function(s){if(!s.hidden&&!vis)vis=s.id.replace('view-','');});return vis;}
 function primeira(){return side.querySelector('.sgroup:not([hidden]) .sitem:not([hidden])');}
+/* a Trilha fica no Geral só para o trainee que não vê a área de C&D (ele vê ali só as trilhas dele) */
+function souTraineeFora(){var P=window.__perm;if(!P||!P.carregado()||P.podeEm('C&D').ver)return false;return P.minhas().some(function(a){return P.cargoEm(a)==='Trainee';});}
 function mostrarGrupos(){
   var P=window.__perm,ok=P&&P.carregado();
   side.querySelectorAll('.sgroup').forEach(function(g){var algum=false,daArea=!g.dataset.area||g.dataset.area===atual;
-    g.querySelectorAll('.sitem').forEach(function(b){var v=(!b.dataset.gov||(ok&&P.diretorAlgum()))&&b.dataset.fora!==atual;b.hidden=!v;if(v)algum=true;});
+    g.querySelectorAll('.sitem').forEach(function(b){var v=(!b.dataset.gov||(ok&&P.diretorAlgum()))&&b.dataset.fora!==atual&&(!b.dataset.trainee||souTraineeFora());b.hidden=!v;if(v)algum=true;});
     g.hidden=!daArea||!algum;});
   rotulos();
 }

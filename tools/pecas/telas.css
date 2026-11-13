@@ -565,7 +565,9 @@ body:not(.cd-editar) .cd-ed{display:none!important}
 .tr-et{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}.tr-lista .tr-et:first-child{border-top:0}
 .tr-et[data-tretapa]{cursor:pointer}.tr-et[data-tretapa]:hover{background:var(--surface-2)}
 .tr-et-n{flex:1;min-width:0}.tr-et .btn{white-space:nowrap}
-.tr-minha{margin:6px 0 10px;padding:14px 16px;border:1px solid var(--wine);border-radius:12px;background:var(--wine-soft)}
+.tr-boxes{display:grid;gap:14px;margin-top:6px}
+.tr-box{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0}
+.tr-box .tablewrap{margin-top:4px}
 .tr-mh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .tr-pet{padding:10px 0;border-top:1px solid var(--line)}.tp-blk h4+.tr-pet{border-top:0;padding-top:0}
 .tr-pet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}

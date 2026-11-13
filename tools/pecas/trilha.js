@@ -13,7 +13,10 @@
 var etapas=[],prog={},entregas={},lig=false,RT={};
 var AREAS_T=['Eventos','Financeiro','Marketing','C&D','RH'];
 var TIPOS=[['cap','Ir a uma capacitação'],['tarefa','Tarefa marcada pelo C&D'],['entrega','Entrega com arquivo ou link']];
-function pode(k){var p=window.__perm;return !!(p&&p.carregado()&&p.podeEm('C&D')[k]);}
+function eu(){var u=window.__euId;return (window.__membros||[]).filter(function(m){return m.id===u;})[0]||null;}
+/* vê todas as trilhas: acesso total, ou cargo em C&D que não seja Trainee. Trainee (de qualquer área, C&D inclusive) vê só as dele e não edita. */
+function visaoToda(){var p=window.__perm;if(!p||!p.carregado())return false;if(p.dev()||p.geral())return true;var c=p.cargoEm('C&D');return !!p.podeEm('C&D').ver&&!!c&&c!=='Trainee';}
+function pode(k){var p=window.__perm;return visaoToda()&&!!p.podeEm('C&D')[k];}
 function blk(t,h){return '<div class="tp-blk">'+(t?'<h4>'+t+'</h4>':'')+h+'</div>';}
 function confirma(b,txt,fn){if(b.dataset.sure){fn();return;}var o=b.textContent;b.dataset.sure='1';b.textContent=txt;setTimeout(function(){delete b.dataset.sure;b.textContent=o;},5000);}
 function dataBR(s){s=String(s||'').slice(0,10);return s?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(2,4):'';}
@@ -24,7 +27,8 @@ window.__trilhaEtapas=function(){return ordenadas();};
 window.__trilhaEtapa=function(id){return etapas.filter(function(x){return x.id===id;})[0]||null;};
 function areasTrainee(m){var a=m&&m.areas||{};return Object.keys(a).filter(function(k){return a[k]==='Trainee';});}
 function trainees(){return (window.__membros||[]).filter(function(m){return areasTrainee(m).length;});}
-function etapasDe(m){var ar=areasTrainee(m);return ordenadas().filter(function(x){return !x.area||ar.indexOf(x.area)>=0;});}
+function trilhasDe(m){return [''].concat(areasTrainee(m));}
+function etapasK(k){return ordenadas().filter(function(x){return (x.area||'')===k;});}
 function capsDe(eid){return (window.__cdCaps||[]).filter(function(c){return c.etapa===eid;});}
 /* situação de uma etapa para um trainee: {s:'feita'|'enviada'|'refazer'|'pendente', em, txt} */
 function sit(m,x){var p=((prog[m.id]||{}).etapas||{})[x.id]||{},en=entregas[x.id+'_'+m.id]||null;
@@ -39,38 +43,47 @@ function sit(m,x){var p=((prog[m.id]||{}).etapas||{})[x.id]||{},en=entregas[x.id
   return {s:'pendente',txt:'Ainda não enviada'};}
 var CHIP={feita:['Cumprida','ok'],enviada:['Aguardando aprovação','warn'],refazer:['Ajustar','bad'],pendente:['Pendente','neutral']};
 function chip(s){var c=CHIP[s]||CHIP.pendente;return '<span class="chip '+c[1]+'">'+c[0]+'</span>';}
-function prg(m){var l=etapasDe(m),f=0,ag=0;l.forEach(function(x){var s=sit(m,x).s;if(s==='feita')f++;if(s==='enviada')ag++;});return {n:l.length,f:f,ag:ag};}
+function prg(m,k){var l=etapasK(k),f=0,ag=0;l.forEach(function(x){var s=sit(m,x).s;if(s==='feita')f++;if(s==='enviada')ag++;});return {n:l.length,f:f,ag:ag};}
 function barra(f,n){var pc=n?Math.round(f/n*100):0;return '<span class="cd-bar"><i style="width:'+pc+'%"></i></span><b>'+f+' de '+n+'</b>';}
 
 /* ---------------- tela ---------------- */
+/* Cada trilha é uma caixinha: Base comum ('') e uma por área. O trainee vê só as dele (base + áreas em que é Trainee);
+   quem tem outro cargo em C&D (ou acesso total) vê todas. Trainee de C&D não edita nada aqui. */
 var main=document.querySelector('main');
 var sec=document.createElement('section');sec.id='view-cd-trilha';sec.hidden=true;sec.setAttribute('aria-labelledby','cd-trilha-title');
-sec.innerHTML='<div class="section-head"><div><h2 id="cd-trilha-title">Trilha do trainee</h2><p class="note">As etapas que cada trainee cumpre: uma base comum para todos e as etapas da área de cada um. Uma etapa se cumpre indo a uma capacitação, por uma tarefa que o C&amp;D marca ou com uma entrega que o C&amp;D aprova.</p></div>'+
+sec.innerHTML='<div class="section-head"><div><h2 id="cd-trilha-title">Trilha do trainee</h2><p class="note" id="tr-nota"></p></div>'+
   '<div class="btns"><span class="msg" id="cd-trilha-ok" aria-live="polite"></span><button class="btn cd-ed" type="button" id="tr-nova">+ Nova etapa</button></div></div>'+
-  '<div id="tr-minha"></div><h3 class="cd-h">Trainees</h3><div class="tablewrap"><table class="tlist" id="tr-tab"></table></div>'+
-  '<h3 class="cd-h">Etapas da trilha</h3><div id="tr-etapas"></div>';
+  '<div id="tr-corpo" class="tr-boxes"></div>';
 main.appendChild(sec);
 
 function linhaEtapa(m,x,eu){var t=sit(m,x);
   return '<li class="tr-et"><span class="tr-et-n"><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(tipoNome(x.tipo))+' · '+esc(t.txt)+'</span></span>'+chip(t.s)+
     (eu&&x.tipo==='entrega'&&t.s!=='feita'?'<button type="button" class="btn small" data-trenv="'+esc(x.id)+'">'+(t.s==='pendente'?'Enviar entrega':'Enviar de novo')+'</button>':'')+'</li>';}
-function grupos(l,fn){var out='',cur=null;l.forEach(function(x){var g=x.area||'Base comum';if(g!==cur){if(cur!==null)out+='</ul>';out+='<h5 class="cd-h5">'+esc(g)+'</h5><ul class="tr-lista">';cur=g;}out+=fn(x);});return out+(cur!==null?'</ul>':'');}
+function linhaDef(x){var nc=x.tipo==='cap'?capsDe(x.id).length:null;
+  return '<li class="tr-et" data-tretapa="'+esc(x.id)+'" tabindex="0"><span class="tr-et-n"><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(tipoNome(x.tipo))+(nc!=null?' · '+(nc?nc+(nc===1?' capacitação ligada':' capacitações ligadas'):'nenhuma capacitação ligada ainda'):'')+(x.descricao?' · '+esc(x.descricao):'')+'</span></span></li>';}
+function caixa(cab,lado,corpo){return '<div class="tr-box"><div class="tr-mh"><h3 class="cd-h" style="margin:0">'+esc(cab)+'</h3>'+lado+'</div>'+corpo+'</div>';}
 function render(){
-  var eu=(window.__membros||[]).filter(function(m){return m.id===window.__euId;})[0],box=$('tr-minha');
-  if(eu&&areasTrainee(eu).length){var l=etapasDe(eu),p=prg(eu);
-    box.innerHTML='<div class="tr-minha"><div class="tr-mh"><h3 class="cd-h" style="margin:0">Sua trilha</h3><span class="tr-prog">'+barra(p.f,p.n)+'</span></div>'+
-      (l.length?grupos(l,function(x){return linhaEtapa(eu,x,true);}):'<p class="note" style="margin:0">O C&amp;D ainda não montou as etapas da sua trilha.</p>')+'</div>';}
-  else box.innerHTML='';
-  var ts=trainees().sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
-  var h='<thead><tr><th>Trainee</th><th>Área</th><th class="r">Progresso</th><th class="r">Aguardando aprovação</th></tr></thead><tbody>';
-  if(!ts.length)h+='<tr><td colspan="4" class="empty">Nenhum trainee ainda. Quem tem o cargo Trainee em alguma área aparece aqui.</td></tr>';
-  ts.forEach(function(m){var p=prg(m);h+='<tr data-tropen="'+esc(m.id)+'" tabindex="0"'+(m.id===window.__euId?' class="cd-eu"':'')+'><td><span class="tn">'+esc(m.nome)+'</span></td><td>'+areasTrainee(m).map(function(a){return '<span class="ttag">'+esc(a)+'</span>';}).join('')+'</td>'+
-    '<td class="r num">'+(p.n?barra(p.f,p.n):'<span class="note">sem etapas</span>')+'</td><td class="r num">'+(p.ag?'<span class="chip warn">'+p.ag+(p.ag===1?' entrega':' entregas')+'</span>':'<span class="note">—</span>')+'</td></tr>';});
-  $('tr-tab').innerHTML=h+'</tbody>';
-  var le=ordenadas();
-  $('tr-etapas').innerHTML=le.length?grupos(le,function(x){var nc=x.tipo==='cap'?capsDe(x.id).length:null;
-      return '<li class="tr-et" data-tretapa="'+esc(x.id)+'" tabindex="0"><span class="tr-et-n"><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(tipoNome(x.tipo))+(nc!=null?' · '+(nc?nc+(nc===1?' capacitação ligada':' capacitações ligadas'):'nenhuma capacitação ligada ainda'):'')+(x.descricao?' · '+esc(x.descricao):'')+'</span></span></li>';})
-    :'<p class="empty">Nenhuma etapa ainda.'+(pode('editar')?' Clique em “+ Nova etapa”: comece pela base comum e depois as etapas de cada área.':'')+'</p>';
+  var me=eu(),todo=visaoToda(),h='';
+  $('tr-nova').hidden=!pode('editar');
+  $('tr-nota').textContent=todo?'Uma caixinha para cada trilha: a base comum (todos os trainees) e a de cada área. Cada etapa se cumpre indo a uma capacitação, por uma tarefa que o C&D marca ou com uma entrega que o C&D aprova.'
+    :'Suas trilhas: a base comum e a de cada área em que você é trainee. Cada etapa se cumpre indo a uma capacitação, por uma tarefa que o C&D marca ou com uma entrega que você manda e o C&D aprova.';
+  if(!todo){
+    if(!me||!areasTrainee(me).length){$('tr-corpo').innerHTML='<p class="empty">A Trilha do trainee aparece aqui para quem tem o cargo Trainee em alguma área.</p>';return;}
+    trilhasDe(me).forEach(function(k){var l=etapasK(k),p=prg(me,k);
+      h+=caixa(k?'Trilha de '+k:'Base comum','<span class="tr-prog">'+barra(p.f,p.n)+'</span>',
+        l.length?'<ul class="tr-lista">'+l.map(function(x){return linhaEtapa(me,x,true);}).join('')+'</ul>':'<p class="note" style="margin:0">O C&amp;D ainda não montou as etapas desta trilha.</p>');});
+    $('tr-corpo').innerHTML=h;return;}
+  [''].concat(AREAS_T).forEach(function(k){
+    var ts=trainees().filter(function(m){return !k||areasTrainee(m).indexOf(k)>=0;}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');}),l=etapasK(k);
+    var t='<div class="tablewrap"><table class="tlist"><thead><tr><th>Trainee</th>'+(k?'':'<th>Área</th>')+'<th class="r">Progresso</th><th class="r">Aguardando aprovação</th></tr></thead><tbody>';
+    if(!ts.length)t+='<tr><td colspan="'+(k?3:4)+'" class="empty">'+(k?'Nenhum trainee em '+esc(k)+'.':'Nenhum trainee ainda. Quem tem o cargo Trainee em alguma área aparece aqui.')+'</td></tr>';
+    ts.forEach(function(m){var p=prg(m,k);t+='<tr data-tropen="'+esc(m.id+'|'+k)+'" tabindex="0"'+(m.id===window.__euId?' class="cd-eu"':'')+'><td><span class="tn">'+esc(m.nome)+'</span></td>'+
+      (k?'':'<td>'+areasTrainee(m).map(function(a){return '<span class="ttag">'+esc(a)+'</span>';}).join('')+'</td>')+
+      '<td class="r num">'+(p.n?barra(p.f,p.n):'<span class="note">sem etapas</span>')+'</td><td class="r num">'+(p.ag?'<span class="chip warn">'+p.ag+(p.ag===1?' entrega':' entregas')+'</span>':'<span class="note">—</span>')+'</td></tr>';});
+    t+='</tbody></table></div>';
+    var e=l.length?'<h5 class="cd-h5">Etapas</h5><ul class="tr-lista">'+l.map(linhaDef).join('')+'</ul>':'<p class="note" style="margin:8px 0 0">Nenhuma etapa'+(k?' de '+esc(k):' na base comum')+' ainda.'+(pode('editar')?' Clique em “+ Nova etapa”.':'')+'</p>';
+    h+=caixa(k?'Trilha de '+k:'Base comum','<span class="note">'+ts.length+(ts.length===1?' trainee':' trainees')+' · '+l.length+(l.length===1?' etapa':' etapas')+'</span>',t+e);});
+  $('tr-corpo').innerHTML=h;
 }
 function tudo(){adiar('view-cd-trilha',render);painelAtualizar('view-cd-trilha');}
 window.__trilhaMudou=tudo;
@@ -101,10 +114,11 @@ function abrirEtapa(id){painelAbrir({sec:'view-cd-trilha',chave:'e'+(id||'nova')
 }});}
 
 /* ---------------- painel: trainee ---------------- */
-function montarTrainee(uid){var m=(window.__membros||[]).filter(function(x){return x.id===uid;})[0];if(!m)return null;
-  var ed=pode('editar'),eu=uid===window.__euId,l=etapasDe(m),p=prg(m);
+function montarTrainee(uid,k){var m=(window.__membros||[]).filter(function(x){return x.id===uid;})[0];if(!m)return null;
+  if(!visaoToda()&&uid!==window.__euId)return null;
+  var ed=pode('editar'),eu=uid===window.__euId,l=etapasK(k),p=prg(m,k);
   var corpo=blk('','<p style="margin:0">'+barra(p.f,p.n)+' <span class="note">etapas cumpridas'+(p.ag?' · '+p.ag+' aguardando aprovação':'')+'</span></p>');
-  if(!l.length)corpo+=blk('','<p class="note" style="margin:0">Nenhuma etapa para '+esc(areasTrainee(m).join(', '))+' nem na base comum ainda.</p>');
+  if(!l.length)corpo+=blk('','<p class="note" style="margin:0">Nenhuma etapa '+(k?'de '+esc(k):'na base comum')+' ainda.</p>');
   var cur=null;
   l.forEach(function(x){var g=x.area||'Base comum',t=sit(m,x),en=entregas[x.id+'_'+uid]||null,pp=((prog[uid]||{}).etapas||{})[x.id]||{},r=RT[x.id+'_'+uid]=RT[x.id+'_'+uid]||{obs:''};
     var h='<div class="tr-pet"><div class="tr-pet-h"><span><b>'+esc(x.nome)+'</b><span class="tsub">'+esc(g+' · '+tipoNome(x.tipo))+'</span></span>'+chip(t.s)+'</div>'+
@@ -121,8 +135,8 @@ function montarTrainee(uid){var m=(window.__membros||[]).filter(function(x){retu
     if(g!==cur){corpo+=(cur!==null?'</div>':'')+'<div class="tp-blk"><h4>'+esc(g)+'</h4>';cur=g;}
     corpo+=h+'</div>';});
   if(cur!==null)corpo+='</div>';
-  return {titulo:m.nome,sub:'Trainee · '+esc(areasTrainee(m).join(', ')),corpo:corpo,rodape:'<div class="btns"><span class="msg" id="tr-pmsg" role="status"></span></div>'};}
-function abrirTrainee(uid){painelAbrir({sec:'view-cd-trilha',chave:'t'+uid,montar:function(){return montarTrainee(uid);},depois:function(dr){
+  return {titulo:m.nome,sub:esc(k?'Trilha de '+k:'Base comum'),corpo:corpo,rodape:'<div class="btns"><span class="msg" id="tr-pmsg" role="status"></span></div>'};}
+function abrirTrainee(uid,k){painelAbrir({sec:'view-cd-trilha',chave:'t'+uid+'|'+k,montar:function(){return montarTrainee(uid,k);},depois:function(dr){
   dr.addEventListener('input',function(e){var o=e.target.closest('[data-trobs]');if(o)RT[o.dataset.trobs+'_'+uid].obs=o.value;});
   dr.addEventListener('click',function(e){var b=e.target.closest('[data-trst]');if(b){var p=b.dataset.trst.split('|'),eid=p[0],st=p[1]||null,m=dr.querySelector('#tr-pmsg'),r=RT[eid+'_'+uid];
       if(!db){m.textContent='Sem conexão com a base.';return;}if(st==='refazer'&&!String(r.obs||'').trim()){m.textContent='Escreva no comentário o que o trainee precisa ajustar.';var i=dr.querySelector('[data-trobs="'+eid+'"]');if(i)i.focus();return;}
@@ -160,9 +174,9 @@ function enviar(eid,dr,b){var m=dr.querySelector('#tn-msg'),x=window.__trilhaEta
 function clique(e){if(e.target.closest('a'))return;if(!(e.type==='click'||e.key==='Enter'||e.key===' '))return;
   var b=e.target.closest('[data-trenv]');if(b&&e.type==='click'){abrirEntrega(b.dataset.trenv);return;}
   var t=e.target.closest('[data-tropen]'),x=e.target.closest('[data-tretapa]');if(!t&&!x)return;if(e.type==='keydown')e.preventDefault();
-  if(t)abrirTrainee(t.dataset.tropen);else abrirEtapa(x.dataset.tretapa);}
+  if(t){var pr=t.dataset.tropen.split('|');abrirTrainee(pr[0],pr.slice(1).join('|'));}else abrirEtapa(x.dataset.tretapa);}
 sec.addEventListener('click',clique);sec.addEventListener('keydown',clique);
-$('tr-nova').addEventListener('click',function(){$('cd-trilha-ok').textContent='';abrirEtapa(null);});
+$('tr-nova').addEventListener('click',function(){if(!pode('editar'))return;$('cd-trilha-ok').textContent='';abrirEtapa(null);});
 function ligar(){if(lig||!db)return;lig=true;
   function falhou(c){return function(err){console.error(c,err);};}
   db.collection('cd_trilha').onSnapshot(function(s){etapas=s.docs.map(function(x){var o=Object.assign({},x.data());o.id=x.id;return o;});tudo();if(window.__cdMudou)window.__cdMudou();},falhou('cd_trilha'));

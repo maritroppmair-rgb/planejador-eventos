@@ -241,9 +241,10 @@ service cloud.firestore {
       allow delete: if liberado() && resource.data.uid == request.auth.uid;
     }
 
+    // Trilha do trainee (cd_trilha, cd_trilha_prog): trainee não edita, nem o de C&D
     match /{colecao}/{documento=**} {
       allow read: if liberado();
-      allow create, update: if !reservada(colecao) && podeNa(colecao, EDITA()) && aprovacaoOk(colecao);
+      allow create, update: if !reservada(colecao) && podeNa(colecao, colecao in ['cd_trilha', 'cd_trilha_prog'] ? EXCLUI() : EDITA()) && aprovacaoOk(colecao);
       allow delete: if !reservada(colecao) && podeNa(colecao, EXCLUI());
     }
   }
