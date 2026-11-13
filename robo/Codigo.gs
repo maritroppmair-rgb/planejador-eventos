@@ -20,7 +20,7 @@ var CFG = {
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
   MODELO_FORM_ID: '1HVmot9qs1QoAu9vt_P_zWy7MzOyQsfcaL8QtDnw9Uy8', // reserva: o que vale é o link salvo em Parâmetros no site
   MODELO_FEEDBACK_ID: '1JL7d0tw2OxW8aV8q-rr_t8oE16r7nm1s0vzzJqxFSfg', // reserva: o que vale é o link salvo em Parâmetros no site
-  FEEDBACK_DIAS: 30,        // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
+  FEEDBACK_DIAS: 5,         // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
   PASTA: 'Feashion · Inscrições',
   PASTA_FEEDBACK: 'Feashion · Feedbacks', // Forms de feedback e planilhas de respostas (mesmo acesso de edição da pasta das inscrições)
   PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
@@ -285,6 +285,8 @@ function sincronizarFeedback(eid, ev) {
   ev = ev || fsGet('eventos/' + eid);
   if (!ev || !ev.feedback || !ev.feedback.formId) throw new Error('Esse evento ainda não tem Forms de feedback.');
   var fb = ev.feedback, form = FormApp.openById(fb.formId), agora = new Date(), T = FormApp.ItemType;
+  var CALC = ['total', 'satisfacao', 'perguntas', 'comentarios', 'aberto', 'assinatura']; // só o que o robô calcula (ligado e o resto são do app)
+  var antes = CALC.map(function (k) { return jsonOrd(fb[k]); });
   if (fb.assinatura !== assinatura(ev)) {
     aplicarTextosFeedback(form, ev);
     try { DriveApp.getFileById(fb.formId).setName('Feedback · ' + ev.nome + ' · ' + dataCurta(ev.data)); } catch (e) { }
@@ -295,7 +297,7 @@ function sincronizarFeedback(eid, ev) {
     var tp = it.getType(), q = null;
     if (tp === T.SCALE) { var s = it.asScaleItem(); q = { min: s.getLowerBound(), max: s.getUpperBound(), rot: [s.getLeftLabel() || '', s.getRightLabel() || ''] }; }
     else if (T.RATING && tp === T.RATING) { try { q = { min: 1, max: it.asRatingItem().getRatingScaleLevel(), rot: ['', ''] }; } catch (e) { } }
-    else if (tp === T.PARAGRAPH_TEXT || tp === T.TEXT) abId[it.getId()] = it.getTitle();
+    else if (tp === T.PARAGRAPH_TEXT) abId[it.getId()] = it.getTitle(); // só parágrafo vira comentário: resposta curta (nome, e-mail, curso) fica de fora
     if (q) { q.t = it.getTitle(); q.soma = 0; q.n = 0; q.dist = {}; porId[it.getId()] = q; esc1.push(q); }
   });
   var n = 0, top = 0, tot = 0, coment = [];
@@ -314,10 +316,16 @@ function sincronizarFeedback(eid, ev) {
     return { t: String(q.t).slice(0, 300), min: q.min, max: q.max, rot: q.rot, n: q.n, media: q.n ? Math.round(q.soma / q.n * 100) / 100 : null, dist: d };
   });
   fb.comentarios = coment.slice(-150);
-  fb.sincronizadoEm = agora.toISOString();
   if (ev.data && agora >= new Date(inicio(ev).getTime() + CFG.FEEDBACK_DIAS * 864e5) && form.isAcceptingResponses()) form.setAcceptingResponses(false);
   fb.aberto = form.isAcceptingResponses();
-  fsPatch('eventos/' + eid, { feedback: fb });
+  /* grava só os subcampos calculados e só quando algo mudou (não pisa no "ligado" do app nem acorda os clientes a cada 10 min) */
+  var up = {};
+  CALC.forEach(function (k, i) { if (jsonOrd(fb[k]) !== antes[i]) up['feedback.' + k] = fb[k] === undefined ? null : fb[k]; });
+  if (Object.keys(up).length) {
+    fb.sincronizadoEm = agora.toISOString();
+    up['feedback.sincronizadoEm'] = fb.sincronizadoEm;
+    fsPatch('eventos/' + eid, up);
+  }
   return { feedback: fb };
 }
 
@@ -966,12 +974,24 @@ function fsList(col) {
   } while (tok);
   return out;
 }
-/** Grava só os campos de `obj` (os outros campos do documento ficam como estão). */
+/** Grava só os campos de `obj` (os outros campos do documento ficam como estão).
+    Chave com ponto ("feedback.total") grava só esse subcampo: o updateMask leva o caminho e o corpo, o mapa aninhado.
+    (Os nomes de cada parte precisam ser simples: letras, números e _.) */
 function fsPatch(path, obj) {
   var q = Object.keys(obj).map(function (k) { return 'updateMask.fieldPaths=' + encodeURIComponent(k); }).join('&');
+  var corpo = {}, MAPA = {};
+  Object.keys(obj).forEach(function (k) {
+    var ps = k.split('.'), x = corpo;
+    for (var i = 0; i < ps.length - 1; i++) {
+      if (!Object.prototype.hasOwnProperty.call(x, ps[i])) { x[ps[i]] = {}; MAPA[ps.slice(0, i + 1).join('.')] = 1; }
+      else if (!MAPA[ps.slice(0, i + 1).join('.')]) throw new Error('fsPatch: ' + k + ' conflita com outro campo do mesmo patch.');
+      x = x[ps[i]];
+    }
+    x[ps[ps.length - 1]] = obj[k];
+  });
   var r = UrlFetchApp.fetch(FS + path + '?' + q, {
     method: 'patch', contentType: 'application/json', headers: cab(), muteHttpExceptions: true,
-    payload: JSON.stringify({ fields: encFields(obj) })
+    payload: JSON.stringify({ fields: encFields(corpo) })
   });
   if (r.getResponseCode() !== 200) throw new Error('Firestore ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 300));
 }
@@ -990,6 +1010,13 @@ function enc(v) {
     case 'object': return { mapValue: { fields: encFields(v) } };
   }
   return { stringValue: String(v) };
+}
+/** JSON com as chaves em ordem (o Firestore não devolve os mapas na ordem em que foram gravados). */
+function jsonOrd(v) {
+  if (v === undefined) return 'null';
+  if (v === null || typeof v !== 'object') return JSON.stringify(v);
+  if (Array.isArray(v)) return '[' + v.map(jsonOrd).join(',') + ']';
+  return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + jsonOrd(v[k]); }).join(',') + '}';
 }
 function encFields(o) { var f = {}; Object.keys(o).forEach(function (k) { f[k] = enc(o[k]); }); return f; }
 function dec(doc) { var o = decFields(doc.fields || {}); o._id = doc.name.split('/').pop(); return o; }

@@ -50,9 +50,10 @@ function insDe(e){var i=e.inscricao;if(i&&i.formId&&i.total!=null&&!isNaN(+i.tot
 function comidaTxt(c,p){var o=COM.filter(function(x){return x[0]===(c||'');})[0];if(!o||!o[0])return '';return o[1]+(c!=='certo'&&p!=null&&p!==''?' ('+p+'%)':'');}
 var TXT=[['certo','O que deu certo',1],['errado','O que deu errado e como foi corrigido',1],['mudar','O que mudar no próximo',1]];
 
-/* rascunho por evento (o que está na tela antes de salvar) */
+/* rascunho por evento (o que está na tela antes de salvar); limpo, é refeito do banco a cada desenho,
+   mas não enquanto salva ou gera (ocup), e a última mensagem passa para o novo */
 var RP={};
-function rasc(e){var m0='';if(RP[e.id]&&!RP[e.id].sujo){m0=RP[e.id].msg;delete RP[e.id];}
+function rasc(e){var m0='';if(RP[e.id]&&!RP[e.id].sujo&&!RP[e.id].ocup){m0=RP[e.id].msg;delete RP[e.id];}
   if(!RP[e.id]){var pe=e.posEvento||{},res={};
     RES.forEach(function(r){var v=e[r[0]];res[r[0]]=v!=null&&v!==''?String(v):'';});
     var ct={};convIds(e).forEach(function(i){var c=(pe.contatos||{})[i]||{};ct[i]={manter:!!c.manter,coment:c.coment||''};});
@@ -135,7 +136,7 @@ function salvar(id,gerar){var e=evDe(id);if(!e||!db)return;var r=rasc(e),q=quem(
   if(window.__travado&&__travado(e)){r.msg='O relatório final já foi gerado: o evento está fechado.';redesenha();return;}
   if(gerar){var falta=TXT.filter(function(t){return !String(r[t[0]]).trim();});
     if(falta.length){r.msg='Preencha: '+falta.map(function(t){return t[1].toLowerCase();}).join('; ')+'.';redesenha();return;}
-    if(e.data&&e.data>hoje()){r.msg='O relatório final só pode ser gerado depois do dia do evento.';redesenha();return;}}
+    if(e.data&&e.data>=hoje()){r.msg='O relatório final só pode ser gerado a partir do dia seguinte ao evento.';redesenha();return;}}
   var up={comida:lr.v.comida,comidaPct:lr.v.comidaPct},ia=insDe(e);RES.forEach(function(x){up[x[0]]=lr.v[x[0]];});
   if(ia!=null)up.inscritos=ia; /* inscritos do Forms gravado no evento (Base e Analytics usam) */
   var ct={};Object.keys(r.contatos).forEach(function(i){var c=r.contatos[i];if(c.manter||String(c.coment).trim())ct[i]={manter:!!c.manter,coment:String(c.coment).trim().slice(0,200)};});
@@ -305,7 +306,7 @@ window.__abrirPos=function(id){if(!$('view-base')||$('view-base').hidden){var b=
    público USP por instituto e as notas do Forms de feedback, com só os comentários que a pessoa marcar. A carta de abertura
    vem com um texto padrão (CARTA) que dá para editar; {nome} vira o primeiro nome de cada convidado e {evento}, o nome do evento.
    Cada PDF fica em Documentos, na pasta do evento. eventos/{id}.relConvidado = {comentarios:[texto], carta, em, por,
-   docs:{convidadoId:{docId, assetId, versao, em}}}. Pode gerar de novo (o Forms de feedback recebe respostas até 30 dias
+   docs:{convidadoId:{docId, assetId, versao, em}}}. Pode gerar de novo (o Forms de feedback recebe respostas até 5 dias
    depois do evento): atualiza o mesmo documento, com nova versão. Não mexe no evento fechado pelo relatório final. */
 var RC={},CARTA='Olá, {nome}!\n\nMuito obrigado por ter participado do evento {evento} com a Feashion. Reunimos aqui como foi o encontro: quantas pessoas vieram, quem eram e como o público avaliou o evento.\n\nDiretoria de Eventos · Feashion';
 function rcRasc(e){if(!RC[e.id]){var x=e.relConvidado||{};RC[e.id]={sel:(x.comentarios||[]).slice(),carta:x.carta||CARTA,msg:'',ocup:false};}return RC[e.id];}
@@ -315,7 +316,7 @@ function montarFc(id){var e=evDe(id);if(!e)return null;var r=rcRasc(e),ed=podeEd
   if(!fb)fh='<p class="note" style="margin:0">Este evento não tem o Forms de feedback do app: o PDF sai só com o público.</p>';
   else if(!fb.total)fh='<p class="note" style="margin:0">O Forms de feedback ainda não tem respostas.</p>';
   else fh=dl([['Respostas',String(fb.total)],['Satisfação',pct(fb.satisfacao)+' <span class="note">notas 4 e 5</span>']])+qLista(fb)+
-    (e.feedback&&e.feedback.aberto?'<p class="note" style="margin:6px 0 0">O Forms ainda recebe respostas (até 30 dias depois do evento): dá para gerar de novo depois.</p>':'');
+    (e.feedback&&e.feedback.aberto?'<p class="note" style="margin:6px 0 0">O Forms ainda recebe respostas (até 5 dias depois do evento): dá para gerar de novo depois.</p>':'');
   c+=blk('Notas do feedback',fh);
   var cs=fb?fb.comentarios:[],ch;
   if(!cs.length)ch='<p class="note" style="margin:0">Nenhum comentário no Forms de feedback.</p>';
@@ -334,7 +335,7 @@ function montarFc(id){var e=evDe(id);if(!e)return null;var r=rcRasc(e),ed=podeEd
   if(ed&&gl.length)rod='<div class="btns"><button type="button" class="btn" id="fc-gerar"'+(r.ocup?' disabled':'')+'>'+(x.em?'Gerar de novo':gl.length>1?'Gerar os '+gl.length+' PDFs':'Gerar o PDF')+'</button><span class="msg" id="fc-m" role="status">'+esc(r.msg)+'</span></div>';
   return {titulo:'Feedback ao convidado · '+(e.nome||'Evento'),sub:dataLonga(e)+(e.sala?' · '+esc(e.sala):''),corpo:c,rodape:rod};}
 function redesenhaFc(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.closest('#view-base .tpanel'))a.blur();painelAtualizar('view-base');}
-function gerarFc(id){var e=evDe(id);if(!e||!db)return;var r=rcRasc(e),q=quem(),gl=convIds(e),x=e.relConvidado||{},velhos=x.docs||{},novos={};if(!gl.length)return;
+function gerarFc(id){var e=evDe(id);if(!e||!db)return;var r=rcRasc(e),q=quem(),gl=convIds(e),x=e.relConvidado||{},velhos=x.docs||{};if(!gl.length)return;
   var cs=(fbDe(e)||{comentarios:[]}).comentarios.map(function(k){return k.txt;}).filter(function(t){return r.sel.indexOf(t)>=0;}),rec=String(r.carta||'').trim().slice(0,2000)||CARTA;
   r.ocup=true;r.msg='Gerando…';redesenhaFc();
   var p=Promise.resolve();
@@ -344,8 +345,9 @@ function gerarFc(id){var e=evDe(id);if(!e||!db)return;var r=rcRasc(e),q=quem(),g
         resumo:'Gerado pelo app para mandar ao convidado: agradecimento, público, público USP e notas do Forms de feedback.',eventos:[id],area:'Eventos',link:'',arquivo:url,assetId:upl.id,url:url};
       var existe=d0.docId&&docs.some(function(z){return z.id===d0.docId;});
       return (existe?db.doc('documentos/'+d0.docId).update(d).then(function(){return d0.docId;}):db.collection('documentos').add(Object.assign({criadoEm:q.em},d)).then(function(z){return z.id;}))
-        .then(function(docId){novos[gid]={docId:docId,assetId:upl.id,versao:vs,em:q.em};});});});});
-  p.then(function(){return db.doc('eventos/'+id).update({relConvidado:{comentarios:cs.slice(0,150),carta:rec,em:q.em,por:q.por,docs:Object.assign({},velhos,novos)}});})
+        .then(function(docId){var u={};u['relConvidado.docs.'+gid]={docId:docId,assetId:upl.id,versao:vs,em:q.em}; /* grava já: se o próximo falhar, este documento não se perde */
+          return db.doc('eventos/'+id).update(u);});});});});
+  p.then(function(){return db.doc('eventos/'+id).update({'relConvidado.comentarios':cs.slice(0,150),'relConvidado.carta':rec,'relConvidado.em':q.em,'relConvidado.por':q.por});})
     .then(function(){r.msg=gl.length>1?'PDFs gerados: estão em Documentos, na pasta do evento.':'PDF gerado: está em Documentos, na pasta do evento.';},
       function(err){r.msg=err&&err.code==='sem'?'Não foi possível guardar o PDF: entre de novo no app e tente outra vez.':'Não foi possível gerar o PDF.';})
     .then(function(){r.ocup=false;redesenhaFc();});}
