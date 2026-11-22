@@ -80,12 +80,16 @@ body:not(.pode-gerir) #parform :is(input,select){pointer-events:none;background:
 
 /* áreas no perfil e em Membros */
 .pareas{border:0;padding:0;margin:0;min-width:0}
+/* as áreas ocupam a linha inteira do formulário: na metade, em telas médias, o cargo quebrava e as caixas encavalavam */
+.pfields .pareas{grid-column:1/-1}
 .pf-alist{display:flex;flex-wrap:wrap;gap:8px}
 .pf-alist .cargo-ro{flex-basis:100%}
 .pf-a{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:14px;background:var(--surface)}
 .pf-a:has(input:checked){border-color:var(--fg)}
 .pf-a small{color:var(--muted);font-size:12px}
-.pf-a input{accent-color:var(--brand);margin:0}
+.pf-a{flex:none;line-height:1.2;white-space:nowrap}
+/* a regra geral .field input (largura 100%, borda e espaçamento) não vale para a caixinha da área */
+.pareas .pf-a input{accent-color:var(--brand);margin:0;width:auto;padding:0;border:0;border-radius:0;flex:none}
 .mpapeis{display:flex;flex-wrap:wrap;gap:4px}
 .mrole{display:grid;gap:6px;margin-bottom:12px}
 .mrole h5{margin:0;font-family:var(--label);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}

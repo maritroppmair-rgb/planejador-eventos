@@ -1,6 +1,6 @@
 # Planejador de Eventos · guia para apresentar
 
-Nov 13, 2026 · @Pedro
+Nov 22, 2026 · @Pedro
 
 ## O que é o Planejador
 
@@ -38,7 +38,7 @@ Só entra quem está na lista de acesso, com a conta Google do e-mail USP. O que
 | Cargo | Na própria área | Nas outras áreas |
 | --- | --- | --- |
 | Presidente, Vice-presidente e Diretor(a) de Eventos | Tudo, em todas as áreas, inclusive Lixeira e Histórico | Tudo |
-| Diretor(a) das outras áreas | Tudo, inclusive atribuir cargos abaixo do dele(a) e ver Lixeira e Histórico | Só visualiza |
+| Diretor(a) das outras áreas | Tudo, inclusive atribuir cargos abaixo do dele(a) e ver a Lixeira (o Histórico, não) | Só visualiza |
 | Coordenador(a) | Cria, edita e exclui | Não vê as telas |
 | Membro(a) | O mesmo que Coordenador(a) | Não vê as telas |
 | Trainee | Cria e edita, mas não exclui | Não vê as telas |
@@ -50,7 +50,7 @@ Quem tem mais de uma área soma as permissões. Calendário, Documentos, Membros
 
 **Escolher a área.** Embaixo de "Planejador de Eventos", no topo, fica a área em que você está: **Diretoria de Eventos ▾**. Clicando, abre a lista das áreas que você pode ver; as que você só pode ver aparecem com "só leitura". Quem tem uma área só vê o nome dela, sem seta. O app lembra a última área escolhida. No celular, a escolha fica no topo do menu.
 
-O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da área escolhida e, embaixo, o grupo **Geral**, igual em todas: Pendências, Calendário, Documentos, Membros e, para a diretoria para cima, Lixeira e Histórico. Em Eventos, o menu tem os grupos Eventos, Recursos e Ajustes, com as telas da tabela abaixo. O círculo com a foto, no canto superior direito, leva a Meu perfil, Membros, Aparência (claro/escuro) e Sair.
+O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da área escolhida e, embaixo, o grupo **Geral**, igual em todas: Pendências, Calendário, Documentos, Membros e, para a diretoria para cima, a Lixeira. O Histórico aparece só para Presidente, Vice-presidente e Diretor(a) de Eventos. Em Eventos, o menu tem os grupos Eventos, Recursos e Ajustes, com as telas da tabela abaixo. O círculo com a foto, no canto superior direito, leva a Meu perfil, Membros, Aparência (claro/escuro) e Sair.
 
 | Tela | Para que serve | O que vale mostrar |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ O menu lateral (☰ no canto superior esquerdo abre e fecha) mostra as telas da 
 | **Parâmetros** | As regras do cálculo: metas de custo, margens, limites e quanto a chuva pesa na nota da data; o link do **Forms padrão de inscrição**, que o robô copia para cada evento, e o do **Forms padrão de feedback**, copiado quando alguém marca Forms de feedback nos avisos (esses links ficam só aqui; sem eles, o robô avisa que falta); também o backup | Só a diretoria de Eventos e a presidência alteram, com dupla confirmação. Se o último backup tiver mais de 30 dias, aparece um aviso no topo para elas. Quem tem cargo em Eventos recebe acesso de edição aos dois Forms padrão e a todos os Forms criados. No Forms de feedback, perguntas de escala (1 a 5) viram média e satisfação, perguntas abertas de parágrafo viram comentários (respostas curtas, como nome, e-mail ou curso, ficam de fora), e {evento}, {convidado}, {data} e {sala} nas perguntas viram os dados do evento |
 | **Membros** | Equipe, com as áreas e o cargo de cada um, e a lista de quem pode entrar | O filtro por área e, ao clicar numa pessoa, os cargos de cada área (só aparecem para mudar os cargos abaixo do seu) |
 | **Lixeira** | O que foi excluído de eventos, salas, calendário, convidados, documentos, do Financeiro, das capacitações e das etapas da trilha, por 30 dias | Restaurar com um clique. Só a diretoria para cima vê; a diretoria restaura o que é da própria área, a presidência restaura tudo |
-| **Histórico** | Quem criou, editou ou excluiu o quê, e quando | O filtro por área, pessoa e ação. Só a diretoria para cima vê |
+| **Histórico** | Quem criou, editou ou excluiu o quê, e quando | O filtro por área, pessoa e ação. Só Presidente, Vice-presidente e Diretor(a) de Eventos veem |
 
 As telas das outras áreas já estão no menu e vão sendo desenhadas uma a uma com cada área:
 
@@ -131,7 +131,7 @@ As respostas curtas abaixo cobrem custo, confiabilidade da previsão, segurança
 
 **"Os dados estão seguros?"** Só entra quem está na lista, com login Google do e-mail USP. As permissões por área e cargo são checadas no próprio banco de dados, não só na tela. A única trava que fica só no app é a do evento fechado depois do relatório final, de propósito: assim dá para corrigir um dado em caso especial. Tem backup completo em Parâmetros (eventos, orçamentos, pagamentos, divulgação, capacitações, documentos e o resto), com aviso quando o último tiver mais de 30 dias.
 
-**"E se alguém apagar algo sem querer?"** O que é excluído vai para a Lixeira e fica lá por 30 dias; a diretoria da área restaura com um clique. E o Histórico mostra quem criou, editou ou excluiu cada coisa, e quando.
+**"E se alguém apagar algo sem querer?"** O que é excluído vai para a Lixeira e fica lá por 30 dias; a diretoria da área restaura com um clique. E o Histórico, que só a presidência e a diretoria de Eventos veem, mostra quem criou, editou ou excluiu cada coisa, e quando.
 
 **"E na passagem de gestão?"** Tudo fica no app, não na cabeça de alguém. A nova diretoria recebe acesso, ganha da presidência o cargo de Diretor(a) na sua área e continua de onde parou, com o histórico inteiro.
 

@@ -30,7 +30,7 @@ var I={
   pend:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11"/><circle cx="5" cy="18" r="1.3"/>'
 };
 /* menu por área: a área é escolhida no subtítulo do topo ("Diretoria de Eventos ▾") e o menu mostra só as telas dela.
-   O grupo Geral (Calendário, Documentos, Membros, Lixeira, Histórico) aparece em todas. Lixeira e Histórico: diretoria para cima. */
+   O grupo Geral (Calendário, Documentos, Membros, Lixeira, Histórico) aparece em todas. Lixeira: diretoria para cima. Histórico: só DEV, presidência e diretoria de Eventos. */
 var AREAS=['Eventos','Financeiro','Marketing','C&D','RH'];
 var MENU={
   'Eventos':[['Eventos',[['ia','Ideia de evento','view','BETA'],['plan','Planejar evento','tab'],['base','Base de eventos','tab'],['ana','Analytics','view'],['mail','Mailing','view']]],
@@ -41,7 +41,7 @@ var MENU={
   'C&D':[['C&D',[['cd-cap','Capacitações','view'],['cd-trilha','Trilha do trainee','view']]]],
   'RH':[['RH',[['rh','Visão geral','view']]]]
 };
-var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['cd-trilha','Trilha do trainee','view','','trainee'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','gov']]];
+var GERAL=['Geral',[['pend','Pendências','view'],['cal','Calendário','tab'],['docs','Documentos','tab'],['membros','Membros','go'],['cd-trilha','Trilha do trainee','view','','trainee'],['lixeira','Lixeira','view','','gov'],['hist','Histórico','view','','topo']]];
 /* telas novas das áreas: por enquanto em branco, para desenhar uma a uma */
 var NOVAS={
   'fin-custos':['Orçamento por evento','Financeiro','Orçamento, validação e pagamentos de cada evento.'],
@@ -73,7 +73,7 @@ function grupo(g,area){
   var box=document.createElement('div');box.className='sgroup';box.dataset.area=area;
   var h=document.createElement('h4');h.textContent=g[0];box.appendChild(h);
   g[1].forEach(function(it){
-    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4]==='gov')b.dataset.gov='1';else if(it[4]==='trainee')b.dataset.trainee='1';else if(it[4])b.dataset.fora=it[4].slice(5);
+    var b=document.createElement('button');b.type='button';b.className='sitem';b.dataset.alvo=it[0];b.dataset.modo=it[2];if(it[4]==='gov')b.dataset.gov='1';else if(it[4]==='topo')b.dataset.topo='1';else if(it[4]==='trainee')b.dataset.trainee='1';else if(it[4])b.dataset.fora=it[4].slice(5);
     b.innerHTML=icone(it[0]);var sp=document.createElement('span');sp.textContent=it[1];b.appendChild(sp);if(it[3]){var bt=document.createElement('span');bt.className='beta';bt.textContent=it[3];b.appendChild(bt);}
     b.addEventListener('click',function(){ir(it[0],it[2]);});
     box.appendChild(b);
@@ -144,7 +144,7 @@ function souTraineeFora(){var P=window.__perm;if(!P||!P.carregado()||P.podeEm('C
 function mostrarGrupos(){
   var P=window.__perm,ok=P&&P.carregado();
   side.querySelectorAll('.sgroup').forEach(function(g){var algum=false,daArea=!g.dataset.area||g.dataset.area===atual;
-    g.querySelectorAll('.sitem').forEach(function(b){var v=(!b.dataset.gov||(ok&&P.diretorAlgum()))&&b.dataset.fora!==atual&&(!b.dataset.trainee||souTraineeFora());b.hidden=!v;if(v)algum=true;});
+    g.querySelectorAll('.sitem').forEach(function(b){var v=(!b.dataset.gov||(ok&&P.diretorAlgum()))&&(!b.dataset.topo||(ok&&P.geral()))&&b.dataset.fora!==atual&&(!b.dataset.trainee||souTraineeFora());b.hidden=!v;if(v)algum=true;});
     g.hidden=!daArea||!algum;});
   rotulos();
 }

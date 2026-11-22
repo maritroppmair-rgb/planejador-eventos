@@ -12,7 +12,7 @@ rules_version = '2';
 // - Área de cada coleção: documentos e arquivos são de todas; coleções com prefixo fin_, mkt_, cd_ e rh_ são de
 //   Financeiro, Marketing, C&D e RH; o resto é de Eventos.
 // - Só quem está acima muda o cargo de quem está abaixo. Ninguém muda o próprio cargo (só o DEV).
-// - Lixeira e registro de alterações: a diretoria (de qualquer área) para cima lê.
+// - Lixeira: a diretoria (de qualquer área) para cima lê. Registro de alterações (Histórico): só DEV, presidência e diretoria de Eventos.
 // - Etapas do evento: a Aprovação só pela presidência e pelo DEV; Orçamento pela diretoria do Financeiro,
 //   Divulgação pela diretoria do Marketing e Dados AEX pelo responsável AEX do evento (além de quem edita Eventos).
 // No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
@@ -194,7 +194,7 @@ service cloud.firestore {
 
     // registro de alterações: cada um grava só em nome próprio; ninguém edita nem apaga
     match /registro/{id} {
-      allow read: if diretorAlgum();
+      allow read: if liberado() && (ehDev() || (temPerfil() && geral(get(eu()).data)));
       allow create: if liberado() && request.resource.data.por == request.auth.uid;
     }
 

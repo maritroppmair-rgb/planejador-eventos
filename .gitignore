@@ -1,1 +1,3 @@
 *.json.bak
+# regras prontas para colar no console (com o e-mail do DEV): só local
+firestore.console.rules

@@ -1,7 +1,7 @@
 <script>
 /* ---------- governança: Lixeira, Histórico (registro de alterações) e lembrete de backup ----------
    Quem grava a lixeira e o registro é o plataforma.js (em toda exclusão e gravação). Aqui ficam só as telas.
-   Lixeira e Histórico: diretoria para cima. Presidência e DEV restauram tudo; a diretoria, só o que é da própria área. */
+   Lixeira: diretoria para cima. Histórico: só DEV, presidência e diretoria de Eventos. Presidência e DEV restauram tudo; a diretoria, só o que é da própria área. */
 (function(){
 "use strict";
 function $(i){return document.getElementById(i);}
@@ -69,7 +69,7 @@ $('lixeira-list').addEventListener('click',function(e){
 
 /* ---- Histórico ---- */
 function hsCarregar(){
-  if(!db||hsCarregando)return;hsCarregando=true;$('hist-count').textContent='Carregando…';
+  var p=P();if(!db||hsCarregando||!p||!p.geral())return;hsCarregando=true;$('hist-count').textContent='Carregando…';
   db.collection('registro').orderBy('em','desc').limit(hsLim).get().then(function(s){
     hist=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;});hsFim=s.docs.length<hsLim;hsCarregando=false;hsRender();
   },function(){hsCarregando=false;$('hist-count').textContent='';$('hist-list').innerHTML='<p class="empty">Não foi possível carregar o histórico.</p>';});
