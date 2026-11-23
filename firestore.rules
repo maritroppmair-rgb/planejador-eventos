@@ -5,7 +5,8 @@ rules_version = '2';
 //   Perfis antigos, sem "areas", contam como Eventos com o "cargo" que tinham.
 // - A presidência fica fora das áreas: presidencia = 'Presidente' | 'Vice-presidente' | ''.
 // - Hierarquia: DEV > Presidente > Vice-presidente > Diretor(a) > Coordenador(a) > Membro(a) > Trainee > Sem cargo.
-// - DEV, presidência e Diretor(a) de Eventos: tudo, em todas as áreas (Diretor(a) de Eventos vale como a Vice-presidência).
+// - DEV, presidência e Diretor(a) de Eventos: tudo, em todas as áreas. Diretor(a) de Eventos vale como o DEV
+//   (acima da presidência): dá e tira a presidência e aprova fichas.
 // - Na própria área: Diretor(a) faz tudo e atribui cargos; Coordenador(a) e Membro(a) editam e excluem;
 //   Trainee edita sem excluir; sem cargo só lê. (Esconder as abas de outras áreas é feito na tela.)
 // - Contatos de coffee (fin_coffee): a tela fica em Eventos; editam Eventos e Financeiro.
@@ -13,7 +14,7 @@ rules_version = '2';
 //   Financeiro, Marketing, C&D e RH; o resto é de Eventos.
 // - Só quem está acima muda o cargo de quem está abaixo. Ninguém muda o próprio cargo (só o DEV).
 // - Lixeira: a diretoria (de qualquer área) para cima lê. Registro de alterações (Histórico): só DEV, presidência e diretoria de Eventos.
-// - Etapas do evento: a Aprovação só pela presidência e pelo DEV; Orçamento pela diretoria do Financeiro,
+// - Etapas do evento: a Aprovação só pela presidência, pela diretoria de Eventos e pelo DEV; Orçamento pela diretoria do Financeiro,
 //   Divulgação pela diretoria do Marketing e Dados AEX pelo responsável AEX do evento (além de quem edita Eventos).
 // No console, troque EMAIL_DO_DEV@usp.br pelo e-mail do DEV.
 service cloud.firestore {
@@ -64,9 +65,9 @@ service cloud.firestore {
     function geral(me) {
       return presidente(me) || areasDe(me).get('Eventos', '') == 'Diretor(a)';
     }
-    // nível de quem tem acesso geral (Diretor(a) de Eventos = Vice-presidente); sem acesso geral, 7
+    // nível de quem tem acesso geral (Diretor(a) de Eventos = DEV); sem acesso geral, 7
     function nivelG(me) {
-      return presidente(me) ? nivel(presDe(me)) : (areasDe(me).get('Eventos', '') == 'Diretor(a)' ? 2 : 7);
+      return areasDe(me).get('Eventos', '') == 'Diretor(a)' ? 0 : (presidente(me) ? nivel(presDe(me)) : 7);
     }
     // área dona da coleção: 'Comum', 'Financeiro', 'Marketing', 'C&D', 'RH' ou 'Eventos'
     function ehComum(c) { return c in ['documentos', 'arquivos']; }
@@ -204,7 +205,7 @@ service cloud.firestore {
     }
     // etapas do evento: a Aprovação (eventos/{id}.etapas.aprovacao) só muda pela presidência ou pelo DEV
     function presOuDev() {
-      return ehDev() || (temPerfil() && presidente(get(eu()).data));
+      return ehDev() || (temPerfil() && (presidente(get(eu()).data) || areasDe(get(eu()).data).get('Eventos', '') == 'Diretor(a)'));
     }
     function aprovacaoOk(c) {
       return c != 'eventos' || resource == null || presOuDev()

@@ -20,7 +20,8 @@
 var EDITA=['Diretor(a)','Coordenador(a)','Membro(a)','Trainee'];
 function P(){return window.__perm&&__perm.carregado()?__perm:null;}
 function dirDe(a){var p=P(),c=p&&p.cargoEm(a);return c==='Diretor(a)'||c==='Coordenador(a)';}
-function pres(){var p=P();return !!p&&(p.dev()||!!p.presidencia());}
+/* aprovação: presidência, DEV e Diretor(a) de Eventos (que tem os mesmos acessos do DEV) */
+function pres(){var p=P();return !!p&&(p.dev()||!!p.presidencia()||p.cargoEm('Eventos')==='Diretor(a)');}
 function geral(){var p=P();return !!p&&p.geral();}
 function evEd(){var p=P();return !!p&&!!p.podeEm('Eventos').editar;}
 function evCargo(){var p=P();return !!p&&EDITA.indexOf(p.cargoEm('Eventos'))>=0;}
