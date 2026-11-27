@@ -3,7 +3,7 @@ var VERSAO='__VERSAO__';
 var CACHE='planejador-'+VERSAO;
 var BASE=['./','index.html','config.js','plataforma.js','manifest.webmanifest',
   'vendor/firebase-app-compat.js','vendor/firebase-auth-compat.js','vendor/firebase-firestore-compat.js',
-  'vendor/pdf.min.js','vendor/pdf.worker.min.js','icons/icon-192.png','icons/icon-512.png','icons/favicon.png'];
+  'vendor/pdf.min.js','vendor/pdf.worker.min.js','vendor/qrcode.min.js','icons/icon-192.png','icons/icon-512.png','icons/favicon.png'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(BASE);}).then(function(){return self.skipWaiting();}));
 });

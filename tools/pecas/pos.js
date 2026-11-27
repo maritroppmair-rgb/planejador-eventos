@@ -1,8 +1,9 @@
 /* ============ PÓS-EVENTO E RELATÓRIO FINAL (seção 07 da Ficha de Evento Feashion) ============
    Roda dentro do script principal (mesmo escopo de events, guests, docs, db, esc, D, iso, $, P, painelAbrir, painelAtualizar...).
    "Finalizar evento" (linha do evento na Base) abre a tela do pós-evento:
-     1. Resultado: inscritos vem sozinho do Forms do app; presentes, membros, duração, atraso e a comida (faltou/sobrou/certas + %)
-        são digitados. "Vieram sem inscrição" vai sair do cruzamento de e-mails (lista de presença × inscritos) quando a presença for automatizada;
+     1. Resultado: inscritos vem sozinho do Forms do app; com o check-in do app (eventos/{id}.checkin), presentes, membros presentes e
+        "vieram sem inscrição" também vêm sozinhos (o robô cruza os e-mails do check-in com os membros e os inscritos). Sem check-in,
+        presentes e membros são digitados. Duração, atraso e a comida (faltou/sobrou/certas + %) são sempre digitados;
      2. Resumo automático: público, custo, checklist e divulgação, calculados do que as áreas já registraram;
      3. Pós-evento: eventos/{id}.posEvento = {certo, errado, mudar, contatos:{convidadoId:{manter, coment}}, outros, em, por}
    "Gerar relatório final" monta um PDF com o que todas as diretorias registraram do evento, guarda o arquivo (arquivos/, como
@@ -46,6 +47,9 @@ function qLista(fb){return '<div class="fc-qs">'+fb.perguntas.map(function(q){re
 var RES=[['presentes','Presentes (total)',1],['membros','Membros presentes'],['duracaoReal','Duração real (min)'],['atraso','Atraso (min)']];
 var COM=[['','—'],['certo','Porções certas'],['faltou','Faltou comida'],['sobrou','Sobrou comida']];
 /* inscritos: automático, do Forms do app (o robô conta as respostas); eventos antigos ficam com o número já gravado */
+/* presença pelo check-in do app: null sem check-in ou sem nenhuma resposta (aí os números são digitados, como antes) */
+function ckDe(e){var c=e.checkin;if(!c||!c.formId||!(+c.total>0))return null;return {presentes:+c.total,membros:+c.membros||0,sem:+c.semInscricao||0};}
+window.__ckDe=ckDe;
 function insDe(e){var i=e.inscricao;if(i&&i.formId&&i.total!=null&&!isNaN(+i.total))return +i.total;return num(e.inscritos);}
 function comidaTxt(c,p){var o=COM.filter(function(x){return x[0]===(c||'');})[0];if(!o||!o[0])return '';return o[1]+(c!=='certo'&&p!=null&&p!==''?' ('+p+'%)':'');}
 var TXT=[['certo','O que deu certo',1],['errado','O que deu errado e como foi corrigido',1],['mudar','O que mudar no próximo',1]];
@@ -60,7 +64,8 @@ function rasc(e){var m0='';if(RP[e.id]&&!RP[e.id].sujo&&!RP[e.id].ocup){m0=RP[e.
     RP[e.id]={res:res,com:e.comida||'',comPct:e.comidaPct!=null?String(e.comidaPct):'',certo:pe.certo||'',errado:pe.errado||'',mudar:pe.mudar||'',contatos:ct,outros:pe.outros||'',sujo:false,msg:m0,ocup:false};}
   return RP[e.id];}
 /* lê e confere os números (as mesmas regras de antes) */
-function lerRes(r,exigir){var v={};RES.forEach(function(x){var s=String(r.res[x[0]]||'').trim().replace(',','.');v[x[0]]=s===''?null:+s;});
+function lerRes(r,exigir,e){var v={};RES.forEach(function(x){var s=String(r.res[x[0]]||'').trim().replace(',','.');v[x[0]]=s===''?null:+s;});
+  var ck=e&&ckDe(e);if(ck){v.presentes=ck.presentes;v.membros=ck.membros;}
   for(var k in v){if(v[k]!=null&&(isNaN(v[k])||v[k]<0))return {erro:'Os números não podem ser negativos nem ter letras.'};}
   var pr=v.presentes;
   if(exigir&&pr==null)return {erro:'Informe quantas pessoas estiveram presentes.'};
@@ -71,7 +76,7 @@ function lerRes(r,exigir){var v={};RES.forEach(function(x){var s=String(r.res[x[
   return {v:v};}
 
 /* ----- resumo automático: o que as áreas já registraram ----- */
-function resumo(e){var r=rasc(e),v=lerRes(r).v||{},ins=insDe(e),pr=v.presentes,sw=num(e.semInscricao)||0;
+function resumo(e){var r=rasc(e),v=lerRes(r,false,e).v||{},ins=insDe(e),pr=v.presentes,ck=ckDe(e),sw=ck?ck.sem:num(e.semInscricao)||0;
   var tc=ins&&pr!=null?Math.min(1,Math.max(0,pr-sw)/ins):null,f=window.__finRel?__finRel(e):null,mk=window.__mktRel?__mktRel(e):null;
   var pub=[{l:'Inscritos',p:num(e.inscritosMeta),r:ins},{l:'Presentes',p:num(e.presentesPrev),r:pr}];
   var pu=publicoUsp(e);
@@ -104,13 +109,17 @@ function montarPos(id){var e=evDe(id);if(!e)return null;var r=rasc(e),dn=e.statu
   else c+='<p class="note" style="margin:0 0 10px">Registre o resultado, confira o resumo e escreva o pós-evento. O evento só passa para <b>Realizados</b> quando o relatório final é gerado.</p>';
   /* 1. resultado */
   var rh;
-  var ins=insDe(e),auto=e.inscricao&&e.inscricao.formId;
-  rh=dl([['Inscritos',(ins!=null?'<b>'+ins+'</b>':'—')+' <span class="note">'+(auto?'automático, do Forms do app':ins!=null?'número registrado antes do Forms do app':'evento sem o Forms do app')+'</span>'],
-    ['Vieram sem inscrição',(num(e.semInscricao)!=null?esc(String(e.semInscricao))+' ':'')+'<span class="note">vai ser automático: cruza os e-mails da lista de presença com os inscritos</span>']]);
-  if(ed)rh+='<div class="treg">'+RES.map(function(x){return '<div class="field"><label for="pr-'+x[0]+'">'+x[1]+(x[2]?' <span class="rq">obrigatório</span>':'')+'</label><input id="pr-'+x[0]+'" data-pr="'+x[0]+'" type="number" min="0" inputmode="decimal" value="'+esc(r.res[x[0]])+'"></div>';}).join('')+
+  var ins=insDe(e),auto=e.inscricao&&e.inscricao.formId,ck=ckDe(e),ckc=e.checkin&&e.checkin.formId;
+  var rl=[['Inscritos',(ins!=null?'<b>'+ins+'</b>':'—')+' <span class="note">'+(auto?'automático, do Forms do app':ins!=null?'número registrado antes do Forms do app':'evento sem o Forms do app')+'</span>']];
+  if(ck)rl.push(['Presentes','<b>'+ck.presentes+'</b> <span class="note">automático, do check-in</span>'],['Membros presentes','<b>'+ck.membros+'</b> <span class="note">e-mails de membros do app no check-in</span>'],
+    ['Vieram sem inscrição','<b>'+ck.sem+'</b> <span class="note">fizeram check-in sem estar entre os inscritos'+(ck.membros?' (inclui membros que não se inscreveram)':'')+'</span>']);
+  else rl.push(['Vieram sem inscrição',(num(e.semInscricao)!=null?esc(String(e.semInscricao))+' ':'')+'<span class="note">'+(ckc?'o check-in ainda não recebeu respostas; enquanto isso, digite os presentes':'sai sozinho com o Forms de check-in (Ficha do evento): cruza os e-mails do check-in com os inscritos')+'</span>']);
+  rh=dl(rl);
+  var RESv=ck?RES.filter(function(x){return x[0]!=='presentes'&&x[0]!=='membros';}):RES;
+  if(ed)rh+='<div class="treg">'+RESv.map(function(x){return '<div class="field"><label for="pr-'+x[0]+'">'+x[1]+(x[2]?' <span class="rq">obrigatório</span>':'')+'</label><input id="pr-'+x[0]+'" data-pr="'+x[0]+'" type="number" min="0" inputmode="decimal" value="'+esc(r.res[x[0]])+'"></div>';}).join('')+
     '<div class="field"><label for="pr-com">Comida</label><select id="pr-com" data-pcom="1">'+COM.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===r.com?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>'+
     (r.com==='faltou'||r.com==='sobrou'?'<div class="field"><label for="pr-cpct">Quanto '+r.com+' (%) <span class="rq opt">opcional</span></label><input id="pr-cpct" data-pcpct="1" type="number" min="0" max="100" inputmode="decimal" value="'+esc(r.comPct)+'"></div>':'')+'</div>';
-  else rh+=dl(RES.map(function(x){return [x[1],esc(r.res[x[0]]||'—')];}).concat([['Comida',esc(comidaTxt(r.com,r.comPct))||'—']]));
+  else rh+=dl(RESv.map(function(x){return [x[1],esc(r.res[x[0]]||'—')];}).concat([['Comida',esc(comidaTxt(r.com,r.comPct))||'—']]));
   c+=blk('Resultado',rh);
   c+=blk('Resumo automático',resumo(e));
   /* 2. pós-evento */
@@ -132,13 +141,14 @@ function redesenha(){var a=document.activeElement;if(a&&a.blur&&a.closest&&a.clo
 
 /* ----- salvar e gerar ----- */
 function salvar(id,gerar){var e=evDe(id);if(!e||!db)return;var r=rasc(e),q=quem();
-  var lr=lerRes(r,gerar);if(lr.erro){r.msg=lr.erro;redesenha();return;}
+  var lr=lerRes(r,gerar,e);if(lr.erro){r.msg=lr.erro;redesenha();return;}
   if(window.__travado&&__travado(e)){r.msg='O relatório final já foi gerado: o evento está fechado.';redesenha();return;}
   if(gerar){var falta=TXT.filter(function(t){return !String(r[t[0]]).trim();});
     if(falta.length){r.msg='Preencha: '+falta.map(function(t){return t[1].toLowerCase();}).join('; ')+'.';redesenha();return;}
     if(e.data&&e.data>=hoje()){r.msg='O relatório final só pode ser gerado a partir do dia seguinte ao evento.';redesenha();return;}}
   var up={comida:lr.v.comida,comidaPct:lr.v.comidaPct},ia=insDe(e);RES.forEach(function(x){up[x[0]]=lr.v[x[0]];});
   if(ia!=null)up.inscritos=ia; /* inscritos do Forms gravado no evento (Base e Analytics usam) */
+  var ck=ckDe(e);if(ck)up.semInscricao=ck.sem; /* do check-in: entra no comparecimento e na previsão dos próximos */
   var ct={};Object.keys(r.contatos).forEach(function(i){var c=r.contatos[i];if(c.manter||String(c.coment).trim())ct[i]={manter:!!c.manter,coment:String(c.coment).trim().slice(0,200)};});
   up.posEvento={certo:r.certo.trim().slice(0,1500),errado:r.errado.trim().slice(0,1500),mudar:r.mudar.trim().slice(0,1500),contatos:ct,outros:r.outros.trim().slice(0,800),em:q.em,por:q.por};
   r.ocup=true;r.msg=gerar?'Gerando o relatório final…':'Salvando…';redesenha();
@@ -241,7 +251,7 @@ function pdfRelatorio(e,aut,q){var f=e.ficha||{},pe=e.posEvento||{},nome=e.nome|
   doc.secao('Resultado');
   var ins=insDe(e),pr=num(e.presentes),sw=num(e.semInscricao)||0,tc=ins&&pr!=null?Math.min(1,Math.max(0,pr-sw)/ins):null,v=function(x){return x==null?'':String(x);};
   doc.tabela(['Indicador','Previsto','Real'],[['Inscritos',v(num(e.inscritosMeta)),v(ins)],['Presentes',v(num(e.presentesPrev)),v(pr)],['Comparecimento (inscritos que vieram)','',pct(tc)],
-    ['Vieram sem inscrição',v(num(e.semInscricaoPrev)),num(e.semInscricao)!=null?v(num(e.semInscricao)):'automático em breve'],['Membros presentes','',v(num(e.membros))],
+    ['Vieram sem inscrição',v(num(e.semInscricaoPrev)),num(e.semInscricao)!=null?v(num(e.semInscricao)):'não registrado'],['Membros presentes','',v(num(e.membros))],
     ['Comida','',comidaTxt(e.comida,e.comidaPct)||(num(e.porcoesCompradas)!=null&&num(e.porcoesConsumidas)!=null?e.porcoesConsumidas+' de '+e.porcoesCompradas+' porções':'')],
     ['Duração (min)',v(num(e.duracao)),v(num(e.duracaoReal))],['Atraso (min)','',v(num(e.atraso))]],[.5,.25,.25]);
   var pu=publicoUsp(e);

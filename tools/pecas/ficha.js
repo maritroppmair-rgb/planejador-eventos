@@ -71,6 +71,7 @@ window.__fichaBlk=function(e){var r=rasc(e),ed=fpode()&&!(window.__travado&&__tr
       '<p class="note fi-alerta">Com link externo, o app não recebe os inscritos: a contagem, os e-mails automáticos e o mailing só funcionam com o Google Forms criado pelo botão acima.</p></div>'
     :(lx?'<div class="fi-ext">'+ro('Link externo','<a href="'+esc(lx)+'" target="_blank" rel="noopener">Abrir ↗</a>')+'</div>':'');
   b+='<div class="field"><label>Inscrição e link</label>'+inscHtml(e)+ext+'</div>';
+  if(window.ROBO_URL||e.checkin)b+='<div class="field"><label>Check-in na porta</label>'+ckHtml(e)+'</div>';
   /* convidado */
   var gl=convsDe(e),cv='';
   if(gl.length)cv=gl.map(function(g){return '<div class="fi-conv"><div><b>'+esc(g.nome)+'</b><span class="tsub">'+esc([g.cargo,g.empresa].filter(Boolean).join(' · ')||'sem cargo e empresa no cadastro')+'</span></div>'+

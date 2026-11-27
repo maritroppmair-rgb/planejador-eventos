@@ -269,6 +269,15 @@ body.sd-aberto{overflow:hidden}
 .insc{display:grid;gap:6px;justify-items:start;text-align:left}.insc a{color:var(--wine)}.insc .btns{margin:0}.insc .inum b{font-family:var(--display);font-size:20px}
 .insc .ilinks{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}.insc .ilinks a{font-weight:700}
 .imsg{font-size:13px;margin-top:4px;color:var(--green);text-align:left}.imsg.err{color:var(--red)}
+/* QR code do check-in (tela cheia; imprime só ele) */
+.ckqr{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}
+.ckqr-box{background:#fff;color:#1a1714;border-radius:8px;padding:24px;max-width:440px;width:100%;text-align:center;display:grid;gap:8px;justify-items:center}
+.ckqr-box h2{margin:0;font-family:var(--display);font-size:24px}
+.ckqr-k{margin:0;font-family:var(--label);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7f0606}
+.ckqr-img{width:min(320px,70vw)}.ckqr-img svg{width:100%;height:auto;display:block}
+.ckqr-u{margin:0;font-weight:700;font-size:18px;word-break:break-all}
+.ckqr-box .note{color:#6b6259}
+@media print{body.imprime-qr>*:not(.ckqr){display:none!important}body.imprime-qr .ckqr{position:static;background:none}body.imprime-qr .ckqr .btns{display:none}}
 .dcard .acts .alt{font-size:13px;color:var(--muted);text-decoration:underline;margin-right:4px}
 .dcur{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;margin-top:6px}
 /* gavetas laterais genéricas (convidados, calendário, documentos) */
@@ -936,6 +945,7 @@ function detail(e,opt){
   }
   out.push(['Horário',(e.hora||'—')+(e.duracao?' · '+(e.duracao>=60?Math.floor(e.duracao/60)+'h'+(e.duracao%60?('0'+e.duracao%60).slice(-2):''):e.duracao+' min'):'')]);
   if(!(opt&&opt.ficha)&&(window.ROBO_URL||e.inscricao))out.push(['Inscrições',inscHtml(e)]);
+  if(!(opt&&opt.ficha)&&(window.ROBO_URL||e.checkin))out.push(['Check-in',ckHtml(e)]);
   if(!(opt&&opt.ficha)&&(e.convidado||e.equipeConvidado))out.push(['Convidado',esc(e.convidado||'—')+(e.equipeConvidado?' · equipe de '+e.equipeConvidado:'')]);
   var ld=docs.filter(function(x){return (x.eventos||[]).indexOf(e.id)>=0;});if(ld.length)out.push(['Documentos',ld.map(function(x){var u=safeUrl(x.url);return u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(x.nome)+'</a>':esc(x.nome);}).join(' · ')]);
   if(e.excecao)out.push(['Exceção','<ul style="margin:0;padding-left:18px">'+(e.excecao.alertas||[]).map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul><b>Motivo:</b> '+esc(e.excecao.motivo||'')]);
@@ -1053,6 +1063,44 @@ function inscHtml(e){
     '<div class="note">Atualizado '+esc(hhmm(i.sincronizadoEm))+'. Se o evento mudar, o Forms se atualiza sozinho em até 10 min.</div>'+
     (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-isync="'+id+'"'+(oc?' disabled':'')+'>Atualizar inscritos</button><button type="button" class="btn small ghost" data-iatual="'+id+'"'+(oc?' disabled':'')+' title="Reaplica nome, data, horário, sala e convidado do evento no mesmo Forms">Atualizar Forms</button></div>')+m+'</div>';
 }
+/* ---------- check-in na porta (presença automática) ----------
+   O robô cria um Forms curto (nome e e-mail); quem responde conta como presente. A cada 10 min o robô cruza os e-mails
+   com os membros do app e com os inscritos: eventos/{id}.checkin = {total, membros, inscritosVieram, semInscricao, url, ...}.
+   No pós-evento, presentes, membros presentes e "vieram sem inscrição" passam a vir daqui. */
+function ckHtml(e){
+  var c=e.checkin,id=esc(e.id),oc=inscOcup['ck:'+e.id],mm=inscMsg['ck:'+e.id],m=mm?'<div class="imsg'+(mm.erro?' err':'')+'">'+esc(mm.t)+'</div>':'';
+  if(!c||!c.formId){
+    if(!window.ROBO_URL)return '<span class="note">Robô ainda não configurado.</span>';
+    if(e.status==='realizado')return '<span class="note">Sem check-in do app.</span>';
+    return '<button type="button" class="btn small" data-ckform="'+id+'"'+(oc?' disabled':'')+'>'+(oc?'Criando o check-in…':'Criar Forms de check-in')+'</button>'+m+'<div class="note">Um Forms curto (nome e e-mail) com QR code para a porta. Quem fizer check-in conta como presente, e o app separa sozinho os membros e quem veio sem inscrição.</div>';}
+  var u=safeUrl(c.url),ed=safeUrl(c.editUrl),pl=safeUrl(c.planilhaUrl);
+  return '<div class="insc"><div class="inum"><b>'+(+c.total||0)+'</b> check-ins'+(+c.membros?' · '+c.membros+(+c.membros===1?' membro':' membros'):'')+(+c.semInscricao?' · '+c.semInscricao+' sem inscrição':'')+' · '+(c.aberto===false?'<span class="chip neutral">fechado</span>':'<span class="chip ok">aberto</span>'+(c.fechaEm?' <span class="note">até '+esc(hhmm(c.fechaEm))+'</span>':''))+'</div>'+
+    '<div class="ilinks">'+(u?'<button type="button" class="btn small" data-ckqr="'+id+'">QR code para a porta</button><button type="button" class="btn small ghost" data-icopy="'+esc(u)+'">Copiar link</button>':'')+(ed?'<a href="'+esc(ed)+'" target="_blank" rel="noopener">Editar Forms</a>':'')+(pl?'<a href="'+esc(pl)+'" target="_blank" rel="noopener">Planilha de check-ins</a>':'')+'</div>'+
+    '<div class="note">Atualizado '+esc(hhmm(c.sincronizadoEm))+'. No dia do evento, a presença se atualiza sozinha a cada 10 min.</div>'+
+    (e.status==='realizado'?'':'<div class="btns"><button type="button" class="btn small ghost" data-cksync="'+id+'"'+(oc?' disabled':'')+'>Atualizar presença</button></div>')+m+'</div>';
+}
+function ckAcao(acao,eid,ok){var k='ck:'+eid;inscOcup[k]=1;delete inscMsg[k];renderBase();
+  robo(acao,eid).then(function(j){inscMsg[k]={t:ok(j)};},function(err){inscMsg[k]={t:err.message,erro:1};}).then(function(){delete inscOcup[k];renderBase();});}
+var qrLib=null;
+function qrCarregar(){if(window.qrcode)return Promise.resolve();if(qrLib)return qrLib;
+  qrLib=new Promise(function(ok,erro){var s=document.createElement('script');s.src='vendor/qrcode.min.js';s.onload=ok;s.onerror=function(){qrLib=null;erro();};document.head.appendChild(s);});return qrLib;}
+function ckQr(eid){var e=events.filter(function(x){return x.id===eid;})[0],u=e&&e.checkin&&safeUrl(e.checkin.url);if(!u)return;
+  qrCarregar().then(function(){
+    var q=qrcode(0,'M');q.addData(u);q.make();
+    var ov=document.createElement('div');ov.className='ckqr';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','QR code do check-in');
+    ov.innerHTML='<div class="ckqr-box"><p class="ckqr-k">Check-in</p><h2>'+esc(e.nome||'Evento')+'</h2><div class="ckqr-img">'+q.createSvgTag({cellSize:8,margin:2,scalable:true})+'</div>'+
+      '<p class="ckqr-u">'+esc(u.replace(/^https:\/\//,''))+'</p><p class="note">Aponte a câmera do celular e preencha nome e e-mail.</p>'+
+      '<div class="btns"><button type="button" class="btn small" data-ckprint="1">Imprimir</button><button type="button" class="btn small ghost" data-ckclose="1">Fechar</button></div></div>';
+    function fechar(){ov.remove();document.removeEventListener('keydown',tecla);}
+    function tecla(k){if(k.key==='Escape')fechar();}
+    ov.addEventListener('click',function(k){if(k.target===ov||k.target.closest('[data-ckclose]'))fechar();else if(k.target.closest('[data-ckprint]')){document.body.classList.add('imprime-qr');window.print();document.body.classList.remove('imprime-qr');}});
+    document.addEventListener('keydown',tecla);document.body.appendChild(ov);ov.querySelector('[data-ckclose]').focus();
+  },function(){alert('Não foi possível carregar o QR code. Use o botão Copiar link.');});}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-ckform],[data-cksync],[data-ckqr]');if(!b)return;
+  if(b.dataset.ckqr){ckQr(b.dataset.ckqr);return;}
+  if(b.dataset.ckform)ckAcao('criarCheckin',b.dataset.ckform,function(j){return j.jaExistia?'Esse evento já tinha check-in.':'Check-in criado. Abra o QR code para a porta no dia do evento.';});
+  else if(b.dataset.cksync)ckAcao('sincronizarCheckin',b.dataset.cksync,function(j){var c=j.checkin||{};return 'Atualizado: '+(+c.total||0)+' check-ins.';});
+});
 function robo(acao,eid,extra){
   var u=window.firebase&&firebase.auth().currentUser;if(!u)return Promise.reject(new Error('Faça login de novo.'));
   return u.getIdToken().then(function(t){return fetch(window.ROBO_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({},extra||{},{acao:acao,evento:eid,idToken:t}))});})

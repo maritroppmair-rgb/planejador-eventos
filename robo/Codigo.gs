@@ -7,6 +7,9 @@
  *  2. rotina    – a cada 10 min: lê as respostas, grava em inscricoes/{id}, fecha o Forms no prazo
  *                 e manda os e-mails automáticos (confirmação, lembrete, aviso no dia, agradecimento)
  *                 e os que ficaram na fila (aviso de mudança, convite para a lista de novidades).
+ *  4. check-in  – criarCheckin cria um Forms curto (nome e e-mail) para a porta do evento; a rotina lê as respostas
+ *                 e calcula presentes, membros presentes (e-mails dos membros do app) e quem veio sem inscrição
+ *                 (e-mails que não estão entre os inscritos). eventos/{id}.checkin; a lista fica em inscricoes/{id}.presenca.
  *  3. e-mails   – textos padrão em MODELOS; cada evento pode ter o próprio texto (eventos/{id}.emails).
  *                 Quem recebeu cada tipo fica em inscricoes/{id}.envios.
  *
@@ -18,7 +21,8 @@
 var CFG = {
   PROJETO: 'planejador-de-eventos-261df',
   API_KEY: 'AIzaSyDjV_CFtFYSXvyrT25ybt3v8vuGFNnumm8', // a mesma do config.js do site (não é senha)
-  FEEDBACK_DIAS: 5,         // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
+  FEEDBACK_DIAS: 5,
+  CHECKIN_HORAS_DEPOIS: 24, // o Forms de check-in recebe respostas até X horas depois do fim do evento (e o robô lê até lá)         // o Forms de feedback recebe respostas até X dias depois do evento (e o robô lê até lá)
   PASTA: 'Feashion · Inscrições',
   PASTA_FEEDBACK: 'Feashion · Feedbacks', // Forms de feedback e planilhas de respostas (mesmo acesso de edição da pasta das inscrições)
   PASTA_FOTOS: 'Feashion · Fotos de eventos', // uma subpasta por evento, criada pelo botão da Ficha
@@ -53,6 +57,8 @@ function doPost(e) {
       else if (b.acao === 'criarPastaFotos') out = criarPastaFotos(b.evento);
       else if (b.acao === 'criarFeedback') out = criarFeedback(b.evento, u);
       else if (b.acao === 'sincronizarFeedback') out = sincronizarFeedback(b.evento);
+      else if (b.acao === 'criarCheckin') out = criarCheckin(b.evento, u);
+      else if (b.acao === 'sincronizarCheckin') out = sincronizarCheckin(b.evento);
       else if (b.acao === 'sincronizar') out = sincronizarEvento(b.evento);
       else if (b.acao === 'atualizarForm') out = sincronizarEvento(b.evento, null, true);
       else if (b.acao === 'enviarAviso') out = enviarTipo(b.evento, 'lembrete');
@@ -326,6 +332,107 @@ function sincronizarFeedback(eid, ev) {
     fsPatch('eventos/' + eid, up);
   }
   return { feedback: fb };
+}
+
+/* ---------- check-in do evento (presença automática) ----------
+   Um Forms novo, feito pelo robô (não precisa de modelo): nome completo e e-mail. Fica na pasta das inscrições, com planilha.
+   Quem responde conta como presente. O robô cruza os e-mails com os membros do app (membros presentes) e com os inscritos
+   do Forms de inscrição (quem veio sem inscrição). eventos/{id}.checkin = {formId, url, editUrl, planilhaUrl, criadoEm, criadoPor,
+   total, membros, inscritosVieram, semInscricao, aberto, fechaEm, sincronizadoEm}; inscricoes/{id}.presenca = [{nome, email, em, membro, inscrito}] */
+function fimCheckin(ev) { return new Date(inicio(ev).getTime() + (+ev.duracao || 120) * 60e3 + CFG.CHECKIN_HORAS_DEPOIS * 3600e3); }
+function criarCheckin(eid, u) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var ev = fsGet('eventos/' + eid);
+    if (!ev) throw new Error('Evento não encontrado.');
+    if (ev.checkin && ev.checkin.formId) return { checkin: ev.checkin, jaExistia: true };
+    if (!ev.data) throw new Error('O evento precisa ter data antes do check-in.');
+    if (new Date() >= fimCheckin(ev)) throw new Error('O check-in fecha ' + CFG.CHECKIN_HORAS_DEPOIS + ' h depois do fim do evento, e esse prazo já passou.');
+    var pasta = pastaInscricoes(), nomeArq = ev.nome + ' · ' + dataCurta(ev.data), form = null, planilha = null;
+    try {
+      form = FormApp.create('Check-in · ' + nomeArq);
+      DriveApp.getFileById(form.getId()).moveTo(pasta);
+      aplicarTextosCheckin(form, ev);
+      form.addTextItem().setTitle('Nome completo').setRequired(true);
+      form.addTextItem().setTitle('E-mail').setHelpText('O mesmo que você usou na inscrição, se fez.').setRequired(true)
+        .setValidation(FormApp.createTextValidation().requireTextIsEmail().setHelpText('Digite um e-mail válido.').build());
+      publicar(form);
+      form.setAcceptingResponses(true);
+      planilha = SpreadsheetApp.create('Respostas check-in · ' + nomeArq);
+      DriveApp.getFileById(planilha.getId()).moveTo(pasta);
+      form.setDestination(FormApp.DestinationType.SPREADSHEET, planilha.getId());
+      var url = form.getPublishedUrl(), curta = url;
+      try { curta = form.shortenFormUrl(url); } catch (e) { }
+    } catch (err) {
+      try { if (form) DriveApp.getFileById(form.getId()).setTrashed(true); } catch (e) { }
+      try { if (planilha) DriveApp.getFileById(planilha.getId()).setTrashed(true); } catch (e) { }
+      throw err;
+    }
+    var agora = new Date().toISOString();
+    var ck = {
+      formId: form.getId(), url: curta, editUrl: form.getEditUrl(), planilhaUrl: planilha.getUrl(), assinatura: assinatura(ev),
+      criadoEm: agora, criadoPor: u.email, total: 0, membros: 0, inscritosVieram: 0, semInscricao: 0,
+      aberto: true, fechaEm: fimCheckin(ev).toISOString(), sincronizadoEm: agora
+    };
+    fsPatch('eventos/' + eid, { checkin: ck });
+    return { checkin: ck };
+  } finally {
+    lock.releaseLock();
+  }
+}
+function aplicarTextosCheckin(form, ev) {
+  form.setTitle('Check-in · ' + ev.nome);
+  form.setDescription('Bem-vindo(a) ao evento ' + ev.nome + ' (' + quando(ev) + (ev.sala ? ', ' + ev.sala : '') + ').\n\nRegistre sua presença: leva 10 segundos.');
+  try { form.setCustomClosedFormMessage('O check-in de ' + ev.nome + ' já foi encerrado.'); } catch (e) { }
+  form.setConfirmationMessage('Presença registrada! Bom evento.');
+}
+/** Lê o check-in e cruza os e-mails com os membros do app e com os inscritos. */
+function sincronizarCheckin(eid, ev) {
+  ev = ev || fsGet('eventos/' + eid);
+  if (!ev || !ev.checkin || !ev.checkin.formId) throw new Error('Esse evento ainda não tem Forms de check-in.');
+  var ck = ev.checkin, form = FormApp.openById(ck.formId), agora = new Date();
+  var CALC = ['total', 'membros', 'inscritosVieram', 'semInscricao', 'aberto', 'assinatura', 'fechaEm'];
+  var antes = CALC.map(function (k) { return jsonOrd(ck[k]); });
+  if (ck.assinatura !== assinatura(ev)) {
+    aplicarTextosCheckin(form, ev);
+    try { DriveApp.getFileById(ck.formId).setName('Check-in · ' + ev.nome + ' · ' + dataCurta(ev.data)); } catch (e) { }
+    ck.assinatura = assinatura(ev);
+  }
+  /* e-mails dos membros: o do perfil e o de login (lista de acesso) */
+  var membros = {};
+  fsList('membros').forEach(function (m) { if (m.email) membros[String(m.email).toLowerCase().trim()] = 1; });
+  fsList('permitidos').forEach(function (p) { var e = p.email || p._id; if (e) membros[String(e).toLowerCase().trim()] = 1; });
+  var insc = fsGet('inscricoes/' + eid) || {}, inscritos = {};
+  (insc.respostas || []).forEach(function (r) { if (r.email) inscritos[String(r.email).toLowerCase().trim()] = 1; });
+  var porEmail = {}, semEmail = [];
+  form.getResponses().forEach(function (r) {
+    var x = { em: r.getTimestamp().toISOString(), nome: '', email: '' };
+    r.getItemResponses().forEach(function (ir) {
+      var tl = semAcento(ir.getItem().getTitle()), v = String(ir.getResponse() == null ? '' : ir.getResponse()).trim();
+      if (/e-?mail/.test(tl)) x.email = v.toLowerCase();
+      else if (/nome/.test(tl)) x.nome = v.slice(0, 120);
+    });
+    if (x.email) porEmail[x.email] = x; else semEmail.push(x); // a mesma pessoa duas vezes conta uma
+  });
+  var lista = Object.keys(porEmail).map(function (k) { return porEmail[k]; }).concat(semEmail);
+  lista.forEach(function (x) { x.membro = !!(x.email && membros[x.email]); x.inscrito = !!(x.email && inscritos[x.email]); });
+  ck.total = lista.length;
+  ck.membros = lista.filter(function (x) { return x.membro; }).length;
+  ck.inscritosVieram = lista.filter(function (x) { return x.inscrito; }).length;
+  ck.semInscricao = ck.total - ck.inscritosVieram; // inclui membros que vieram trabalhar sem se inscrever
+  ck.fechaEm = fimCheckin(ev).toISOString();
+  if (agora >= fimCheckin(ev) && form.isAcceptingResponses()) form.setAcceptingResponses(false);
+  ck.aberto = form.isAcceptingResponses();
+  var up = {};
+  CALC.forEach(function (k, i) { if (jsonOrd(ck[k]) !== antes[i]) up['checkin.' + k] = ck[k] === undefined ? null : ck[k]; });
+  if (Object.keys(up).length || insc.presencaTotal !== lista.length) fsPatch('inscricoes/' + eid, { evento: eid, presenca: lista, presencaTotal: lista.length });
+  if (Object.keys(up).length) {
+    ck.sincronizadoEm = agora.toISOString();
+    up['checkin.sincronizadoEm'] = ck.sincronizadoEm;
+    fsPatch('eventos/' + eid, up);
+  }
+  return { checkin: ck };
 }
 
 /* ---------- ler respostas ---------- */
@@ -715,6 +822,10 @@ function rotina() {
   try { sincronizarEquipe(); } catch (err) { console.error('Equipe: ' + err); }
   var agora = new Date(), H = 3600e3;
   fsList('eventos').forEach(function (ev) {
+    /* check-in: lê as respostas de 12 h antes do início até 1 h depois de o Forms fechar (o evento pode não ter Forms de inscrição) */
+    if (ev.checkin && ev.checkin.formId && ev.data && ev.status !== 'realizado' && agora >= new Date(inicio(ev).getTime() - 12 * H) && agora < new Date(fimCheckin(ev).getTime() + H)) {
+      try { ev.checkin = sincronizarCheckin(ev._id, ev).checkin; } catch (e) { console.error(ev._id + ' check-in: ' + e); }
+    }
     if (!ev.inscricao || !ev.inscricao.formId || !ev.data) return;
     var ini = inicio(ev), fim = new Date(ini.getTime() + (+ev.duracao || 120) * 60e3);
     /* feedback: lê as respostas até FEEDBACK_DIAS depois do evento (e fecha o Forms nessa hora) */
